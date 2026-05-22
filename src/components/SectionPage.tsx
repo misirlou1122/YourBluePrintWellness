@@ -9,6 +9,7 @@ import { FormField } from "./FormField";
 import { LabsScreen } from "./LabsScreen";
 import { ProgressBar } from "./ProgressBar";
 import { QuickNotes } from "./QuickNotes";
+import { RemindersScreen } from "./RemindersScreen";
 import { SectionCard } from "./SectionCard";
 
 interface SectionPageProps {
@@ -73,6 +74,10 @@ function TileSpecificContent({ tile }: { tile: WellnessTile }) {
     return <QuickNotes />;
   }
 
+  if (tile.id === "reminders") {
+    return <RemindersScreen />;
+  }
+
   if (tile.id === "food") {
     return (
       <div className="grid gap-3">
@@ -103,7 +108,7 @@ function TileSpecificContent({ tile }: { tile: WellnessTile }) {
   return null;
 }
 
-const fullScreenTiles: TileId[] = ["labs", "appointments"];
+const fullScreenTiles: TileId[] = ["labs", "appointments", "notes", "reminders"];
 
 export function SectionPage({ tile, previousTile, nextTile, onHome, onOpenTile }: SectionPageProps) {
   const [activeCategory, setActiveCategory] = useState(tile.subcategories[0]);
