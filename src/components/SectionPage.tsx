@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import type { FeatureGroup, TileId, WellnessTile } from "../types/wellness";
+import { useLocalStorage } from "../lib/useLocalStorage";
 import { AppointmentsScreen } from "./AppointmentsScreen";
 import { Checklist } from "./Checklist";
 import { DetailHeader } from "./DetailHeader";
@@ -29,26 +30,58 @@ function fallbackGroup(title: string): FeatureGroup {
   };
 }
 
-function FieldEntry({ group }: { group: FeatureGroup }) {
+function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: string }) {
   const fields = group.fields?.length ? group.fields : ["Title", "Date", "Notes"];
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [entries, setEntries] = useLocalStorage<Record<string, string>[]>(storageKey, []);
+
+  const updateValue = (field: string, value: string) => {
+    setValues((current) => ({ ...current, [field]: value }));
+  };
+
+  const saveEntry = () => {
+    if (!fields.some((field) => values[field]?.trim())) {
+      return;
+    }
+
+    setEntries([{ ...values, savedAt: new Date().toLocaleString() }, ...entries]);
+    setValues({});
+  };
 
   return (
     <SectionCard className="bg-white/[0.04]">
       <div className="mb-4 flex items-center gap-2">
         <Plus size={18} className="text-ice" aria-hidden="true" />
-        <h3 className="text-base font-semibold text-white">Manual entry placeholder</h3>
+        <h3 className="text-base font-semibold text-white">Manual entry</h3>
       </div>
       <div className="grid gap-3">
         {fields.map((field) => (
-          <FormField key={field} label={field} />
+          <FormField key={field} label={field} value={values[field] ?? ""} onChange={(value) => updateValue(field, value)} />
         ))}
       </div>
       <button
         type="button"
+        onClick={saveEntry}
         className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
       >
-        Save sample entry
+        Save entry locally
       </button>
+      {entries.length ? (
+        <div className="mt-4 grid gap-3">
+          {entries.map((entry, index) => (
+            <article key={`${entry.savedAt}-${index}`} className="rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm text-periwinkle/85">
+              <p className="mb-2 text-xs text-lavender/80">{entry.savedAt}</p>
+              {fields.map((field) =>
+                entry[field] ? (
+                  <p key={field} className="leading-6">
+                    <span className="text-white">{field}:</span> {entry[field]}
+                  </p>
+                ) : null
+              )}
+            </article>
+          ))}
+        </div>
+      ) : null}
     </SectionCard>
   );
 }
@@ -197,7 +230,11 @@ export function SectionPage({ tile, previousTile, nextTile, onHome, onOpenTile }
                 ))}
               </div>
             ) : null}
-            <FieldEntry group={activeGroup} />
+            <FieldEntry
+              key={`${tile.id}-${activeGroup.title}`}
+              group={activeGroup}
+              storageKey={`ybw.genericEntries.${tile.id}.${activeGroup.title}`}
+            />
           </div>
         </SectionCard>
       ) : null}

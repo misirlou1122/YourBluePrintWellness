@@ -14,35 +14,114 @@ import { FormField, SelectField, TextAreaField } from "../FormField";
 import { ProgressBar } from "../ProgressBar";
 import { SectionCard } from "../SectionCard";
 
+interface HydrationProgress {
+  waterPercent: number;
+  proteinPercent: number;
+  fiberPercent: number;
+}
+
+interface FoodLogEntry {
+  id: string;
+  mealNotes: string;
+  snackNotes: string;
+  caffeine: string;
+  nauseaCravings: string;
+  createdAt: string;
+}
+
 export function FoodHydrationScreen() {
+  const [progress, setProgress] = useLocalStorage<HydrationProgress>("ybw.hydrationProgress", {
+    waterPercent: foodHydration.waterPercent,
+    proteinPercent: foodHydration.proteinPercent,
+    fiberPercent: foodHydration.fiberPercent
+  });
+  const [logs, setLogs] = useLocalStorage<FoodLogEntry[]>("ybw.foodLogs", [
+    {
+      id: "food-sample",
+      mealNotes: foodHydration.meals.join(", "),
+      snackNotes: foodHydration.snacks.join(", "),
+      caffeine: foodHydration.caffeine,
+      nauseaCravings: foodHydration.nauseaCravings,
+      createdAt: "Sample"
+    }
+  ]);
+  const [mealNotes, setMealNotes] = useState("");
+  const [snackNotes, setSnackNotes] = useState("");
+  const [caffeine, setCaffeine] = useState("");
+  const [nauseaCravings, setNauseaCravings] = useState("");
+
+  const updateProgress = (key: keyof HydrationProgress, value: string) => {
+    setProgress((current) => ({ ...current, [key]: Number(value) || 0 }));
+  };
+
+  const addFoodLog = () => {
+    if (!mealNotes.trim() && !snackNotes.trim() && !caffeine.trim() && !nauseaCravings.trim()) {
+      return;
+    }
+
+    setLogs([
+      {
+        id: `food-${Date.now()}`,
+        mealNotes,
+        snackNotes,
+        caffeine,
+        nauseaCravings,
+        createdAt: new Date().toLocaleString()
+      },
+      ...logs
+    ]);
+    setMealNotes("");
+    setSnackNotes("");
+    setCaffeine("");
+    setNauseaCravings("");
+  };
+
   return (
     <div className="grid gap-4">
       <div className="grid gap-3">
-        <ProgressBar label="Water" value={foodHydration.waterPercent} detail="56 oz of 80 oz sample target" tone="aqua" />
-        <ProgressBar label="Protein" value={foodHydration.proteinPercent} detail="68 g of 110 g sample target" tone="lavender" />
-        <ProgressBar label="Fiber" value={foodHydration.fiberPercent} detail="12 g of 25 g sample target" tone="blue" />
+        <ProgressBar label="Water" value={progress.waterPercent} detail="Local progress value" tone="aqua" />
+        <ProgressBar label="Protein" value={progress.proteinPercent} detail="Local progress value" tone="lavender" />
+        <ProgressBar label="Fiber" value={progress.fiberPercent} detail="Local progress value" tone="blue" />
       </div>
 
-      <SectionCard title="Meals and snacks" description="Simple notes for meals, snacks, caffeine, nausea, and cravings.">
+      <SectionCard title="Progress inputs" description="Hydration, protein, and fiber percentages persist locally.">
         <div className="grid gap-3">
-          {[...foodHydration.meals, ...foodHydration.snacks].map((item) => (
-            <div key={item} className="rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm text-white">
-              {item}
-            </div>
-          ))}
-          <div className="rounded-2xl border border-ice/15 bg-ice/10 p-3 text-sm text-ice">{foodHydration.caffeine}</div>
-          <div className="rounded-2xl border border-lavender/20 bg-lavender/10 p-3 text-sm text-lavender">
-            {foodHydration.nauseaCravings}
-          </div>
+          <FormField label="Water progress %" type="number" value={String(progress.waterPercent)} onChange={(value) => updateProgress("waterPercent", value)} />
+          <FormField label="Protein progress %" type="number" value={String(progress.proteinPercent)} onChange={(value) => updateProgress("proteinPercent", value)} />
+          <FormField label="Fiber progress %" type="number" value={String(progress.fiberPercent)} onChange={(value) => updateProgress("fiberPercent", value)} />
         </div>
       </SectionCard>
 
-      <SectionCard title="Food log placeholder" description="This form is local UI only for now.">
+      <SectionCard title="Food log" description="Meal, snack, caffeine, nausea, and cravings notes save locally.">
         <div className="grid gap-3">
-          <TextAreaField label="Meal notes" />
-          <TextAreaField label="Snack notes" />
-          <FormField label="Caffeine tracker" />
-          <TextAreaField label="Nausea/cravings notes" />
+          <TextAreaField label="Meal notes" value={mealNotes} onChange={setMealNotes} />
+          <TextAreaField label="Snack notes" value={snackNotes} onChange={setSnackNotes} />
+          <FormField label="Caffeine tracker" value={caffeine} onChange={setCaffeine} />
+          <TextAreaField label="Nausea/cravings notes" value={nauseaCravings} onChange={setNauseaCravings} />
+        </div>
+        <button
+          type="button"
+          onClick={addFoodLog}
+          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
+        >
+          <Plus size={18} aria-hidden="true" />
+          Save food log
+        </button>
+      </SectionCard>
+
+      <SectionCard title="Saved food logs" description="Sample and locally added entries.">
+        <div className="grid gap-3">
+          {logs.map((log) => (
+            <article key={log.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+              <p className="text-xs text-lavender/80">{log.createdAt}</p>
+              <p className="mt-2 text-sm leading-6 text-white">Meals: {log.mealNotes || "No meal note"}</p>
+              <p className="mt-1 text-sm leading-6 text-periwinkle/85">Snacks: {log.snackNotes || "No snack note"}</p>
+              <p className="mt-1 text-sm leading-6 text-periwinkle/85">Caffeine: {log.caffeine || "None noted"}</p>
+              <p className="mt-1 text-sm leading-6 text-periwinkle/85">
+                Nausea/cravings: {log.nauseaCravings || "None noted"}
+              </p>
+            </article>
+          ))}
         </div>
       </SectionCard>
     </div>
@@ -195,7 +274,7 @@ export function FitnessScreen() {
   return (
     <div className="grid gap-4">
       <SectionCard title="What I Want To Do" description="Choose supportive movement ideas for today.">
-        <Checklist items={fitnessPlan} checkedFirst={false} />
+        <Checklist items={fitnessPlan} checkedFirst={false} storageKey="ybw.fitnessPlanChecklist" />
       </SectionCard>
 
       <SectionCard title="Cardio options" description="Pick the style of movement that fits the day.">
