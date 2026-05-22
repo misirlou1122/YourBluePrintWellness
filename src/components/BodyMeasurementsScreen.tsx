@@ -1,4 +1,4 @@
-import { Plus, Ruler } from "lucide-react";
+import { Plus, Printer, Ruler } from "lucide-react";
 import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
 import { FormField, TextAreaField } from "./FormField";
@@ -306,6 +306,15 @@ export function BodyMeasurementsScreen() {
           </div>
         </SectionCard>
       ) : null}
+
+      <button
+        type="button"
+        onClick={() => window.print()}
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
+      >
+        <Printer size={18} aria-hidden="true" />
+        Print Body Measurements / Shopping Reference
+      </button>
     </div>
   );
 }

@@ -27,10 +27,15 @@ function App() {
   const activeTile = activeTileId === "home" ? undefined : allTiles.find((tile) => tile.id === activeTileId);
   const previousTile = activeIndex > 0 ? visibleTiles[activeIndex - 1] : undefined;
   const nextTile = activeIndex >= 0 && activeIndex < visibleTiles.length - 1 ? visibleTiles[activeIndex + 1] : undefined;
+  const printedDate = new Date().toLocaleDateString();
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[linear-gradient(145deg,#05081d_0%,#09153b_42%,#171046_74%,#05081d_100%)] text-white">
       <div className="mx-auto min-h-screen w-full max-w-6xl px-4 pb-[env(safe-area-inset-bottom)] pt-4 sm:px-6 lg:px-8">
+        <div className="print-only mb-4 border-b border-gray-300 pb-3 text-sm">
+          <strong>Your Blueprint Wellness</strong>
+          <span className="block">Date printed: {printedDate}</span>
+        </div>
         {activeTile ? (
           <SectionPage
             tile={activeTile}

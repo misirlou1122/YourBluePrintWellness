@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarDays, Download, Plus } from "lucide-react";
+import { CalendarDays, Plus, Printer } from "lucide-react";
 import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
 import { FormField, TextAreaField } from "./FormField";
@@ -331,8 +331,8 @@ export function AppointmentsScreen() {
         onClick={() => window.print()}
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
       >
-        <Download size={18} aria-hidden="true" />
-        Export Doctor Appointment Summary
+        <Printer size={18} aria-hidden="true" />
+        Print Doctor Appointment Summary
       </button>
     </div>
   );

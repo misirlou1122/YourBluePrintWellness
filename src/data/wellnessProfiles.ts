@@ -71,6 +71,7 @@ export const femaleTileIds: TileId[] = [
 export const maleTileIds: TileId[] = [
   ...coreTileIds,
   "testosterone",
+  "muscle-strength",
   "mens-health",
   "prostate",
   "libido-energy-mood",
@@ -110,6 +111,7 @@ export const customTileOptions: CustomTileOption[] = [
   { id: "fertility", label: "Fertility Notes", group: "Optional reproductive / hormone tiles" },
   { id: "menopause", label: "Perimenopause / Menopause", group: "Optional reproductive / hormone tiles" },
   { id: "testosterone", label: "Testosterone Tracker", group: "Optional reproductive / hormone tiles" },
+  { id: "muscle-strength", label: "Muscle / Strength Progress", group: "Optional reproductive / hormone tiles" },
   { id: "mens-health", label: "Men's Health", group: "Optional reproductive / hormone tiles" },
   { id: "prostate", label: "Prostate Health Notes", group: "Optional reproductive / hormone tiles" },
   { id: "libido-energy-mood", label: "Libido / Energy / Mood Tracking", group: "Optional reproductive / hormone tiles" },

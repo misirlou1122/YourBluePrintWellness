@@ -1,4 +1,4 @@
-import { Download, FileText } from "lucide-react";
+import { FileText, Printer } from "lucide-react";
 import { reportExports } from "../data/wellness";
 
 export function ReportsPanel() {
@@ -38,7 +38,7 @@ export function ReportsPanel() {
             className="flex min-h-16 items-center gap-3 rounded-2xl border border-white/10 bg-midnight/45 p-4 text-left transition hover:border-ice/45 hover:bg-white/[0.08]"
           >
             <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-ice/20 bg-ice/10 text-ice">
-              <Download size={18} aria-hidden="true" />
+              <Printer size={18} aria-hidden="true" />
             </span>
             <span>
               <span className="block text-sm font-semibold text-white">{report.title}</span>

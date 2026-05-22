@@ -6,6 +6,7 @@ export type TileId =
   | "vitals"
   | "measurements"
   | "fitness"
+  | "muscle-strength"
   | "food"
   | "alcohol"
   | "period"

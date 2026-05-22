@@ -1,6 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 import type { WellnessProfileId } from "../data/wellnessProfiles";
 import type { TileId } from "../types/wellness";
+import { LoginPreview } from "./LoginPreview";
 import { SectionCard } from "./SectionCard";
 import { WellnessProfileSelector } from "./WellnessProfileSelector";
 
@@ -31,6 +32,8 @@ export function ProfileSettingsScreen({
           Use it for online clothes shopping, fit notes, and body progress tracking. Entries stay local in this browser.
         </div>
       </SectionCard>
+
+      <LoginPreview />
 
       <SectionCard className="border-ice/20 bg-ice/10">
         <div className="flex items-start gap-3">

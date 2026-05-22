@@ -10,24 +10,24 @@ export const profileSummary: ProfileSummary = {
 
 export const reportExports: ReportExport[] = [
   {
-    title: "Export Doctor Summary as PDF",
-    description: "Preview includes labs, medications, symptoms, mood notes, questions, and upcoming appointments."
+    title: "Print Wellness Summary",
+    description: "Printable overview of goals, daily trackers, notes, reminders, and progress."
   },
   {
-    title: "Export Lab Trends",
-    description: "Draft report for A1C, cholesterol, glucose, blood pressure, and weight trends."
+    title: "Print Lab Summary",
+    description: "Printable lab result summary with saved values and trend notes."
   },
   {
-    title: "Export Medication List",
-    description: "Medication and supplement list with dosage, timing, and refill reminders."
+    title: "Print Doctor Appointment Summary",
+    description: "Printable visit prep with things to discuss, questions, notes, and follow-up tasks."
   },
   {
-    title: "Export Appointment Notes",
-    description: "Things to discuss, questions, after-visit notes, and follow-up tasks."
+    title: "Print Medication List",
+    description: "Printable medication and supplement list with dosage, timing, and refill reminders."
   },
   {
-    title: "Export Wellness Summary",
-    description: "A private overview of wellness goals, habits, reminders, and progress."
+    title: "Print Body Measurements / Shopping Reference",
+    description: "Printable measurements, sizing notes, brand fit notes, and shopping reference."
   }
 ];
 
@@ -69,6 +69,7 @@ export const noteCategories = [
   "Prostate Health Notes",
   "Libido / Energy / Mood",
   "Hair Loss Notes",
+  "Muscle / Strength Progress",
   "Sleep / Recovery",
   "Mood / Mental Health",
   "Skin & Beauty",
@@ -104,6 +105,7 @@ export const noteSuggestionRules = [
   { category: "Testosterone Tracker", keywords: ["testosterone", "t levels", "low t"] },
   { category: "Prostate Health Notes", keywords: ["prostate", "psa"] },
   { category: "Hair Loss Notes", keywords: ["hair loss", "thinning hair"] },
+  { category: "Muscle / Strength Progress", keywords: ["muscle", "strength progress", "strength gain"] },
   { category: "Alcohol Tracker", keywords: ["margarita", "wine", "beer", "cocktail", "alcohol", "drink"] },
   { category: "Bloodwork / Labs", keywords: ["a1c", "cholesterol", "ldl", "hdl", "triglycerides", "glucose", "labs"] },
   { category: "Fitness", keywords: ["treadmill", "walked", "walk", "workout", "pilates", "sets", "reps", "miles", "gym"] },
@@ -148,7 +150,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Symptoms",
         description: "Track symptom notes gently with timing, context, and intensity.",
         fields: ["Symptom", "Date/time", "Intensity", "Possible trigger", "Notes"],
-        cards: [{ title: "Example symptom note", body: "Mild nausea after dinner. Hydrated and rested.", meta: "Starter example" }]
+        cards: [{ title: "Symptom note", body: "Add timing, context, intensity, and anything you want to remember.", meta: "Personal tracking" }]
       },
       {
         title: "Health goals",
@@ -269,7 +271,7 @@ export const wellnessTiles: WellnessTile[] = [
       "Questions for doctor",
       "After appointment notes",
       "Follow-up tasks",
-      "Export appointment summary"
+      "Print appointment summary"
     ],
     groups: [
       {
@@ -286,7 +288,7 @@ export const wellnessTiles: WellnessTile[] = [
       },
       {
         title: "Things To Discuss",
-        description: "A visit-specific checklist that can become part of an export later.",
+        description: "A visit-specific checklist that can be included in a printed summary.",
         checklist: [
           "Ask about cholesterol",
           "Discuss A1C",
@@ -334,7 +336,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Current medications",
         description: "Track what you take and when, using safe language.",
         fields: ["Name", "Dosage", "Time of day", "Taken today?", "Notes"],
-        cards: [{ title: "Medication example", body: "Morning dose marked taken today.", meta: "Starter example" }]
+        cards: [{ title: "Medication status", body: "Use daily checkboxes to track whether an item was marked taken today.", meta: "Personal tracking" }]
       },
       {
         title: "Supplements",
@@ -369,7 +371,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Blood pressure",
         description: "Manual tracking for readings and context.",
         fields: ["Systolic", "Diastolic", "Pulse", "Date/time", "Notes"],
-        cards: [{ title: "Example reading", body: "118/76 with resting heart rate 72.", meta: "Starter example" }]
+        cards: [{ title: "Reading note", body: "Add readings with date, context, and any notes you want to remember.", meta: "Personal tracking" }]
       },
       {
         title: "Oxygen",
@@ -437,12 +439,31 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Treadmill",
         description: "Track treadmill sessions with simple fields.",
         fields: ["Minutes", "Miles", "Incline", "Speed", "Notes"],
-        cards: [{ title: "Example treadmill", body: "20 minutes, 1.1 miles, comfortable pace.", meta: "Starter example" }]
+        cards: [{ title: "Treadmill note", body: "Log minutes, miles, incline, speed, and how the session felt.", meta: "Personal tracking" }]
       },
       {
         title: "Strength",
         description: "Capture exercises, sets, reps, and resistance.",
         fields: ["Exercise name", "Sets", "Reps", "Weight/resistance", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "muscle-strength",
+    title: "Muscle / Strength Progress",
+    subtitle: "Strength notes, recovery, progress",
+    icon: "dumbbell",
+    subcategories: ["Strength progress", "Muscle notes", "Measurements", "Photos", "Recovery", "Notes"],
+    groups: [
+      {
+        title: "Strength progress",
+        description: "Track strength changes, muscle goals, and recovery notes for personal organization.",
+        fields: ["Date", "Exercise or area", "Sets/reps/weight", "Progress note", "Recovery note", "Notes"]
+      },
+      {
+        title: "Muscle notes",
+        description: "Capture observations about strength, soreness, measurements, and progress photos.",
+        fields: ["Date", "Body area", "Observation", "Related workout", "Notes"]
       }
     ]
   },
@@ -462,7 +483,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Meals and snacks",
         description: "A lightweight place to capture what you ate.",
         fields: ["Meal", "Snack", "Caffeine", "Cravings", "Nausea notes", "Food notes"],
-        cards: [{ title: "Example meal note", body: "Greek yogurt, berries, and water.", meta: "Starter example" }]
+        cards: [{ title: "Meal note", body: "Save meals, snacks, caffeine, cravings, nausea, and context.", meta: "Personal tracking" }]
       }
     ]
   },
@@ -477,7 +498,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Drink log",
         description: "Personal tracking without judgment.",
         fields: ["Date", "Drink type", "Number of drinks", "Context/notes", "Mood before", "Mood after"],
-        cards: [{ title: "Example entry", body: "One margarita at dinner. Slept lightly.", meta: "Starter example" }]
+        cards: [{ title: "Drink log note", body: "Track drink count, context, mood, sleep impact, and notes.", meta: "Personal tracking" }]
       },
       {
         title: "Medication interaction reminder",
@@ -502,7 +523,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Cycle overview",
         description: "A gentle, non-childish cycle tracking space.",
         fields: ["Period start date", "Period end date", "Cycle day", "Notes"],
-        cards: [{ title: "Cycle day", body: "Day 18 estimate.", meta: "Starter example" }]
+        cards: [{ title: "Cycle day", body: "Use this area for cycle-day notes, symptoms, and context.", meta: "Personal tracking" }]
       },
       {
         title: "Symptoms",
@@ -738,7 +759,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Routine log",
         description: "Track wash days, refresh days, and product notes.",
         fields: ["Wash day", "Refresh day", "Products used", "Curl routine", "Scalp notes", "Products to try"],
-        cards: [{ title: "Example wash day", body: "Gentle shampoo, mask, curl cream, diffuser.", meta: "Starter example" }]
+        cards: [{ title: "Wash day note", body: "Track wash days, refresh days, products used, and scalp notes.", meta: "Personal tracking" }]
       },
       {
         title: "Progress photos",

@@ -46,6 +46,7 @@ export function HomeDashboard({
 }: HomeDashboardProps) {
   const [measurements] = useLocalStorage<BodyMeasurementSummary[]>("ybw.bodyMeasurements", []);
   const [dailyTrackers, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
+  const [lastDailyDate, setLastDailyDate] = useLocalStorage("ybw.lastDailyTrackingDate", todayKey());
   const visibleTileIds = new Set(tiles.map((tile) => tile.id));
   const latestMeasurement = [...measurements].sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
   const today = todayKey();
@@ -57,10 +58,12 @@ export function HomeDashboard({
   const showCycle = selectedProfile === "female" || (selectedProfile === "custom" && customTileIds.includes("period"));
 
   useEffect(() => {
-    if (!dailyTrackers[today]) {
-      setDailyTrackers((current) => mergeDailyTracker(current, today, {}));
+    setDailyTrackers((current) => (current[today] ? current : mergeDailyTracker(current, today, {})));
+
+    if (lastDailyDate !== today) {
+      setLastDailyDate(today);
     }
-  }, [dailyTrackers, setDailyTrackers, today]);
+  }, [lastDailyDate, setDailyTrackers, setLastDailyDate, today]);
 
   const updateToday = (updates: Partial<DailyTrackerEntry>) => {
     setDailyTrackers((current) => mergeDailyTracker(current, today, updates));

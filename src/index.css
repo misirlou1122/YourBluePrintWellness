@@ -50,6 +50,10 @@ button {
   .luxury-scrollbar {
     scrollbar-color: rgba(211, 156, 255, 0.45) transparent;
   }
+
+  .print-only {
+    display: none;
+  }
 }
 
 @media print {
@@ -67,6 +71,10 @@ button {
     display: none !important;
   }
 
+  .print-only {
+    display: block !important;
+  }
+
   section,
   article,
   div {
@@ -82,5 +90,12 @@ button {
 
   .printable-report {
     background: #fff !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  a {
+    color: #111827 !important;
   }
 }
