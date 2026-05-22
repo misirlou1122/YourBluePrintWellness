@@ -40,16 +40,45 @@ export const reportExports: ReportExport[] = [
   }
 ];
 
+export const profileSettingsTile: WellnessTile = {
+  id: "settings",
+  title: "Wellness Profile",
+  subtitle: "Profile selector and custom tile settings",
+  icon: "settings",
+  subcategories: ["Profile selector", "Custom tiles", "Safety note"],
+  groups: [
+    {
+      title: "Profile selector",
+      description: "Choose which tracking areas appear on the dashboard.",
+      fields: ["Selected profile", "Custom tiles", "Notes"]
+    }
+  ]
+};
+
 export const noteCategories = [
   "Health",
   "Bloodwork / Labs",
   "Doctor Appointments",
   "Medications & Supplements",
   "Vitals",
+  "Body Measurements",
+  "Shopping Reference",
   "Fitness",
   "Food & Hydration",
   "Alcohol Tracker",
   "Period Tracker",
+  "Cycle Symptoms",
+  "Hormone-Related Notes",
+  "Birth Control Notes",
+  "Ovulation",
+  "Fertility Notes",
+  "Perimenopause / Menopause",
+  "Testosterone Tracker",
+  "Men's Health",
+  "Prostate Health Notes",
+  "Libido / Energy / Mood",
+  "Hair Loss Notes",
+  "Sleep / Recovery",
   "Mood / Mental Health",
   "Skin & Beauty",
   "Hair Care",
@@ -59,16 +88,44 @@ export const noteCategories = [
 ];
 
 export const noteSuggestionRules = [
+  {
+    category: "Body Measurements",
+    keywords: [
+      "measurements",
+      "waist",
+      "hips",
+      "bust",
+      "chest",
+      "inseam",
+      "clothes",
+      "clothing",
+      "dress size",
+      "pants size",
+      "bra size",
+      "online shopping",
+      "shoes",
+      "shoe size",
+      "ring size"
+    ]
+  },
+  { category: "Birth Control Notes", keywords: ["birth control", "pill", "iud", "contraception"] },
+  { category: "Perimenopause / Menopause", keywords: ["menopause", "hot flash", "perimenopause"] },
+  { category: "Testosterone Tracker", keywords: ["testosterone", "t levels", "low t"] },
+  { category: "Prostate Health Notes", keywords: ["prostate", "psa"] },
+  { category: "Hair Loss Notes", keywords: ["hair loss", "thinning hair"] },
   { category: "Alcohol Tracker", keywords: ["margarita", "wine", "beer", "cocktail", "alcohol", "drink"] },
-  { category: "Skin & Beauty", keywords: ["niacinamide", "retinol", "serum", "breakout", "sunscreen", "cleanser"] },
-  { category: "Fitness", keywords: ["treadmill", "walked", "workout", "pilates", "sets", "reps", "miles"] },
   { category: "Bloodwork / Labs", keywords: ["a1c", "cholesterol", "ldl", "hdl", "triglycerides", "glucose", "labs"] },
+  { category: "Fitness", keywords: ["treadmill", "walked", "walk", "workout", "pilates", "sets", "reps", "miles", "gym"] },
+  { category: "Mood / Mental Health", keywords: ["anxious", "overwhelmed", "sad", "mood", "tired", "foggy", "hopeful", "irritable"] },
+  { category: "Skin & Beauty", keywords: ["niacinamide", "retinol", "serum", "breakout", "sunscreen", "cleanser", "moisturizer"] },
+  { category: "Hair Care", keywords: ["shampoo", "conditioner", "curls", "wash day", "curl", "scalp", "hair", "refresh"] },
+  { category: "Recipes", keywords: ["recipe", "chicken", "protein", "fiber", "meal"] },
   { category: "Doctor Appointments", keywords: ["doctor", "appointment", "follow up", "questions", "specialist"] },
   { category: "Medications & Supplements", keywords: ["medication", "dose", "supplement", "refill", "pharmacist"] },
-  { category: "Mood / Mental Health", keywords: ["anxious", "sad", "overwhelmed", "foggy", "hopeful", "irritable"] },
   { category: "Food & Hydration", keywords: ["protein", "fiber", "water", "snack", "meal", "nausea"] },
-  { category: "Period Tracker", keywords: ["period", "cramps", "cycle", "flow", "bloating"] },
-  { category: "Hair Care", keywords: ["wash day", "curl", "scalp", "hair", "refresh"] }
+  { category: "Period Tracker", keywords: ["period", "cramps", "cycle", "flow", "pms", "bloating", "ovulation"] },
+  { category: "Libido / Energy / Mood", keywords: ["libido", "energy", "low energy"] },
+  { category: "Sleep / Recovery", keywords: ["sleep", "recovery", "fatigue", "tired"] }
 ];
 
 export const wellnessTiles: WellnessTile[] = [
@@ -341,6 +398,34 @@ export const wellnessTiles: WellnessTile[] = [
     ]
   },
   {
+    id: "measurements",
+    title: "Body Measurements",
+    subtitle: "Shopping reference, fit notes, progress",
+    icon: "ruler",
+    subcategories: [
+      "Latest Measurements",
+      "Measurement History",
+      "Shopping Reference",
+      "Tops",
+      "Bottoms",
+      "Dresses",
+      "Shoes",
+      "Brands"
+    ],
+    groups: [
+      {
+        title: "Latest Measurements",
+        description: "Quick reference for online shopping and body progress tracking.",
+        fields: ["Date", "Waist", "Hips", "Bust/chest", "Inseam", "Notes"]
+      },
+      {
+        title: "Shopping Reference",
+        description: "Fit notes, favorite brands, and sizing reminders.",
+        fields: ["Tops size notes", "Bottoms size notes", "Dress size notes", "Shoe size notes", "Online shopping notes"]
+      }
+    ]
+  },
+  {
     id: "fitness",
     title: "Fitness",
     subtitle: "Plans, completed workouts, movement notes",
@@ -432,6 +517,179 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Symptoms",
         description: "Track flow, cramps, nausea, bloating, headache, cravings, mood, and energy.",
         fields: ["Flow level", "Cramps", "Nausea", "Bloating", "Headache", "Cravings", "Mood", "Energy"]
+      }
+    ]
+  },
+  {
+    id: "cycle-symptoms",
+    title: "Cycle Symptoms",
+    subtitle: "Mood, cramps, bloating, sleep, skin",
+    icon: "calendarHeart",
+    subcategories: ["Mood changes", "Anxiety", "Irritability", "Fatigue", "Cravings", "Cramps", "Bloating", "Nausea", "Headache", "Breast tenderness", "Sleep changes", "Skin changes", "Notes"],
+    groups: [
+      {
+        title: "Cycle symptom entry",
+        description: "Track cycle-related symptoms and context for personal organization only.",
+        fields: ["Date", "Cycle day", "Symptoms", "Intensity", "Sleep changes", "Skin changes", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "hormone-notes",
+    title: "Hormone-Related Notes",
+    subtitle: "Mood, skin, energy, sleep, appetite",
+    icon: "sparkles",
+    subcategories: ["Mood changes", "Skin changes", "Energy changes", "Sleep changes", "Appetite/cravings", "Questions for doctor", "Notes"],
+    groups: [
+      {
+        title: "Hormone-related note",
+        description: "General notes for patterns and doctor questions without diagnosis or medical advice.",
+        fields: ["Date", "Pattern or concern", "Context", "Question for doctor", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "birth-control",
+    title: "Birth Control Notes",
+    subtitle: "Questions, timing, symptoms, notes",
+    icon: "pill",
+    subcategories: ["Current method", "Timing", "Side effect notes", "Questions for doctor", "Notes"],
+    groups: [
+      {
+        title: "Birth control note",
+        description: "Organize notes and questions to review with a licensed professional.",
+        fields: ["Date", "Method", "Timing note", "Side effect note", "Question for doctor", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "ovulation",
+    title: "Ovulation",
+    subtitle: "Tracking notes and patterns",
+    icon: "calendarHeart",
+    subcategories: ["Estimated date", "Symptoms", "Energy", "Mood", "Notes"],
+    groups: [
+      {
+        title: "Ovulation note",
+        description: "Optional tracking notes for personal organization only.",
+        fields: ["Date", "Estimated cycle day", "Symptoms", "Mood/energy", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "fertility",
+    title: "Fertility Notes",
+    subtitle: "Questions, tracking notes, appointments",
+    icon: "heart",
+    subcategories: ["Tracking notes", "Doctor questions", "Appointments", "Labs", "Notes"],
+    groups: [
+      {
+        title: "Fertility note",
+        description: "A private place for notes and questions to discuss with a clinician.",
+        fields: ["Date", "Topic", "Question for doctor", "Related appointment or lab", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "menopause",
+    title: "Perimenopause / Menopause",
+    subtitle: "Symptoms, sleep, energy, doctor questions",
+    icon: "sparkles",
+    subcategories: ["Hot flashes", "Sleep", "Mood", "Energy", "Cycle changes", "Doctor questions", "Notes"],
+    groups: [
+      {
+        title: "Perimenopause / menopause note",
+        description: "Track changes and questions for personal organization only.",
+        fields: ["Date", "Symptom or change", "Intensity", "Sleep/energy", "Question for doctor", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "testosterone",
+    title: "Testosterone Tracker",
+    subtitle: "Labs, symptoms, energy, questions",
+    icon: "flask",
+    subcategories: ["Test date", "Testosterone value", "Reference range", "Symptoms/energy notes", "Doctor questions", "Lab upload"],
+    groups: [
+      {
+        title: "Testosterone entry",
+        description: "Track lab values and questions without medical interpretation.",
+        fields: ["Test date", "Testosterone value", "Unit", "Reference range", "Symptoms/energy notes", "Doctor questions", "Notes"]
+      },
+      {
+        title: "Lab upload",
+        description: "PDF upload is not connected yet. Manual entries save locally.",
+        fields: ["Document name", "Lab date", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "mens-health",
+    title: "Men's Health",
+    subtitle: "Preventive notes, energy, recovery",
+    icon: "heart",
+    subcategories: ["Prostate health notes", "PSA lab", "Libido notes", "Energy notes", "Mood notes", "Sleep/recovery notes", "Hair loss notes", "Fertility notes", "Questions for doctor"],
+    groups: [
+      {
+        title: "Men's health note",
+        description: "Organize preventive health notes and doctor questions.",
+        fields: ["Date", "Topic", "Notes", "Question for doctor", "Follow-up"]
+      }
+    ]
+  },
+  {
+    id: "prostate",
+    title: "Prostate Health Notes",
+    subtitle: "PSA notes, questions, follow-up",
+    icon: "heart",
+    subcategories: ["PSA lab placeholder", "Symptoms notes", "Doctor questions", "Follow-up", "Notes"],
+    groups: [
+      {
+        title: "Prostate health note",
+        description: "Track notes and questions to discuss with a licensed professional.",
+        fields: ["Date", "PSA note", "Symptom note", "Question for doctor", "Follow-up", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "libido-energy-mood",
+    title: "Libido / Energy / Mood",
+    subtitle: "Energy, mood, recovery notes",
+    icon: "brain",
+    subcategories: ["Libido notes", "Energy notes", "Mood notes", "Sleep", "Stress", "Doctor questions"],
+    groups: [
+      {
+        title: "Libido / energy / mood entry",
+        description: "Gentle tracking for patterns and clinician conversations.",
+        fields: ["Date", "Libido note", "Energy level", "Mood", "Sleep/recovery", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "hair-loss",
+    title: "Hair Loss Notes",
+    subtitle: "Shedding, scalp, products, questions",
+    icon: "scissors",
+    subcategories: ["Shedding notes", "Thinning notes", "Scalp notes", "Products", "Progress photos", "Doctor questions"],
+    groups: [
+      {
+        title: "Hair loss note",
+        description: "Track hair and scalp observations for personal reference.",
+        fields: ["Date", "Observation", "Scalp notes", "Products used", "Question for doctor", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "sleep-recovery",
+    title: "Sleep / Recovery",
+    subtitle: "Sleep quality, rest, recovery notes",
+    icon: "activity",
+    subcategories: ["Sleep quality", "Hours", "Recovery", "Fatigue", "Stress", "Notes"],
+    groups: [
+      {
+        title: "Sleep / recovery entry",
+        description: "Track sleep and recovery patterns without medical interpretation.",
+        fields: ["Date", "Sleep hours", "Sleep quality", "Recovery", "Fatigue", "Notes"]
       }
     ]
   },

@@ -4,10 +4,23 @@ export type TileId =
   | "appointments"
   | "medications"
   | "vitals"
+  | "measurements"
   | "fitness"
   | "food"
   | "alcohol"
   | "period"
+  | "cycle-symptoms"
+  | "hormone-notes"
+  | "birth-control"
+  | "ovulation"
+  | "fertility"
+  | "menopause"
+  | "testosterone"
+  | "mens-health"
+  | "prostate"
+  | "libido-energy-mood"
+  | "hair-loss"
+  | "sleep-recovery"
   | "mood"
   | "skin"
   | "hair"
@@ -15,7 +28,8 @@ export type TileId =
   | "documents"
   | "notes"
   | "reminders"
-  | "photos";
+  | "photos"
+  | "settings";
 
 export type TrendDirection = "up" | "down" | "stable";
 

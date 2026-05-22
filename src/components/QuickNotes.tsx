@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Brain, CheckCircle2, Save } from "lucide-react";
-import { noteCategories } from "../data/wellness";
+import { noteCategories, noteSuggestionRules } from "../data/wellness";
 import { EntryActions } from "./EntryActions";
 import { SectionCard } from "./SectionCard";
 import { TextAreaField } from "./FormField";
@@ -14,20 +14,9 @@ interface QuickNoteEntry {
   createdAt: string;
 }
 
-const suggestionRules = [
-  { category: "Alcohol Tracker", keywords: ["margarita", "wine", "beer", "cocktail", "alcohol"] },
-  { category: "Bloodwork / Labs", keywords: ["a1c", "cholesterol", "glucose", "ldl", "hdl", "triglycerides", "labs"] },
-  { category: "Fitness", keywords: ["treadmill", "workout", "sets", "reps", "walk", "gym"] },
-  { category: "Mood / Mental Health", keywords: ["anxious", "overwhelmed", "sad", "mood", "tired"] },
-  { category: "Skin & Beauty", keywords: ["niacinamide", "retinol", "cleanser", "moisturizer", "sunscreen"] },
-  { category: "Hair Care", keywords: ["shampoo", "conditioner", "curls", "scalp"] },
-  { category: "Recipes", keywords: ["recipe", "chicken", "protein", "fiber", "meal"] },
-  { category: "Doctor Appointments", keywords: ["doctor", "appointment", "ask", "discuss"] }
-];
-
 function suggestCategory(note: string) {
   const normalized = note.toLowerCase();
-  const match = suggestionRules.find((rule) => rule.keywords.some((keyword) => normalized.includes(keyword)));
+  const match = noteSuggestionRules.find((rule) => rule.keywords.some((keyword) => normalized.includes(keyword)));
   return match?.category ?? "General Notes";
 }
 

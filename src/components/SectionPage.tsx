@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import type { WellnessProfileId } from "../data/wellnessProfiles";
 import type { FeatureGroup, TileId, WellnessTile } from "../types/wellness";
 import { useLocalStorage } from "../lib/useLocalStorage";
 import { AppointmentsScreen } from "./AppointmentsScreen";
+import { BodyMeasurementsScreen } from "./BodyMeasurementsScreen";
 import { Checklist } from "./Checklist";
 import { DetailHeader } from "./DetailHeader";
 import { FormField } from "./FormField";
 import { LabsScreen } from "./LabsScreen";
+import { ProfileSettingsScreen } from "./ProfileSettingsScreen";
 import { QuickNotes } from "./QuickNotes";
 import { RemindersScreen } from "./RemindersScreen";
 import { SectionCard } from "./SectionCard";
@@ -20,6 +23,10 @@ interface SectionPageProps {
   nextTile?: WellnessTile;
   onHome: () => void;
   onOpenTile: (id: TileId) => void;
+  selectedProfile: WellnessProfileId;
+  customTileIds: TileId[];
+  onProfileChange: (profile: WellnessProfileId) => void;
+  onCustomTileIdsChange: (tileIds: TileId[]) => void;
 }
 
 function fallbackGroup(title: string): FeatureGroup {
@@ -86,7 +93,24 @@ function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: st
   );
 }
 
-function TileSpecificContent({ tile }: { tile: WellnessTile }) {
+function TileSpecificContent({
+  tile,
+  selectedProfile,
+  customTileIds,
+  onProfileChange,
+  onCustomTileIdsChange
+}: Pick<SectionPageProps, "tile" | "selectedProfile" | "customTileIds" | "onProfileChange" | "onCustomTileIdsChange">) {
+  if (tile.id === "settings") {
+    return (
+      <ProfileSettingsScreen
+        selectedProfile={selectedProfile}
+        customTileIds={customTileIds}
+        onProfileChange={onProfileChange}
+        onCustomTileIdsChange={onCustomTileIdsChange}
+      />
+    );
+  }
+
   if (tile.id === "labs") {
     return <LabsScreen />;
   }
@@ -121,6 +145,10 @@ function TileSpecificContent({ tile }: { tile: WellnessTile }) {
 
   if (tile.id === "vitals") {
     return <VitalsScreen />;
+  }
+
+  if (tile.id === "measurements") {
+    return <BodyMeasurementsScreen />;
   }
 
   if (tile.id === "period") {
@@ -159,6 +187,7 @@ const fullScreenTiles: TileId[] = [
   "appointments",
   "medications",
   "vitals",
+  "measurements",
   "fitness",
   "food",
   "alcohol",
@@ -170,10 +199,21 @@ const fullScreenTiles: TileId[] = [
   "documents",
   "notes",
   "reminders",
-  "photos"
+  "photos",
+  "settings"
 ];
 
-export function SectionPage({ tile, previousTile, nextTile, onHome, onOpenTile }: SectionPageProps) {
+export function SectionPage({
+  tile,
+  previousTile,
+  nextTile,
+  onHome,
+  onOpenTile,
+  selectedProfile,
+  customTileIds,
+  onProfileChange,
+  onCustomTileIdsChange
+}: SectionPageProps) {
   const [activeCategory, setActiveCategory] = useState(tile.subcategories[0]);
 
   useEffect(() => {
@@ -208,7 +248,13 @@ export function SectionPage({ tile, previousTile, nextTile, onHome, onOpenTile }
         </div>
       </nav>
 
-      <TileSpecificContent tile={tile} />
+      <TileSpecificContent
+        tile={tile}
+        selectedProfile={selectedProfile}
+        customTileIds={customTileIds}
+        onProfileChange={onProfileChange}
+        onCustomTileIdsChange={onCustomTileIdsChange}
+      />
 
       {!fullScreenTiles.includes(tile.id) ? (
         <SectionCard eyebrow="Detail entry" title={activeGroup.title} description={activeGroup.description}>

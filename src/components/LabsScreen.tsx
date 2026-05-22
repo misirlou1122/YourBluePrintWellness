@@ -20,6 +20,8 @@ interface LabEntry {
 
 const labCategories = [
   "A1C",
+  "Testosterone",
+  "PSA",
   "Cholesterol",
   "Glucose",
   "LDL",
