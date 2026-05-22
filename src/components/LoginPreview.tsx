@@ -43,7 +43,7 @@ export function LoginPreview() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Optional sign-in</p>
           <h2 className="mt-1 text-xl font-semibold text-white">Azure login</h2>
           <p className="mt-2 text-sm leading-6 text-periwinkle/85">
-            The app is public so it can open on your phone. Microsoft login can be used through Azure Static Web Apps when the provider is configured.
+            Your private dashboard is protected through Azure Static Web Apps. Microsoft handles the username and password securely.
           </p>
         </div>
       </div>
@@ -56,7 +56,7 @@ export function LoginPreview() {
               {principal
                 ? `Signed in as ${principal.userDetails ?? "Microsoft account"}${principal.identityProvider ? ` with ${principal.identityProvider}` : ""}.`
                 : checkedAuth
-                  ? "Not signed in. You can still use the public app."
+                  ? "Not signed in locally. Azure will show your status after deployment login."
                   : "Checking Azure sign-in status..."}
             </p>
           </div>
@@ -64,7 +64,7 @@ export function LoginPreview() {
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <a
-          href="/.auth/login/aad?post_login_redirect_uri=/"
+          href="/.auth/login/aad?post_login_redirect_uri=/app"
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
         >
           <LogIn size={18} aria-hidden="true" />

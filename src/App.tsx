@@ -5,9 +5,11 @@ import type { TileId } from "./types/wellness";
 import { useLocalStorage } from "./lib/useLocalStorage";
 import { HomeDashboard } from "./components/HomeDashboard";
 import { MedicalDisclaimer } from "./components/MedicalDisclaimer";
+import { PublicLanding } from "./components/PublicLanding";
 import { SectionPage } from "./components/SectionPage";
 
 function App() {
+  const isPrivateApp = typeof window === "undefined" ? true : window.location.pathname.startsWith("/app");
   const [activeTileId, setActiveTileId] = useState<TileId | "home">("home");
   const [selectedProfile, setSelectedProfile] = useLocalStorage<WellnessProfileId>("ybw.wellnessProfile", "female");
   const [customTileIds, setCustomTileIds] = useLocalStorage<TileId[]>("ybw.customTileIds", defaultCustomTileIds);
@@ -28,6 +30,14 @@ function App() {
   const previousTile = activeIndex > 0 ? visibleTiles[activeIndex - 1] : undefined;
   const nextTile = activeIndex >= 0 && activeIndex < visibleTiles.length - 1 ? visibleTiles[activeIndex + 1] : undefined;
   const printedDate = new Date().toLocaleDateString();
+
+  if (!isPrivateApp) {
+    return (
+      <div className="min-h-screen overflow-x-hidden bg-[linear-gradient(145deg,#05081d_0%,#09153b_42%,#171046_74%,#05081d_100%)] text-white">
+        <PublicLanding />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[linear-gradient(145deg,#05081d_0%,#09153b_42%,#171046_74%,#05081d_100%)] text-white">
