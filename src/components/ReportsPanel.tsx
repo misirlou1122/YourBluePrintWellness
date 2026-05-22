@@ -2,8 +2,12 @@ import { Download, FileText } from "lucide-react";
 import { reportExports } from "../data/wellness";
 
 export function ReportsPanel() {
+  const printReport = () => {
+    window.print();
+  };
+
   return (
-    <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.06] p-5 shadow-ice">
+    <section className="printable-report rounded-[1.75rem] border border-white/10 bg-white/[0.06] p-5 shadow-ice">
       <div className="flex items-start gap-4">
         <div className="grid size-12 shrink-0 place-items-center rounded-2xl border border-lavender/20 bg-lavender/10 text-lavender">
           <FileText size={22} aria-hidden="true" />
@@ -12,7 +16,7 @@ export function ReportsPanel() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-lavender/75">Reports / export</p>
           <h2 className="mt-1 text-xl font-semibold text-white">Wellness summary exports</h2>
           <p className="mt-2 text-sm leading-6 text-periwinkle/85">
-            Draft export actions for doctor visits, lab trends, medications, appointment notes, and wellness summaries.
+            Print-friendly summaries for doctor visits, lab trends, medications, appointment notes, and wellness overviews.
           </p>
         </div>
       </div>
@@ -30,6 +34,7 @@ export function ReportsPanel() {
           <button
             type="button"
             key={report.title}
+            onClick={printReport}
             className="flex min-h-16 items-center gap-3 rounded-2xl border border-white/10 bg-midnight/45 p-4 text-left transition hover:border-ice/45 hover:bg-white/[0.08]"
           >
             <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-ice/20 bg-ice/10 text-ice">

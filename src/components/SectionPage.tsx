@@ -32,7 +32,7 @@ function fallbackGroup(title: string): FeatureGroup {
 
 function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: string }) {
   const fields = group.fields?.length ? group.fields : ["Title", "Date", "Notes"];
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useLocalStorage<Record<string, string>>(`${storageKey}.draft`, {});
   const [entries, setEntries] = useLocalStorage<Record<string, string>[]>(storageKey, []);
 
   const updateValue = (field: string, value: string) => {

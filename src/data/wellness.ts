@@ -1,9 +1,9 @@
 import type { DailySnapshotItem, ProfileSummary, ReportExport, WellnessTile } from "../types/wellness";
 
 export const profileSummary: ProfileSummary = {
-  name: "Sample Member",
-  age: "36",
-  height: "5 ft 5 in",
+  name: "Your Profile",
+  age: "Add age",
+  height: "Add height",
   sex: "Female",
   mainGoals: ["Lower stress", "Support labs", "Build strength", "Stay consistent"]
 };
@@ -28,7 +28,7 @@ export const reportExports: ReportExport[] = [
   },
   {
     title: "Export Medication List",
-    description: "Sample medication and supplement list with dosage, timing, and refill reminders."
+    description: "Medication and supplement list with dosage, timing, and refill reminders."
   },
   {
     title: "Export Appointment Notes",
@@ -92,7 +92,7 @@ export const wellnessTiles: WellnessTile[] = [
         description: "A private snapshot for organizing health history and wellness priorities.",
         fields: ["Primary focus", "Known conditions", "Current care team", "Last wellness visit"],
         cards: [
-          { title: "Main goal", body: "Build a clearer picture of patterns over time.", meta: "Sample data only" },
+          { title: "Main goal", body: "Build a clearer picture of patterns over time.", meta: "Personal tracking" },
           { title: "Care reminder", body: "Use this space to prepare for visits, not to diagnose symptoms.", meta: "Safety first" }
         ]
       },
@@ -100,7 +100,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Symptoms",
         description: "Track symptom notes gently with timing, context, and intensity.",
         fields: ["Symptom", "Date/time", "Intensity", "Possible trigger", "Notes"],
-        cards: [{ title: "Sample symptom note", body: "Mild nausea after dinner. Hydrated and rested.", meta: "Sample" }]
+        cards: [{ title: "Example symptom note", body: "Mild nausea after dinner. Hydrated and rested.", meta: "Starter example" }]
       },
       {
         title: "Health goals",
@@ -155,7 +155,7 @@ export const wellnessTiles: WellnessTile[] = [
         goal: "Discuss personal goal range with clinician",
         trend: "down",
         date: "May 2026",
-        notes: "Sample trend card for future lab extraction."
+        notes: "Trend card for future lab extraction."
       },
       {
         label: "Cholesterol",
@@ -230,7 +230,7 @@ export const wellnessTiles: WellnessTile[] = [
         fields: ["Doctor name", "Specialty", "Date/time", "Location", "Phone number", "Notes"],
         cards: [
           {
-            title: "Dr. Sample Rivera",
+            title: "Dr. Rivera",
             body: "Primary care check-in on June 12, 2026 at 10:30 AM.",
             meta: "Location and phone details"
           }
@@ -286,7 +286,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Current medications",
         description: "Track what you take and when, using safe language.",
         fields: ["Name", "Dosage", "Time of day", "Taken today?", "Notes"],
-        cards: [{ title: "Medication example", body: "Morning dose marked taken today.", meta: "Sample only" }]
+        cards: [{ title: "Medication example", body: "Morning dose marked taken today.", meta: "Starter example" }]
       },
       {
         title: "Supplements",
@@ -321,7 +321,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Blood pressure",
         description: "Manual tracking for readings and context.",
         fields: ["Systolic", "Diastolic", "Pulse", "Date/time", "Notes"],
-        cards: [{ title: "Sample reading", body: "118/76 with resting heart rate 72.", meta: "Sample" }]
+        cards: [{ title: "Example reading", body: "118/76 with resting heart rate 72.", meta: "Starter example" }]
       },
       {
         title: "Oxygen",
@@ -361,7 +361,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Treadmill",
         description: "Track treadmill sessions with simple fields.",
         fields: ["Minutes", "Miles", "Incline", "Speed", "Notes"],
-        cards: [{ title: "Sample treadmill", body: "20 minutes, 1.1 miles, comfortable pace.", meta: "Sample" }]
+        cards: [{ title: "Example treadmill", body: "20 minutes, 1.1 miles, comfortable pace.", meta: "Starter example" }]
       },
       {
         title: "Strength",
@@ -386,7 +386,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Meals and snacks",
         description: "A lightweight place to capture what you ate.",
         fields: ["Meal", "Snack", "Caffeine", "Cravings", "Nausea notes", "Food notes"],
-        cards: [{ title: "Sample meal note", body: "Greek yogurt, berries, and water.", meta: "Sample" }]
+        cards: [{ title: "Example meal note", body: "Greek yogurt, berries, and water.", meta: "Starter example" }]
       }
     ]
   },
@@ -401,7 +401,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Drink log",
         description: "Personal tracking without judgment.",
         fields: ["Date", "Drink type", "Number of drinks", "Context/notes", "Mood before", "Mood after"],
-        cards: [{ title: "Sample entry", body: "One margarita at dinner. Slept lightly.", meta: "Sample" }]
+        cards: [{ title: "Example entry", body: "One margarita at dinner. Slept lightly.", meta: "Starter example" }]
       },
       {
         title: "Medication interaction reminder",
@@ -426,7 +426,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Cycle overview",
         description: "A gentle, non-childish cycle tracking space.",
         fields: ["Period start date", "Period end date", "Cycle day", "Notes"],
-        cards: [{ title: "Cycle day", body: "Day 18 estimate.", meta: "Sample only" }]
+        cards: [{ title: "Cycle day", body: "Day 18 estimate.", meta: "Starter example" }]
       },
       {
         title: "Symptoms",
@@ -489,7 +489,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Routine log",
         description: "Track wash days, refresh days, and product notes.",
         fields: ["Wash day", "Refresh day", "Products used", "Curl routine", "Scalp notes", "Products to try"],
-        cards: [{ title: "Sample wash day", body: "Gentle shampoo, mask, curl cream, diffuser.", meta: "Sample" }]
+        cards: [{ title: "Example wash day", body: "Gentle shampoo, mask, curl cream, diffuser.", meta: "Starter example" }]
       },
       {
         title: "Progress photos",

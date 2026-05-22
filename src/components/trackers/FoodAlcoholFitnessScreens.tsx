@@ -1,165 +1,197 @@
 import { useState } from "react";
 import { AlertTriangle, Plus } from "lucide-react";
-import {
-  alcoholEntries,
-  completedWorkouts,
-  fitnessPlan,
-  foodHydration,
-  type AlcoholEntry,
-  type FitnessEntry
-} from "../../data/sampleData";
-import { useLocalStorage } from "../../lib/useLocalStorage";
-import { Checklist } from "../Checklist";
-import { FormField, SelectField, TextAreaField } from "../FormField";
+import { EntryActions } from "../EntryActions";
+import { EmptyState } from "../EmptyState";
+import { FormField, TextAreaField } from "../FormField";
 import { ProgressBar } from "../ProgressBar";
 import { SectionCard } from "../SectionCard";
+import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
 
-interface HydrationProgress {
-  waterPercent: number;
-  proteinPercent: number;
-  fiberPercent: number;
+interface FoodLog {
+  id: string;
+  date: string;
+  waterAmount: string;
+  protein: string;
+  fiber: string;
+  meals: string;
+  snacks: string;
+  caffeine: string;
+  cravings: string;
+  nausea: string;
+  notes: string;
 }
 
-interface FoodLogEntry {
+interface AlcoholLog {
   id: string;
-  mealNotes: string;
-  snackNotes: string;
-  caffeine: string;
-  nauseaCravings: string;
-  createdAt: string;
+  date: string;
+  drinkType: string;
+  drinks: string;
+  moodBefore: string;
+  moodAfter: string;
+  sleepImpact: string;
+  notes: string;
+}
+
+interface FitnessLog {
+  id: string;
+  plannedWorkout: string;
+  completedWorkout: string;
+  cardio: string;
+  treadmillMinutes: string;
+  treadmillMiles: string;
+  treadmillIncline: string;
+  treadmillSpeed: string;
+  strengthExercise: string;
+  sets: string;
+  reps: string;
+  weight: string;
+  notes: string;
+  completed?: boolean;
+}
+
+const emptyFood: Omit<FoodLog, "id"> = {
+  date: "",
+  waterAmount: "",
+  protein: "",
+  fiber: "",
+  meals: "",
+  snacks: "",
+  caffeine: "",
+  cravings: "",
+  nausea: "",
+  notes: ""
+};
+
+const emptyAlcohol: Omit<AlcoholLog, "id"> = {
+  date: "",
+  drinkType: "",
+  drinks: "1",
+  moodBefore: "",
+  moodAfter: "",
+  sleepImpact: "",
+  notes: ""
+};
+
+const emptyFitness: Omit<FitnessLog, "id"> = {
+  plannedWorkout: "",
+  completedWorkout: "",
+  cardio: "",
+  treadmillMinutes: "",
+  treadmillMiles: "",
+  treadmillIncline: "",
+  treadmillSpeed: "",
+  strengthExercise: "",
+  sets: "",
+  reps: "",
+  weight: "",
+  notes: "",
+  completed: false
+};
+
+function percent(value: string, goal: number) {
+  const numeric = Number.parseFloat(value);
+  if (Number.isNaN(numeric)) {
+    return 0;
+  }
+
+  return Math.min(100, Math.round((numeric / goal) * 100));
 }
 
 export function FoodHydrationScreen() {
-  const [progress, setProgress] = useLocalStorage<HydrationProgress>("ybw.hydrationProgress", {
-    waterPercent: foodHydration.waterPercent,
-    proteinPercent: foodHydration.proteinPercent,
-    fiberPercent: foodHydration.fiberPercent
-  });
-  const [logs, setLogs] = useLocalStorage<FoodLogEntry[]>("ybw.foodLogs", [
-    {
-      id: "food-sample",
-      mealNotes: foodHydration.meals.join(", "),
-      snackNotes: foodHydration.snacks.join(", "),
-      caffeine: foodHydration.caffeine,
-      nauseaCravings: foodHydration.nauseaCravings,
-      createdAt: "Sample"
-    }
-  ]);
-  const [mealNotes, setMealNotes] = useState("");
-  const [snackNotes, setSnackNotes] = useState("");
-  const [caffeine, setCaffeine] = useState("");
-  const [nauseaCravings, setNauseaCravings] = useState("");
+  const { items, add, update, remove } = useLocalCollection<FoodLog>("ybw.foodLogs", [], "food");
+  const [draft, setDraft] = useLocalStorage("ybw.foodDraft", emptyFood);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const latest = items[0];
 
-  const updateProgress = (key: keyof HydrationProgress, value: string) => {
-    setProgress((current) => ({ ...current, [key]: Number(value) || 0 }));
+  const setField = (field: keyof typeof emptyFood, value: string) => setDraft((current) => ({ ...current, [field]: value }));
+  const reset = () => {
+    setDraft(emptyFood);
+    setEditingId(null);
   };
-
-  const addFoodLog = () => {
-    if (!mealNotes.trim() && !snackNotes.trim() && !caffeine.trim() && !nauseaCravings.trim()) {
+  const save = () => {
+    if (!Object.values(draft).some((value) => String(value).trim())) {
       return;
     }
-
-    setLogs([
-      {
-        id: `food-${Date.now()}`,
-        mealNotes,
-        snackNotes,
-        caffeine,
-        nauseaCravings,
-        createdAt: new Date().toLocaleString()
-      },
-      ...logs
-    ]);
-    setMealNotes("");
-    setSnackNotes("");
-    setCaffeine("");
-    setNauseaCravings("");
+    const entry = { ...draft, date: draft.date || new Date().toISOString().slice(0, 10) };
+    if (editingId) update(editingId, entry);
+    else add(entry);
+    reset();
   };
 
   return (
     <div className="grid gap-4">
       <div className="grid gap-3">
-        <ProgressBar label="Water" value={progress.waterPercent} detail="Local progress value" tone="aqua" />
-        <ProgressBar label="Protein" value={progress.proteinPercent} detail="Local progress value" tone="lavender" />
-        <ProgressBar label="Fiber" value={progress.fiberPercent} detail="Local progress value" tone="blue" />
+        <ProgressBar label="Water" value={percent(latest?.waterAmount ?? "0", 80)} detail={latest ? `${latest.waterAmount} oz logged` : "No water logged yet"} tone="aqua" />
+        <ProgressBar label="Protein" value={percent(latest?.protein ?? "0", 110)} detail={latest ? `${latest.protein} g logged` : "No protein logged yet"} tone="lavender" />
+        <ProgressBar label="Fiber" value={percent(latest?.fiber ?? "0", 25)} detail={latest ? `${latest.fiber} g logged` : "No fiber logged yet"} tone="blue" />
       </div>
 
-      <SectionCard title="Progress inputs" description="Hydration, protein, and fiber percentages persist locally.">
+      <SectionCard eyebrow={editingId ? "Edit food log" : "Add food log"} title={editingId ? "Update food and hydration" : "Food and hydration log"}>
         <div className="grid gap-3">
-          <FormField label="Water progress %" type="number" value={String(progress.waterPercent)} onChange={(value) => updateProgress("waterPercent", value)} />
-          <FormField label="Protein progress %" type="number" value={String(progress.proteinPercent)} onChange={(value) => updateProgress("proteinPercent", value)} />
-          <FormField label="Fiber progress %" type="number" value={String(progress.fiberPercent)} onChange={(value) => updateProgress("fiberPercent", value)} />
+          <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
+          <div className="grid gap-3 sm:grid-cols-3">
+            <FormField label="Water amount" value={draft.waterAmount} onChange={(value) => setField("waterAmount", value)} placeholder="oz" />
+            <FormField label="Protein" value={draft.protein} onChange={(value) => setField("protein", value)} placeholder="grams" />
+            <FormField label="Fiber" value={draft.fiber} onChange={(value) => setField("fiber", value)} placeholder="grams" />
+          </div>
+          <TextAreaField label="Meals" value={draft.meals} onChange={(value) => setField("meals", value)} />
+          <TextAreaField label="Snacks" value={draft.snacks} onChange={(value) => setField("snacks", value)} />
+          <FormField label="Caffeine" value={draft.caffeine} onChange={(value) => setField("caffeine", value)} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Cravings" value={draft.cravings} onChange={(value) => setField("cravings", value)} />
+            <FormField label="Nausea" value={draft.nausea} onChange={(value) => setField("nausea", value)} />
+          </div>
+          <TextAreaField label="Notes" value={draft.notes} onChange={(value) => setField("notes", value)} />
+        </div>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <button type="button" onClick={save} className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
+            <Plus size={18} aria-hidden="true" />
+            {editingId ? "Save changes" : "Add food log"}
+          </button>
+          {editingId ? <button type="button" onClick={reset} className="min-h-12 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85">Cancel edit</button> : null}
         </div>
       </SectionCard>
 
-      <SectionCard title="Food log" description="Meal, snack, caffeine, nausea, and cravings notes save locally.">
-        <div className="grid gap-3">
-          <TextAreaField label="Meal notes" value={mealNotes} onChange={setMealNotes} />
-          <TextAreaField label="Snack notes" value={snackNotes} onChange={setSnackNotes} />
-          <FormField label="Caffeine tracker" value={caffeine} onChange={setCaffeine} />
-          <TextAreaField label="Nausea/cravings notes" value={nauseaCravings} onChange={setNauseaCravings} />
-        </div>
-        <button
-          type="button"
-          onClick={addFoodLog}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-        >
-          <Plus size={18} aria-hidden="true" />
-          Save food log
-        </button>
-      </SectionCard>
-
-      <SectionCard title="Saved food logs" description="Sample and locally added entries.">
-        <div className="grid gap-3">
-          {logs.map((log) => (
-            <article key={log.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-              <p className="text-xs text-lavender/80">{log.createdAt}</p>
-              <p className="mt-2 text-sm leading-6 text-white">Meals: {log.mealNotes || "No meal note"}</p>
-              <p className="mt-1 text-sm leading-6 text-periwinkle/85">Snacks: {log.snackNotes || "No snack note"}</p>
-              <p className="mt-1 text-sm leading-6 text-periwinkle/85">Caffeine: {log.caffeine || "None noted"}</p>
-              <p className="mt-1 text-sm leading-6 text-periwinkle/85">
-                Nausea/cravings: {log.nauseaCravings || "None noted"}
-              </p>
-            </article>
-          ))}
-        </div>
-      </SectionCard>
+      {items.length ? (
+        <SectionCard title="Food and hydration history">
+          <div className="grid gap-3">
+            {items.map((entry) => (
+              <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">{entry.date}</h3>
+                    <p className="mt-1 text-sm text-periwinkle/85">Water {entry.waterAmount || "0"} oz | Protein {entry.protein || "0"} g | Fiber {entry.fiber || "0"} g</p>
+                  </div>
+                  <EntryActions onEdit={() => { const { id: _id, ...rest } = entry; setDraft(rest); setEditingId(entry.id); }} onDelete={() => remove(entry.id)} />
+                </div>
+                {entry.meals ? <p className="mt-3 text-sm leading-6 text-white">Meals: {entry.meals}</p> : null}
+                {entry.snacks ? <p className="mt-1 text-sm leading-6 text-periwinkle/85">Snacks: {entry.snacks}</p> : null}
+                {[entry.caffeine, entry.cravings, entry.nausea, entry.notes].filter(Boolean).length ? (
+                  <p className="mt-2 text-sm leading-6 text-periwinkle/80">{[entry.caffeine, entry.cravings, entry.nausea, entry.notes].filter(Boolean).join(" | ")}</p>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </SectionCard>
+      ) : (
+        <EmptyState title="No food logs yet" message="Add your first food and hydration log." />
+      )}
     </div>
   );
 }
 
 export function AlcoholScreen() {
-  const [entries, setEntries] = useLocalStorage<AlcoholEntry[]>("ybw.alcohol", alcoholEntries);
-  const [drinkType, setDrinkType] = useState("");
-  const [drinks, setDrinks] = useState("1");
-  const [date, setDate] = useState("");
-  const [moodBefore, setMoodBefore] = useState("");
-  const [moodAfter, setMoodAfter] = useState("");
-  const [notes, setNotes] = useState("");
-
-  const addDrink = () => {
-    if (!drinkType.trim()) {
-      return;
-    }
-
-    setEntries([
-      {
-        id: `alc-${Date.now()}`,
-        drinkType: drinkType.trim(),
-        drinks,
-        date: date || "Date not set",
-        moodBefore,
-        moodAfter,
-        notes
-      },
-      ...entries
-    ]);
-    setDrinkType("");
-    setDrinks("1");
-    setDate("");
-    setMoodBefore("");
-    setMoodAfter("");
-    setNotes("");
+  const { items, add, update, remove } = useLocalCollection<AlcoholLog>("ybw.alcohol", [], "alcohol");
+  const [draft, setDraft] = useLocalStorage("ybw.alcoholDraft", emptyAlcohol);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const setField = (field: keyof typeof emptyAlcohol, value: string) => setDraft((current) => ({ ...current, [field]: value }));
+  const reset = () => { setDraft(emptyAlcohol); setEditingId(null); };
+  const save = () => {
+    if (!draft.drinkType.trim()) return;
+    const entry = { ...draft, date: draft.date || new Date().toISOString().slice(0, 10) };
+    if (editingId) update(editingId, entry);
+    else add(entry);
+    reset();
   };
 
   return (
@@ -167,174 +199,117 @@ export function AlcoholScreen() {
       <SectionCard className="border-champagne/20 bg-champagne/10">
         <div className="flex items-start gap-3 text-champagne">
           <AlertTriangle size={20} className="mt-0.5 shrink-0" aria-hidden="true" />
-          <p className="text-sm leading-6 text-white">
-            Check with your doctor or pharmacist for medication interactions. This tracker does not provide medical advice.
-          </p>
+          <p className="text-sm leading-6 text-white">Check with your doctor or pharmacist for medication interactions.</p>
         </div>
       </SectionCard>
-
-      <SectionCard eyebrow="Add drink" title="Drink log" description="Personal tracking without judgment. Stored locally in this browser.">
+      <SectionCard eyebrow={editingId ? "Edit alcohol log" : "Add alcohol log"} title="Alcohol tracker">
         <div className="grid gap-3">
-          <FormField label="Drink type" value={drinkType} onChange={setDrinkType} placeholder="Margarita, wine, beer..." />
-          <FormField label="Number of drinks" type="number" value={drinks} onChange={setDrinks} />
-          <FormField label="Date" type="date" value={date} onChange={setDate} />
+          <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
+          <FormField label="Drink type" value={draft.drinkType} onChange={(value) => setField("drinkType", value)} />
+          <FormField label="Number of drinks" type="number" value={draft.drinks} onChange={(value) => setField("drinks", value)} />
           <div className="grid gap-3 sm:grid-cols-2">
-            <FormField label="Mood before" value={moodBefore} onChange={setMoodBefore} />
-            <FormField label="Mood after" value={moodAfter} onChange={setMoodAfter} />
+            <FormField label="Mood before" value={draft.moodBefore} onChange={(value) => setField("moodBefore", value)} />
+            <FormField label="Mood after" value={draft.moodAfter} onChange={(value) => setField("moodAfter", value)} />
           </div>
-          <TextAreaField label="Notes" value={notes} onChange={setNotes} />
+          <FormField label="Sleep impact" value={draft.sleepImpact} onChange={(value) => setField("sleepImpact", value)} />
+          <TextAreaField label="Notes" value={draft.notes} onChange={(value) => setField("notes", value)} />
         </div>
-        <button
-          type="button"
-          onClick={addDrink}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-        >
+        <button type="button" onClick={save} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
           <Plus size={18} aria-hidden="true" />
-          Add drink entry
+          {editingId ? "Save changes" : "Add alcohol log"}
         </button>
       </SectionCard>
-
-      <SectionCard title="Alcohol entries" description="Sample and locally added entries.">
-        <div className="grid gap-3">
-          {entries.map((entry) => (
-            <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-sm font-semibold text-white">{entry.drinkType}</h3>
-                <span className="rounded-full border border-ice/20 bg-ice/10 px-2.5 py-1 text-xs font-semibold text-ice">
-                  {entry.drinks} drink(s)
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-periwinkle/70">{entry.date}</p>
-              <p className="mt-2 text-sm leading-6 text-periwinkle/85">{entry.notes}</p>
-              <p className="mt-2 text-xs text-lavender/80">
-                Mood before: {entry.moodBefore || "Not noted"} | Mood after: {entry.moodAfter || "Not noted"}
-              </p>
-            </article>
-          ))}
-        </div>
-      </SectionCard>
+      {items.length ? (
+        <SectionCard title="Alcohol history">
+          <div className="grid gap-3">
+            {items.map((entry) => (
+              <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">{entry.drinkType}</h3>
+                    <p className="mt-1 text-xs text-periwinkle/75">{entry.date} | {entry.drinks} drink(s)</p>
+                  </div>
+                  <EntryActions onEdit={() => { const { id: _id, ...rest } = entry; setDraft(rest); setEditingId(entry.id); }} onDelete={() => remove(entry.id)} />
+                </div>
+                <p className="mt-2 text-sm leading-6 text-periwinkle/85">{[entry.moodBefore, entry.moodAfter, entry.sleepImpact, entry.notes].filter(Boolean).join(" | ")}</p>
+              </article>
+            ))}
+          </div>
+        </SectionCard>
+      ) : (
+        <EmptyState title="No alcohol logs yet" message="Add your first alcohol log." />
+      )}
     </div>
   );
 }
 
 export function FitnessScreen() {
-  const [workouts, setWorkouts] = useLocalStorage<FitnessEntry[]>("ybw.fitness", completedWorkouts);
-  const [treadmillMinutes, setTreadmillMinutes] = useState("");
-  const [treadmillMiles, setTreadmillMiles] = useState("");
-  const [treadmillIncline, setTreadmillIncline] = useState("");
-  const [treadmillSpeed, setTreadmillSpeed] = useState("");
-  const [exercise, setExercise] = useState("");
-  const [sets, setSets] = useState("");
-  const [reps, setReps] = useState("");
-  const [weight, setWeight] = useState("");
-  const [notes, setNotes] = useState("");
-
-  const addTreadmill = () => {
-    setWorkouts([
-      {
-        id: `fit-${Date.now()}`,
-        type: "Treadmill",
-        detail: `${treadmillMinutes || "0"} minutes, ${treadmillMiles || "0"} miles, ${treadmillIncline || "0"} incline, ${treadmillSpeed || "0"} speed`,
-        duration: `${treadmillMinutes || "0"} min`,
-        intensity: "Custom",
-        notes
-      },
-      ...workouts
-    ]);
-    setTreadmillMinutes("");
-    setTreadmillMiles("");
-    setTreadmillIncline("");
-    setTreadmillSpeed("");
-    setNotes("");
-  };
-
-  const addStrength = () => {
-    if (!exercise.trim()) {
-      return;
-    }
-
-    setWorkouts([
-      {
-        id: `fit-${Date.now()}`,
-        type: "Strength",
-        detail: `${exercise}, ${sets || "0"} sets, ${reps || "0"} reps, ${weight || "bodyweight"} resistance`,
-        duration: "Custom",
-        intensity: "Custom",
-        notes
-      },
-      ...workouts
-    ]);
-    setExercise("");
-    setSets("");
-    setReps("");
-    setWeight("");
-    setNotes("");
+  const { items, add, update, remove, toggleComplete } = useLocalCollection<FitnessLog>("ybw.fitness", [], "fitness");
+  const [draft, setDraft] = useLocalStorage("ybw.fitnessDraft", emptyFitness);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const setField = (field: keyof typeof emptyFitness, value: string | boolean) => setDraft((current) => ({ ...current, [field]: value }));
+  const reset = () => { setDraft(emptyFitness); setEditingId(null); };
+  const save = () => {
+    if (!Object.values(draft).some((value) => String(value).trim())) return;
+    if (editingId) update(editingId, draft);
+    else add(draft);
+    reset();
   };
 
   return (
     <div className="grid gap-4">
-      <SectionCard title="What I Want To Do" description="Choose supportive movement ideas for today.">
-        <Checklist items={fitnessPlan} checkedFirst={false} storageKey="ybw.fitnessPlanChecklist" />
-      </SectionCard>
-
-      <SectionCard title="Cardio options" description="Pick the style of movement that fits the day.">
-        <div className="grid grid-cols-2 gap-2">
-          {["Treadmill", "Walk", "Bike", "Elliptical", "Dance", "Recovery walk"].map((option) => (
-            <button key={option} type="button" className="min-h-11 rounded-2xl border border-white/10 bg-midnight/45 px-3 text-sm text-white">
-              {option}
-            </button>
-          ))}
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Treadmill entry" description="Minutes, miles, incline, and speed.">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="Minutes" type="number" value={treadmillMinutes} onChange={setTreadmillMinutes} />
-          <FormField label="Miles" type="number" value={treadmillMiles} onChange={setTreadmillMiles} />
-          <FormField label="Incline" type="number" value={treadmillIncline} onChange={setTreadmillIncline} />
-          <FormField label="Speed" type="number" value={treadmillSpeed} onChange={setTreadmillSpeed} />
-        </div>
-        <TextAreaField label="Notes" value={notes} onChange={setNotes} className="mt-3" />
-        <button
-          type="button"
-          onClick={addTreadmill}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-        >
-          Add treadmill workout
-        </button>
-      </SectionCard>
-
-      <SectionCard title="Strength entry" description="Exercise name, sets, reps, weight/resistance, and notes.">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label="Exercise name" value={exercise} onChange={setExercise} />
-          <FormField label="Sets" type="number" value={sets} onChange={setSets} />
-          <FormField label="Reps" type="number" value={reps} onChange={setReps} />
-          <FormField label="Weight/resistance" value={weight} onChange={setWeight} />
-        </div>
-        <TextAreaField label="Notes" value={notes} onChange={setNotes} className="mt-3" />
-        <button
-          type="button"
-          onClick={addStrength}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
-        >
-          Add strength workout
-        </button>
-      </SectionCard>
-
-      <SectionCard title="What I Did Today" description="Completed workout list stored locally.">
+      <SectionCard eyebrow={editingId ? "Edit workout" : "Add workout"} title="Fitness tracker">
         <div className="grid gap-3">
-          {workouts.map((workout) => (
-            <article key={workout.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-              <h3 className="text-sm font-semibold text-white">{workout.type}</h3>
-              <p className="mt-1 text-sm leading-6 text-periwinkle/85">{workout.detail}</p>
-              <p className="mt-2 text-xs text-lavender/80">
-                Duration: {workout.duration} | Intensity: {workout.intensity}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-periwinkle/80">{workout.notes}</p>
-            </article>
-          ))}
+          <FormField label="Planned workout" value={draft.plannedWorkout} onChange={(value) => setField("plannedWorkout", value)} />
+          <FormField label="Completed workout" value={draft.completedWorkout} onChange={(value) => setField("completedWorkout", value)} />
+          <FormField label="Cardio" value={draft.cardio} onChange={(value) => setField("cardio", value)} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Treadmill minutes" type="number" value={draft.treadmillMinutes} onChange={(value) => setField("treadmillMinutes", value)} />
+            <FormField label="Treadmill miles" type="number" value={draft.treadmillMiles} onChange={(value) => setField("treadmillMiles", value)} />
+            <FormField label="Treadmill incline" type="number" value={draft.treadmillIncline} onChange={(value) => setField("treadmillIncline", value)} />
+            <FormField label="Treadmill speed" type="number" value={draft.treadmillSpeed} onChange={(value) => setField("treadmillSpeed", value)} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Strength exercise" value={draft.strengthExercise} onChange={(value) => setField("strengthExercise", value)} />
+            <FormField label="Sets" type="number" value={draft.sets} onChange={(value) => setField("sets", value)} />
+            <FormField label="Reps" type="number" value={draft.reps} onChange={(value) => setField("reps", value)} />
+            <FormField label="Weight/resistance" value={draft.weight} onChange={(value) => setField("weight", value)} />
+          </div>
+          <TextAreaField label="Notes" value={draft.notes} onChange={(value) => setField("notes", value)} />
+          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-midnight/45 px-3 text-sm text-white">
+            <input type="checkbox" checked={Boolean(draft.completed)} onChange={(event) => setField("completed", event.target.checked)} className="size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40" />
+            Completed
+          </label>
         </div>
+        <button type="button" onClick={save} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
+          <Plus size={18} aria-hidden="true" />
+          {editingId ? "Save changes" : "Add workout"}
+        </button>
       </SectionCard>
+      {items.length ? (
+        <SectionCard title="Fitness history">
+          <div className="grid gap-3">
+            {items.map((entry) => (
+              <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <label className="flex flex-1 items-start gap-3 text-sm text-white">
+                    <input type="checkbox" checked={Boolean(entry.completed)} onChange={() => toggleComplete(entry.id)} className="mt-1 size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40" />
+                    <span>
+                      <span className="block font-semibold">{entry.completedWorkout || entry.plannedWorkout || entry.cardio || "Workout"}</span>
+                      <span className="mt-1 block text-periwinkle/85">
+                        {[entry.treadmillMinutes && `${entry.treadmillMinutes} min treadmill`, entry.strengthExercise, entry.notes].filter(Boolean).join(" | ")}
+                      </span>
+                    </span>
+                  </label>
+                  <EntryActions onEdit={() => { const { id: _id, ...rest } = entry; setDraft(rest); setEditingId(entry.id); }} onDelete={() => remove(entry.id)} />
+                </div>
+              </article>
+            ))}
+          </div>
+        </SectionCard>
+      ) : (
+        <EmptyState title="No workouts yet" message="Add your first planned or completed workout." />
+      )}
     </div>
   );
 }

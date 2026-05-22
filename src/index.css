@@ -51,3 +51,36 @@ button {
     scrollbar-color: rgba(211, 156, 255, 0.45) transparent;
   }
 }
+
+@media print {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff !important;
+    color: #111827 !important;
+  }
+
+  button,
+  nav {
+    display: none !important;
+  }
+
+  section,
+  article,
+  div {
+    box-shadow: none !important;
+  }
+
+  * {
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+    background-image: none !important;
+    text-shadow: none !important;
+  }
+
+  .printable-report {
+    background: #fff !important;
+  }
+}

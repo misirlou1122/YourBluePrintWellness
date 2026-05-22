@@ -25,7 +25,7 @@ export function ReminderCard({ title, date, time, category, recurrence, notes, c
             </span>
           </div>
           <p className="mt-1 text-xs text-periwinkle/70">
-            {category} · {date} at {time}
+          {category} | {date} at {time}
           </p>
           {notes ? <p className="mt-2 text-sm leading-6 text-periwinkle/85">{notes}</p> : null}
         </div>

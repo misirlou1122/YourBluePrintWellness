@@ -11,7 +11,7 @@ export function LoginPreview() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Private dashboard</p>
           <h2 className="mt-1 text-xl font-semibold text-white">Sign-in preview</h2>
           <p className="mt-2 text-sm leading-6 text-periwinkle/85">
-            Secure sign-in is planned for a later phase. For now, this app stays local and sample-data only.
+            Secure sign-in can be added later. For now, entries stay local in this browser.
           </p>
         </div>
       </div>

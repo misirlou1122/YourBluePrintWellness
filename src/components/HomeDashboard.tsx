@@ -19,7 +19,7 @@ export function HomeDashboard({ onOpenTile }: HomeDashboardProps) {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Your Blueprint Wellness</p>
             <h1 className="mt-2 text-3xl font-semibold leading-tight text-white">Private wellness blueprint</h1>
-            <p className="mt-2 text-sm leading-6 text-periwinkle/85">Mobile-first sample dashboard for yourblueprintwellness.com.</p>
+            <p className="mt-2 text-sm leading-6 text-periwinkle/85">Mobile-first wellness tracking for yourblueprintwellness.com.</p>
           </div>
           <div className="grid size-12 shrink-0 place-items-center rounded-2xl border border-lavender/25 bg-lavender/15 text-lavender shadow-lavender">
             <Sparkles size={23} aria-hidden="true" />
@@ -66,11 +66,11 @@ export function HomeDashboard({ onOpenTile }: HomeDashboardProps) {
       </section>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <ProgressRing label="Daily consistency" value={72} caption="Sample glow ring for habits and reminders." />
+        <ProgressRing label="Daily consistency" value={72} caption="A gentle view of habits and reminders." />
         <div className="grid gap-3 sm:col-span-2">
-          <ProgressBar label="Water" value={70} detail="56 oz of 80 oz sample target" tone="aqua" />
-          <ProgressBar label="Protein" value={62} detail="68 g of 110 g sample target" tone="lavender" />
-          <ProgressBar label="Fiber" value={48} detail="12 g of 25 g sample target" tone="blue" />
+          <ProgressBar label="Water" value={70} detail="56 oz of 80 oz target" tone="aqua" />
+          <ProgressBar label="Protein" value={62} detail="68 g of 110 g target" tone="lavender" />
+          <ProgressBar label="Fiber" value={48} detail="12 g of 25 g target" tone="blue" />
         </div>
       </div>
 

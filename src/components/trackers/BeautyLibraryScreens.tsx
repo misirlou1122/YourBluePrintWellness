@@ -1,413 +1,309 @@
-import { useState } from "react";
 import { Camera, Plus, UploadCloud } from "lucide-react";
-import {
-  documents as sampleDocuments,
-  hairProducts,
-  haircareRoutine,
-  progressPhotos as sampleProgressPhotos,
-  recipeCards,
-  recipeCategories,
-  skincareProducts,
-  skincareRoutines,
-  type DocumentSample,
-  type ProductNote,
-  type ProgressPhotoSample,
-  type RecipeCard
-} from "../../data/sampleData";
-import { useLocalStorage } from "../../lib/useLocalStorage";
-import { Checklist } from "../Checklist";
+import { EntryActions } from "../EntryActions";
 import { EmptyState } from "../EmptyState";
 import { FormField, SelectField, TextAreaField } from "../FormField";
 import { SectionCard } from "../SectionCard";
+import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
+
+interface BeautyEntry {
+  id: string;
+  title: string;
+  category: string;
+  details: string;
+  notes: string;
+}
+
+interface RecipeEntry {
+  id: string;
+  title: string;
+  category: string;
+  ingredients: string;
+  directions: string;
+  notes: string;
+  tags: string;
+}
+
+interface DocumentEntry {
+  id: string;
+  title: string;
+  category: string;
+  date: string;
+  fileName: string;
+  notes: string;
+}
+
+interface PhotoEntry {
+  id: string;
+  category: string;
+  date: string;
+  fileName: string;
+  notes: string;
+}
+
+const recipeCategories = [
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Snacks",
+  "Smoothies",
+  "Meal prep",
+  "High protein",
+  "Diabetic-friendly",
+  "Heart healthy",
+  "High fiber",
+  "Period support foods",
+  "Saved recipes",
+  "Recipes to try"
+];
+
+const recipeTagOptions = ["High protein", "Diabetic-friendly", "Heart healthy", "High fiber", "Period support"];
+
+const emptyBeauty: Omit<BeautyEntry, "id"> = { title: "", category: "Current products", details: "", notes: "" };
+const emptyHair: Omit<BeautyEntry, "id"> = { title: "", category: "Products used", details: "", notes: "" };
+const emptyRecipe: Omit<RecipeEntry, "id"> = { title: "", category: recipeCategories[0], ingredients: "", directions: "", notes: "", tags: "" };
+const emptyDocument: Omit<DocumentEntry, "id"> = { title: "", category: "Lab documents", date: "", fileName: "", notes: "" };
+const emptyPhoto: Omit<PhotoEntry, "id"> = { category: "Body", date: "", fileName: "", notes: "" };
+
+function useEditable<T extends { id: string }, D extends Omit<T, "id">>(key: string, draftKey: string, emptyDraft: D, prefix: string) {
+  const collection = useLocalCollection<T>(key, [], prefix);
+  const [draft, setDraft] = useLocalStorage<D>(draftKey, emptyDraft);
+  const [editingId, setEditingId] = useLocalStorage<string | null>(`${draftKey}.editingId`, null);
+  const reset = () => {
+    setDraft(emptyDraft);
+    setEditingId(null);
+  };
+  const save = (isValid: (draft: D) => boolean, normalize?: (draft: D) => D) => {
+    if (!isValid(draft)) return;
+    const next = normalize ? normalize(draft) : draft;
+    if (editingId) collection.update(editingId, next as unknown as Partial<T>);
+    else collection.add(next as Omit<T, "id">);
+    reset();
+  };
+  const startEdit = (entry: T) => {
+    const { id: _id, ...rest } = entry;
+    setDraft(rest as D);
+    setEditingId(entry.id);
+  };
+  return { ...collection, draft, setDraft, editingId, reset, save, startEdit };
+}
+
+function BeautyList({
+  entries,
+  onEdit,
+  onDelete,
+  emptyTitle,
+  emptyMessage
+}: {
+  entries: BeautyEntry[];
+  onEdit: (entry: BeautyEntry) => void;
+  onDelete: (id: string) => void;
+  emptyTitle: string;
+  emptyMessage: string;
+}) {
+  return entries.length ? (
+    <SectionCard title="Saved entries">
+      <div className="grid gap-3">
+        {entries.map((entry) => (
+          <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-white">{entry.title}</h3>
+                <p className="mt-1 text-xs text-lavender/80">{entry.category}</p>
+              </div>
+              <EntryActions onEdit={() => onEdit(entry)} onDelete={() => onDelete(entry.id)} />
+            </div>
+            {entry.details ? <p className="mt-3 text-sm leading-6 text-periwinkle/85">{entry.details}</p> : null}
+            {entry.notes ? <p className="mt-2 text-sm leading-6 text-periwinkle/80">{entry.notes}</p> : null}
+          </article>
+        ))}
+      </div>
+    </SectionCard>
+  ) : (
+    <EmptyState title={emptyTitle} message={emptyMessage} />
+  );
+}
 
 export function SkinScreen() {
-  const [products, setProducts] = useLocalStorage<ProductNote[]>("ybw.skinProducts", skincareProducts);
-  const [product, setProduct] = useState("");
-  const [status, setStatus] = useState("Current product");
-  const [reaction, setReaction] = useState("");
-
-  const addSkinNote = () => {
-    if (!product.trim() && !reaction.trim()) {
-      return;
-    }
-
-    setProducts([
-      {
-        name: product || "Skin note",
-        status,
-        notes: reaction || "No irritation note."
-      },
-      ...products
-    ]);
-    setProduct("");
-    setStatus("Current product");
-    setReaction("");
-  };
-
+  const store = useEditable<BeautyEntry, Omit<BeautyEntry, "id">>("ybw.skinProducts", "ybw.skinDraft", emptyBeauty, "skin");
+  const setField = (field: keyof typeof emptyBeauty, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
   return (
     <div className="grid gap-4">
-      {skincareRoutines.map((routine) => (
-        <SectionCard key={routine.title} title={routine.title} description="Routine checklist state persists locally.">
-          <Checklist items={routine.steps} checkedFirst={false} storageKey={`ybw.skinRoutine.${routine.title}`} />
-        </SectionCard>
-      ))}
-
-      <SectionCard title="Products and skin notes" description="Current products, products to try, and reaction notes save locally.">
+      <SectionCard title="Skin & Beauty entry">
         <div className="grid gap-3">
-          {products.map((item, index) => (
-            <article key={`${item.name}-${index}`} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-              <h3 className="text-sm font-semibold text-white">{item.name}</h3>
-              <p className="mt-1 text-xs text-lavender/80">{item.status}</p>
-              <p className="mt-2 text-sm leading-6 text-periwinkle/85">{item.notes}</p>
-            </article>
-          ))}
+          <FormField label="Title" value={store.draft.title} onChange={(value) => setField("title", value)} />
+          <SelectField label="Category" options={["AM routine", "PM routine", "Current products", "Products to try", "Irritation/breakout log"]} value={store.draft.category} onChange={(value) => setField("category", value)} />
+          <TextAreaField label="Details" value={store.draft.details} onChange={(value) => setField("details", value)} />
+          <TextAreaField label="Notes" value={store.draft.notes} onChange={(value) => setField("notes", value)} />
         </div>
-      </SectionCard>
-
-      <SectionCard title="Irritation / breakout log" description="Track product reactions gently and locally.">
-        <div className="grid gap-3">
-          <FormField label="Product" value={product} onChange={setProduct} />
-          <SelectField label="Status" options={["Current product", "Product to try", "Irritation note", "Breakout note"]} value={status} onChange={setStatus} />
-          <TextAreaField label="Irritation or breakout note" value={reaction} onChange={setReaction} />
-        </div>
-        <button
-          type="button"
-          onClick={addSkinNote}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-        >
+        <button type="button" onClick={() => store.save((draft) => Boolean(draft.title.trim() || draft.details.trim()))} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
           <Plus size={18} aria-hidden="true" />
-          Save skin note
+          {store.editingId ? "Save changes" : "Add skin entry"}
         </button>
       </SectionCard>
+      <BeautyList entries={store.items} onEdit={store.startEdit} onDelete={store.remove} emptyTitle="No skin entries yet" emptyMessage="Add your first routine, product, or skin note." />
     </div>
   );
 }
 
 export function HairScreen() {
-  const [products, setProducts] = useLocalStorage<ProductNote[]>("ybw.hairProducts", hairProducts);
-  const [washDay, setWashDay] = useState("");
-  const [refreshDay, setRefreshDay] = useState("");
-  const [productsUsed, setProductsUsed] = useState("");
-  const [curlRoutine, setCurlRoutine] = useState("");
-  const [scalpNotes, setScalpNotes] = useState("");
-
-  const addHairNote = () => {
-    if (!productsUsed.trim() && !curlRoutine.trim() && !scalpNotes.trim()) {
-      return;
-    }
-
-    setProducts([
-      {
-        name: productsUsed || "Hair care note",
-        status: washDay ? `Wash day: ${washDay}` : refreshDay ? `Refresh day: ${refreshDay}` : "Hair note",
-        notes: [curlRoutine, scalpNotes].filter(Boolean).join(" | ") || "Local hair care note."
-      },
-      ...products
-    ]);
-    setWashDay("");
-    setRefreshDay("");
-    setProductsUsed("");
-    setCurlRoutine("");
-    setScalpNotes("");
-  };
-
+  const store = useEditable<BeautyEntry, Omit<BeautyEntry, "id">>("ybw.hairProducts", "ybw.hairDraft", emptyHair, "hair");
+  const setField = (field: keyof typeof emptyHair, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
   return (
     <div className="grid gap-4">
-      <SectionCard title={haircareRoutine.title} description="Wash day, refresh day, products, curl routine, and scalp notes.">
-        <Checklist items={haircareRoutine.steps} checkedFirst={false} storageKey="ybw.hairRoutineChecklist" />
-      </SectionCard>
-
-      <SectionCard title="Hair notes" description="Products used, curl routine, and scalp notes save locally.">
+      <SectionCard title="Hair care entry">
         <div className="grid gap-3">
-          {products.map((item, index) => (
-            <article key={`${item.name}-${index}`} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-              <h3 className="text-sm font-semibold text-white">{item.name}</h3>
-              <p className="mt-1 text-xs text-lavender/80">{item.status}</p>
-              <p className="mt-2 text-sm leading-6 text-periwinkle/85">{item.notes}</p>
-            </article>
-          ))}
+          <FormField label="Title" value={store.draft.title} onChange={(value) => setField("title", value)} />
+          <SelectField label="Category" options={["Wash day", "Refresh day", "Products used", "Curl routine", "Scalp notes"]} value={store.draft.category} onChange={(value) => setField("category", value)} />
+          <TextAreaField label="Details" value={store.draft.details} onChange={(value) => setField("details", value)} />
+          <TextAreaField label="Notes" value={store.draft.notes} onChange={(value) => setField("notes", value)} />
         </div>
-      </SectionCard>
-
-      <SectionCard title="Hair care entry" description="A simple local form for hair notes.">
-        <div className="grid gap-3">
-          <FormField label="Wash day" type="date" value={washDay} onChange={setWashDay} />
-          <FormField label="Refresh day" type="date" value={refreshDay} onChange={setRefreshDay} />
-          <TextAreaField label="Products used" value={productsUsed} onChange={setProductsUsed} />
-          <TextAreaField label="Curl routine" value={curlRoutine} onChange={setCurlRoutine} />
-          <TextAreaField label="Scalp notes" value={scalpNotes} onChange={setScalpNotes} />
-        </div>
-        <button
-          type="button"
-          onClick={addHairNote}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-        >
+        <button type="button" onClick={() => store.save((draft) => Boolean(draft.title.trim() || draft.details.trim()))} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
           <Plus size={18} aria-hidden="true" />
-          Save hair note
+          {store.editingId ? "Save changes" : "Add hair entry"}
         </button>
       </SectionCard>
+      <BeautyList entries={store.items} onEdit={store.startEdit} onDelete={store.remove} emptyTitle="No hair entries yet" emptyMessage="Add your first wash day, product, or scalp note." />
     </div>
   );
 }
 
 export function RecipesScreen() {
-  const [recipes, setRecipes] = useLocalStorage<RecipeCard[]>("ybw.recipes", recipeCards);
+  const store = useEditable<RecipeEntry, Omit<RecipeEntry, "id">>("ybw.recipes", "ybw.recipeDraft", emptyRecipe, "recipe");
   const [mealLogs, setMealLogs] = useLocalStorage<string[]>("ybw.loggedMeals", []);
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState(recipeCategories[0]);
-  const [ingredients, setIngredients] = useState("");
-  const [directions, setDirections] = useState("");
-  const [protein, setProtein] = useState("");
-  const [fiber, setFiber] = useState("");
-
-  const addRecipe = () => {
-    if (!title.trim()) {
-      return;
-    }
-
-    setRecipes([
-      {
-        id: `rec-${Date.now()}`,
-        title: title.trim(),
-        category,
-        protein: protein || "Estimate to add",
-        fiber: fiber || "Estimate to add",
-        notes: [ingredients, directions].filter(Boolean).join(" | ") || "Local recipe note."
-      },
-      ...recipes
-    ]);
-    setTitle("");
-    setCategory(recipeCategories[0]);
-    setIngredients("");
-    setDirections("");
-    setProtein("");
-    setFiber("");
-  };
-
+  const setField = (field: keyof typeof emptyRecipe, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
   return (
     <div className="grid gap-4">
-      <SectionCard title="Recipe categories" description="Tap-friendly category chips for organizing meals.">
-        <div className="flex flex-wrap gap-2">
-          {recipeCategories.map((item) => (
-            <button key={item} type="button" className="min-h-10 rounded-full border border-white/10 bg-white/[0.05] px-3 text-xs font-semibold text-periwinkle/85">
-              {item}
-            </button>
-          ))}
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Recipe cards" description="Recipes and meal logs persist locally.">
+      <SectionCard title="Recipe form">
         <div className="grid gap-3">
-          {recipes.map((recipe) => (
-            <article key={recipe.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-sm font-semibold text-white">{recipe.title}</h3>
-                <span className="rounded-full border border-ice/20 bg-ice/10 px-2.5 py-1 text-xs font-semibold text-ice">
-                  {recipe.category}
-                </span>
-              </div>
-              <p className="mt-2 text-sm leading-6 text-periwinkle/85">{recipe.notes}</p>
-              <p className="mt-2 text-xs text-lavender/80">
-                Protein: {recipe.protein} | Fiber: {recipe.fiber}
-              </p>
-              <button
-                type="button"
-                onClick={() => setMealLogs([`${recipe.title} logged ${new Date().toLocaleString()}`, ...mealLogs])}
-                className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-lavender/25 bg-lavender/10 px-3 text-sm font-semibold text-lavender"
-              >
-                Log this meal
-              </button>
-            </article>
-          ))}
+          <FormField label="Title" value={store.draft.title} onChange={(value) => setField("title", value)} />
+          <SelectField label="Category" options={recipeCategories} value={store.draft.category} onChange={(value) => setField("category", value)} />
+          <TextAreaField label="Ingredients" value={store.draft.ingredients} onChange={(value) => setField("ingredients", value)} />
+          <TextAreaField label="Directions" value={store.draft.directions} onChange={(value) => setField("directions", value)} />
+          <TextAreaField label="Notes" value={store.draft.notes} onChange={(value) => setField("notes", value)} />
+          <SelectField label="Tag" options={recipeTagOptions} value={store.draft.tags} onChange={(value) => setField("tags", value)} />
         </div>
+        <button type="button" onClick={() => store.save((draft) => Boolean(draft.title.trim()))} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
+          <Plus size={18} aria-hidden="true" />
+          {store.editingId ? "Save changes" : "Add recipe"}
+        </button>
       </SectionCard>
-
-      {mealLogs.length ? (
-        <SectionCard title="Logged meals">
-          <div className="grid gap-2">
-            {mealLogs.map((meal, index) => (
-              <div key={`${meal}-${index}`} className="rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm text-white">
-                {meal}
-              </div>
+      {store.items.length ? (
+        <SectionCard title="Recipes">
+          <div className="grid gap-3">
+            {store.items.map((recipe) => (
+              <article key={recipe.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">{recipe.title}</h3>
+                    <p className="mt-1 text-xs text-lavender/80">{recipe.category}{recipe.tags ? ` | ${recipe.tags}` : ""}</p>
+                  </div>
+                  <EntryActions onEdit={() => store.startEdit(recipe)} onDelete={() => store.remove(recipe.id)} />
+                </div>
+                {recipe.ingredients ? <p className="mt-3 text-sm leading-6 text-periwinkle/85">Ingredients: {recipe.ingredients}</p> : null}
+                {recipe.directions ? <p className="mt-2 text-sm leading-6 text-periwinkle/85">Directions: {recipe.directions}</p> : null}
+                {recipe.notes ? <p className="mt-2 text-sm leading-6 text-periwinkle/80">{recipe.notes}</p> : null}
+                <button type="button" onClick={() => setMealLogs([`${recipe.title} logged ${new Date().toLocaleString()}`, ...mealLogs])} className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-lavender/25 bg-lavender/10 px-3 text-sm font-semibold text-lavender">
+                  Log this meal
+                </button>
+              </article>
             ))}
           </div>
         </SectionCard>
+      ) : <EmptyState title="No recipes yet" message="Add your first recipe." />}
+      {mealLogs.length ? (
+        <SectionCard title="Logged meals">
+          <div className="grid gap-2">
+            {mealLogs.map((meal, index) => <div key={`${meal}-${index}`} className="rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm text-white">{meal}</div>)}
+          </div>
+        </SectionCard>
       ) : null}
-
-      <SectionCard title="Recipe form" description="Recipe entries save locally in this browser.">
-        <div className="grid gap-3">
-          <FormField label="Recipe title" value={title} onChange={setTitle} />
-          <SelectField label="Category" options={recipeCategories} value={category} onChange={setCategory} />
-          <TextAreaField label="Ingredients" value={ingredients} onChange={setIngredients} />
-          <TextAreaField label="Directions" value={directions} onChange={setDirections} />
-          <FormField label="Protein estimate" value={protein} onChange={setProtein} />
-          <FormField label="Fiber estimate" value={fiber} onChange={setFiber} />
-        </div>
-        <button
-          type="button"
-          onClick={addRecipe}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-        >
-          <Plus size={18} aria-hidden="true" />
-          Save recipe
-        </button>
-      </SectionCard>
     </div>
   );
 }
 
 export function DocumentsScreen() {
-  const [documents, setDocuments] = useLocalStorage<DocumentSample[]>("ybw.documents", sampleDocuments);
-  const [category, setCategory] = useState("Lab documents");
-  const [title, setTitle] = useState("");
-  const [notes, setNotes] = useState("");
-
-  const addDocument = () => {
-    if (!title.trim() && !notes.trim()) {
-      return;
-    }
-
-    setDocuments([
-      {
-        id: `doc-${Date.now()}`,
-        title: title || "Document note",
-        category,
-        date: new Date().toISOString().slice(0, 10),
-        notes
-      },
-      ...documents
-    ]);
-    setTitle("");
-    setNotes("");
-  };
-
+  const store = useEditable<DocumentEntry, Omit<DocumentEntry, "id">>("ybw.documents", "ybw.documentDraft", emptyDocument, "doc");
+  const setField = (field: keyof typeof emptyDocument, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
   return (
     <div className="grid gap-4">
-      <EmptyState
-        title="Upload PDF/photo"
-        message="Document notes save locally for now. Files are not uploaded yet."
-        icon={UploadCloud}
-        actionLabel="Choose file"
-      />
-
-      <SectionCard title="Document note" description="Document category and notes persist locally.">
+      <EmptyState title="Document notes" message="Add document details and optional file names. Actual file storage is not connected yet." icon={UploadCloud} />
+      <SectionCard title="Document note">
         <div className="grid gap-3">
-          <SelectField
-            label="Document category"
-            options={["Lab documents", "Doctor documents", "Exported reports", "Progress photos", "Notes/documents"]}
-            value={category}
-            onChange={setCategory}
-          />
-          <FormField label="Document title" value={title} onChange={setTitle} />
-          <TextAreaField label="Notes" value={notes} onChange={setNotes} />
+          <FormField label="Title" value={store.draft.title} onChange={(value) => setField("title", value)} />
+          <SelectField label="Category" options={["Lab documents", "Doctor documents", "Exported reports", "Progress photos", "Notes/documents"]} value={store.draft.category} onChange={(value) => setField("category", value)} />
+          <FormField label="Date" type="date" value={store.draft.date} onChange={(value) => setField("date", value)} />
+          <FormField label="File name" value={store.draft.fileName} onChange={(value) => setField("fileName", value)} />
+          <TextAreaField label="Notes" value={store.draft.notes} onChange={(value) => setField("notes", value)} />
         </div>
-        <button
-          type="button"
-          onClick={addDocument}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-        >
+        <button type="button" onClick={() => store.save((draft) => Boolean(draft.title.trim() || draft.fileName.trim()), (draft) => ({ ...draft, date: draft.date || new Date().toISOString().slice(0, 10) }))} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
           <Plus size={18} aria-hidden="true" />
-          Save document note
+          {store.editingId ? "Save changes" : "Add document note"}
         </button>
       </SectionCard>
-
-      <SectionCard title="Sample documents" description="Sample records only. No real files are stored.">
-        <div className="grid gap-3">
-          {documents.map((document) => (
-            <article key={document.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-              <h3 className="text-sm font-semibold text-white">{document.title}</h3>
-              <p className="mt-1 text-xs text-lavender/80">
-                {document.category} | {document.date}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-periwinkle/85">{document.notes}</p>
-            </article>
-          ))}
-        </div>
-      </SectionCard>
+      <DocumentList items={store.items} onEdit={store.startEdit} onDelete={store.remove} emptyTitle="No documents yet" emptyMessage="Add your first document note." />
     </div>
   );
 }
 
+function DocumentList({ items, onEdit, onDelete, emptyTitle, emptyMessage }: { items: DocumentEntry[]; onEdit: (entry: DocumentEntry) => void; onDelete: (id: string) => void; emptyTitle: string; emptyMessage: string }) {
+  return items.length ? (
+    <SectionCard title="Documents">
+      <div className="grid gap-3">
+        {items.map((item) => (
+          <article key={item.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-white">{item.title}</h3>
+                <p className="mt-1 text-xs text-lavender/80">{item.category} | {item.date}</p>
+              </div>
+              <EntryActions onEdit={() => onEdit(item)} onDelete={() => onDelete(item.id)} />
+            </div>
+            {item.fileName ? <p className="mt-3 text-sm text-ice">{item.fileName}</p> : null}
+            {item.notes ? <p className="mt-2 text-sm leading-6 text-periwinkle/85">{item.notes}</p> : null}
+          </article>
+        ))}
+      </div>
+    </SectionCard>
+  ) : <EmptyState title={emptyTitle} message={emptyMessage} />;
+}
+
 export function ProgressPhotosScreen() {
-  const [photos, setPhotos] = useLocalStorage<ProgressPhotoSample[]>("ybw.progressPhotos", sampleProgressPhotos);
-  const [category, setCategory] = useState("Body");
-  const [date, setDate] = useState("");
-  const [notes, setNotes] = useState("");
-
-  const addPhotoNote = () => {
-    if (!notes.trim() && !date) {
-      return;
-    }
-
-    setPhotos([
-      {
-        id: `photo-${Date.now()}`,
-        category,
-        date: date || new Date().toISOString().slice(0, 10),
-        notes: notes || "Progress photo note."
-      },
-      ...photos
-    ]);
-    setCategory("Body");
-    setDate("");
-    setNotes("");
-  };
-
+  const store = useEditable<PhotoEntry, Omit<PhotoEntry, "id">>("ybw.progressPhotos", "ybw.photoDraft", emptyPhoto, "photo");
+  const setField = (field: keyof typeof emptyPhoto, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
   return (
     <div className="grid gap-4">
-      <EmptyState
-        title="Progress photo note"
-        message="Body, face, skin, and hair notes save locally. Images are not uploaded yet."
-        icon={Camera}
-        actionLabel="Choose photo"
-      />
-
-      <SectionCard title="Photo categories" description="Private progress photo categories for a future secure upload flow.">
-        <Checklist items={["Body", "Face", "Skin", "Hair"]} checkedFirst={false} storageKey="ybw.progressPhotoCategories" />
-      </SectionCard>
-
-      <SectionCard title="Add progress photo note" description="Date and notes persist locally.">
+      <EmptyState title="Progress photo notes" message="Add photo categories, dates, optional file names, and notes. Actual photo storage is not connected yet." icon={Camera} />
+      <SectionCard title="Progress photo note">
         <div className="grid gap-3">
-          <SelectField label="Category" options={["Body", "Face", "Skin", "Hair"]} value={category} onChange={setCategory} />
-          <FormField label="Date" type="date" value={date} onChange={setDate} />
-          <TextAreaField label="Notes" value={notes} onChange={setNotes} />
+          <SelectField label="Category" options={["Body", "Face", "Skin", "Hair"]} value={store.draft.category} onChange={(value) => setField("category", value)} />
+          <FormField label="Date" type="date" value={store.draft.date} onChange={(value) => setField("date", value)} />
+          <FormField label="File name" value={store.draft.fileName} onChange={(value) => setField("fileName", value)} />
+          <TextAreaField label="Notes" value={store.draft.notes} onChange={(value) => setField("notes", value)} />
         </div>
-        <button
-          type="button"
-          onClick={addPhotoNote}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-        >
+        <button type="button" onClick={() => store.save((draft) => Boolean(draft.notes.trim() || draft.fileName.trim()), (draft) => ({ ...draft, date: draft.date || new Date().toISOString().slice(0, 10) }))} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
           <Plus size={18} aria-hidden="true" />
-          Save photo note
+          {store.editingId ? "Save changes" : "Add photo note"}
         </button>
       </SectionCard>
-
-      <SectionCard title="Progress photo notes" description="Comparison notes without real images.">
-        <div className="grid gap-3">
-          {photos.map((photo) => (
-            <article key={photo.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-sm font-semibold text-white">{photo.category}</h3>
-                <span className="rounded-full border border-ice/20 bg-ice/10 px-2.5 py-1 text-xs font-semibold text-ice">
-                  {photo.date}
-                </span>
-              </div>
-              <p className="mt-2 text-sm leading-6 text-periwinkle/85">{photo.notes}</p>
-            </article>
-          ))}
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Comparison view" description="Future before/after comparisons can live here.">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-white/15 bg-midnight/45 text-sm text-periwinkle/70">
-            Before
+      {store.items.length ? (
+        <SectionCard title="Progress photo notes">
+          <div className="grid gap-3">
+            {store.items.map((photo) => (
+              <article key={photo.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">{photo.category}</h3>
+                    <p className="mt-1 text-xs text-lavender/80">{photo.date}</p>
+                  </div>
+                  <EntryActions onEdit={() => store.startEdit(photo)} onDelete={() => store.remove(photo.id)} />
+                </div>
+                {photo.fileName ? <p className="mt-3 text-sm text-ice">{photo.fileName}</p> : null}
+                {photo.notes ? <p className="mt-2 text-sm leading-6 text-periwinkle/85">{photo.notes}</p> : null}
+              </article>
+            ))}
           </div>
-          <div className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-white/15 bg-midnight/45 text-sm text-periwinkle/70">
-            After
-          </div>
-        </div>
-      </SectionCard>
+        </SectionCard>
+      ) : <EmptyState title="No progress photo notes yet" message="Add your first progress photo note." />}
     </div>
   );
 }

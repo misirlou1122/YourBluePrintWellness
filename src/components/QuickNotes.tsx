@@ -1,10 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Brain, CheckCircle2, Save } from "lucide-react";
 import { noteCategories } from "../data/wellness";
-import { sampleQuickNotes, type QuickNoteSample } from "../data/sampleData";
+import { EntryActions } from "./EntryActions";
 import { SectionCard } from "./SectionCard";
+import { TextAreaField } from "./FormField";
+import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
+import { EmptyState } from "./EmptyState";
 
-const NOTE_STORAGE_KEY = "ybw.quickNotes";
+interface QuickNoteEntry {
+  id: string;
+  note: string;
+  category: string;
+  createdAt: string;
+}
 
 const suggestionRules = [
   { category: "Alcohol Tracker", keywords: ["margarita", "wine", "beer", "cocktail", "alcohol"] },
@@ -23,59 +31,59 @@ function suggestCategory(note: string) {
   return match?.category ?? "General Notes";
 }
 
-function readStoredNotes() {
-  if (typeof window === "undefined") {
-    return sampleQuickNotes;
-  }
-
-  try {
-    const stored = window.localStorage.getItem(NOTE_STORAGE_KEY);
-    return stored ? (JSON.parse(stored) as QuickNoteSample[]) : sampleQuickNotes;
-  } catch {
-    return sampleQuickNotes;
-  }
-}
-
 function orderedCategories(suggested: string) {
   return [suggested, ...noteCategories.filter((category) => category !== suggested)];
 }
 
 export function QuickNotes() {
-  const [note, setNote] = useState("");
-  const [notes, setNotes] = useState<QuickNoteSample[]>(readStoredNotes);
-  const [pendingId, setPendingId] = useState(notes[0]?.id ?? "");
-  const suggestedCategory = useMemo(() => suggestCategory(note), [note]);
-  const pendingNote = notes.find((saved) => saved.id === pendingId);
+  const { items, add, update, remove } = useLocalCollection<QuickNoteEntry>("ybw.quickNotes", [], "note");
+  const [draft, setDraft] = useLocalStorage("ybw.quickNotesDraft", "");
+  const [pendingNote, setPendingNote] = useLocalStorage("ybw.quickNotesPending", "");
+  const [selectedCategory, setSelectedCategory] = useLocalStorage("ybw.quickNotesPendingCategory", "General Notes");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const suggestedCategory = useMemo(() => suggestCategory(draft), [draft]);
+  const pendingSuggested = useMemo(() => suggestCategory(pendingNote), [pendingNote]);
 
-  useEffect(() => {
-    window.localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(notes));
-  }, [notes]);
-
-  const saveNote = () => {
-    const trimmed = note.trim();
+  const beginRouteNote = () => {
+    const trimmed = draft.trim();
     if (!trimmed) {
       return;
     }
 
-    const saved: QuickNoteSample = {
-      id: `note-${Date.now()}`,
-      note: trimmed,
-      category: suggestCategory(trimmed),
-      createdAt: new Date().toLocaleString()
-    };
-
-    setNotes((current) => [saved, ...current]);
-    setPendingId(saved.id);
-    setNote("");
+    setPendingNote(trimmed);
+    setSelectedCategory(suggestCategory(trimmed));
+    setDraft("");
   };
 
-  const chooseCategory = (category: string) => {
-    if (!pendingId) {
+  const savePending = () => {
+    if (!pendingNote.trim()) {
       return;
     }
 
-    setNotes((current) => current.map((saved) => (saved.id === pendingId ? { ...saved, category } : saved)));
+    if (editingId) {
+      update(editingId, { note: pendingNote, category: selectedCategory });
+    } else {
+      add({
+        note: pendingNote,
+        category: selectedCategory,
+        createdAt: new Date().toLocaleString()
+      });
+    }
+
+    setPendingNote("");
+    setSelectedCategory("General Notes");
+    setEditingId(null);
   };
+
+  const startEdit = (entry: QuickNoteEntry) => {
+    setPendingNote(entry.note);
+    setSelectedCategory(entry.category);
+    setEditingId(entry.id);
+  };
+
+  const grouped = noteCategories
+    .map((category) => ({ category, notes: items.filter((item) => item.category === category) }))
+    .filter((group) => group.notes.length > 0);
 
   return (
     <section className="grid gap-4">
@@ -87,20 +95,20 @@ export function QuickNotes() {
           <div>
             <h3 className="text-lg font-semibold text-white">Quick Notes / Brain Dump</h3>
             <p className="mt-1 text-sm leading-6 text-periwinkle/85">
-              Type anything quickly. Suggestions are keyword-based and local only.
+              Capture anything, then route it to the right wellness area.
             </p>
           </div>
         </div>
         <textarea
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          placeholder="I had a margarita at dinner tonight..."
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="I walked on the treadmill for 20 minutes..."
           className="mt-4 min-h-40 w-full resize-none rounded-3xl border border-white/10 bg-midnight/65 p-4 text-base leading-7 text-white outline-none placeholder:text-periwinkle/45 focus:border-ice/60 focus:ring-2 focus:ring-ice/20"
         />
         <div className="mt-3 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
-            onClick={saveNote}
+            onClick={beginRouteNote}
             className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
           >
             <Save size={18} aria-hidden="true" />
@@ -118,17 +126,15 @@ export function QuickNotes() {
             <CheckCircle2 size={18} aria-hidden="true" />
             <h3 className="font-semibold text-white">Where should this go?</h3>
           </div>
-          <p className="mt-3 rounded-2xl border border-white/10 bg-midnight/50 p-3 text-sm leading-6 text-periwinkle/90">
-            {pendingNote.note}
-          </p>
+          <TextAreaField label="Note" value={pendingNote} onChange={setPendingNote} className="mt-3" />
           <div className="mt-4 flex flex-wrap gap-2">
-            {orderedCategories(pendingNote.category).map((category) => (
+            {orderedCategories(editingId ? selectedCategory : pendingSuggested).map((category) => (
               <button
                 key={category}
                 type="button"
-                onClick={() => chooseCategory(category)}
+                onClick={() => setSelectedCategory(category)}
                 className={`min-h-10 rounded-full border px-3 text-xs font-semibold transition ${
-                  pendingNote.category === category
+                  selectedCategory === category
                     ? "border-ice/70 bg-ice/15 text-ice shadow-ice"
                     : "border-white/10 bg-white/[0.05] text-periwinkle/80 hover:border-lavender/50 hover:text-white"
                 }`}
@@ -137,32 +143,49 @@ export function QuickNotes() {
               </button>
             ))}
           </div>
-          <p className="mt-4 text-sm text-periwinkle/80">
-            Selected destination: <span className="font-semibold text-white">{pendingNote.category}</span>
-          </p>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={savePending}
+              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
+            >
+              Save to {selectedCategory}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPendingNote("");
+                setEditingId(null);
+              }}
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85"
+            >
+              Cancel
+            </button>
+          </div>
         </SectionCard>
       ) : null}
 
-      <SectionCard title="Saved notes" description="Local browser notes for this first version.">
-        <div className="grid gap-3">
-          {notes.map((saved) => (
-            <button
-              key={saved.id}
-              type="button"
-              onClick={() => setPendingId(saved.id)}
-              className="rounded-2xl border border-white/10 bg-midnight/45 p-4 text-left transition hover:border-lavender/45"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm leading-6 text-white">{saved.note}</p>
-                <span className="shrink-0 rounded-full border border-ice/20 bg-ice/10 px-2.5 py-1 text-[0.68rem] font-semibold text-ice">
-                  {saved.category}
-                </span>
-              </div>
-              <p className="mt-2 text-xs text-periwinkle/65">{saved.createdAt}</p>
-            </button>
-          ))}
-        </div>
-      </SectionCard>
+      {grouped.length ? (
+        grouped.map((group) => (
+          <SectionCard key={group.category} title={group.category}>
+            <div className="grid gap-3">
+              {group.notes.map((entry) => (
+                <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm leading-6 text-white">{entry.note}</p>
+                      <p className="mt-2 text-xs text-periwinkle/65">{entry.createdAt}</p>
+                    </div>
+                    <EntryActions onEdit={() => startEdit(entry)} onDelete={() => remove(entry.id)} />
+                  </div>
+                </article>
+              ))}
+            </div>
+          </SectionCard>
+        ))
+      ) : (
+        <EmptyState title="No quick notes yet" message="Add your first note and choose where it belongs." />
+      )}
     </section>
   );
 }

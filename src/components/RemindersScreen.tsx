@@ -1,110 +1,169 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
-import { reminderCategories, reminderRecurrences, sampleReminders, type ReminderSample } from "../data/sampleData";
+import { EntryActions } from "./EntryActions";
+import { EmptyState } from "./EmptyState";
 import { FormField, SelectField, TextAreaField } from "./FormField";
 import { ReminderCard } from "./ReminderCard";
 import { SectionCard } from "./SectionCard";
+import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
 
-const REMINDER_STORAGE_KEY = "ybw.reminders";
+const reminderCategories = [
+  "Doctor appointment",
+  "Schedule bloodwork",
+  "Take medication",
+  "Refill prescription",
+  "Drink water",
+  "Log weight",
+  "Upload lab results",
+  "Skincare routine",
+  "Haircare routine",
+  "Period check-in",
+  "Take progress photo",
+  "Follow up with doctor",
+  "Custom"
+];
 
-function readStoredReminders() {
-  if (typeof window === "undefined") {
-    return sampleReminders;
-  }
+const reminderRecurrences = ["one-time", "daily", "weekly", "monthly", "every 3 months", "custom"];
 
-  try {
-    const stored = window.localStorage.getItem(REMINDER_STORAGE_KEY);
-    return stored ? (JSON.parse(stored) as ReminderSample[]) : sampleReminders;
-  } catch {
-    return sampleReminders;
-  }
+interface ReminderEntry {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  recurrence: string;
+  category: string;
+  notes: string;
+  completed: boolean;
 }
 
+const emptyDraft: Omit<ReminderEntry, "id"> = {
+  title: "",
+  date: "",
+  time: "",
+  recurrence: reminderRecurrences[0],
+  category: reminderCategories[0],
+  notes: "",
+  completed: false
+};
+
 export function RemindersScreen() {
-  const [reminders, setReminders] = useState<ReminderSample[]>(readStoredReminders);
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [recurrence, setRecurrence] = useState(reminderRecurrences[0]);
-  const [category, setCategory] = useState(reminderCategories[0]);
-  const [notes, setNotes] = useState("");
-  const [completed, setCompleted] = useState(false);
+  const { items, add, update, remove, toggleComplete } = useLocalCollection<ReminderEntry>("ybw.reminders", [], "reminder");
+  const [draft, setDraft] = useLocalStorage("ybw.reminderDraft", emptyDraft);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    window.localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(reminders));
-  }, [reminders]);
+  const setField = (field: keyof typeof emptyDraft, value: string | boolean) => {
+    setDraft((current) => ({ ...current, [field]: value }));
+  };
 
-  const addReminder = () => {
-    if (!title.trim()) {
+  const resetDraft = () => {
+    setDraft(emptyDraft);
+    setEditingId(null);
+  };
+
+  const saveReminder = () => {
+    if (!draft.title.trim()) {
       return;
     }
 
-    const nextReminder: ReminderSample = {
-      id: `rem-${Date.now()}`,
-      title: title.trim(),
-      date: date || "Any date",
-      time: time || "Any time",
-      recurrence,
-      category,
-      notes,
-      completed
+    const entry = {
+      ...draft,
+      title: draft.title.trim(),
+      date: draft.date || "Any date",
+      time: draft.time || "Any time"
     };
 
-    setReminders((current) => [nextReminder, ...current]);
-    setTitle("");
-    setDate("");
-    setTime("");
-    setNotes("");
-    setCompleted(false);
+    if (editingId) {
+      update(editingId, entry);
+    } else {
+      add(entry);
+    }
+
+    resetDraft();
   };
 
-  const toggleCompleted = (id: string) => {
-    setReminders((current) =>
-      current.map((reminder) => (reminder.id === id ? { ...reminder, completed: !reminder.completed } : reminder))
-    );
+  const startEdit = (entry: ReminderEntry) => {
+    const { id: _id, ...rest } = entry;
+    setDraft(rest);
+    setEditingId(entry.id);
   };
+
+  const upcoming = items.filter((item) => !item.completed);
+  const completed = items.filter((item) => item.completed);
 
   return (
     <div className="grid gap-4">
-      <SectionCard eyebrow="Add reminder" title="Local reminder form" description="Reminders are stored in this browser for now.">
+      <SectionCard eyebrow={editingId ? "Edit reminder" : "Add reminder"} title={editingId ? "Update reminder" : "Reminder form"} description="Reminders save locally in this browser.">
         <div className="grid gap-3">
-          <FormField label="Title" value={title} onChange={setTitle} placeholder="Drink water..." />
+          <FormField label="Title" value={draft.title} onChange={(value) => setField("title", value)} />
           <div className="grid gap-3 sm:grid-cols-2">
-            <FormField label="Date" type="date" value={date} onChange={setDate} />
-            <FormField label="Time" type="time" value={time} onChange={setTime} />
+            <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
+            <FormField label="Time" type="time" value={draft.time} onChange={(value) => setField("time", value)} />
           </div>
-          <SelectField label="Recurrence" options={reminderRecurrences} value={recurrence} onChange={setRecurrence} />
-          <SelectField label="Category" options={reminderCategories} value={category} onChange={setCategory} />
-          <TextAreaField label="Notes" value={notes} onChange={setNotes} placeholder="Add gentle context..." />
+          <SelectField label="Recurrence" options={reminderRecurrences} value={draft.recurrence} onChange={(value) => setField("recurrence", value)} />
+          <SelectField label="Category" options={reminderCategories} value={draft.category} onChange={(value) => setField("category", value)} />
+          <TextAreaField label="Notes" value={draft.notes} onChange={(value) => setField("notes", value)} />
           <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-midnight/45 px-3 text-sm text-white">
             <input
               type="checkbox"
-              checked={completed}
-              onChange={(event) => setCompleted(event.target.checked)}
+              checked={draft.completed}
+              onChange={(event) => setField("completed", event.target.checked)}
               className="size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40"
             />
             Completed
           </label>
         </div>
-        <button
-          type="button"
-          onClick={addReminder}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-        >
-          <Plus size={18} aria-hidden="true" />
-          Add reminder
-        </button>
-      </SectionCard>
-
-      <SectionCard title="Reminder list" description="Sample and locally added reminders.">
-        <div className="grid gap-3">
-          {reminders.map((reminder) => (
-            <button key={reminder.id} type="button" onClick={() => toggleCompleted(reminder.id)} className="text-left">
-              <ReminderCard {...reminder} />
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={saveReminder}
+            className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
+          >
+            <Plus size={18} aria-hidden="true" />
+            {editingId ? "Save changes" : "Add reminder"}
+          </button>
+          {editingId ? (
+            <button
+              type="button"
+              onClick={resetDraft}
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85"
+            >
+              Cancel edit
             </button>
-          ))}
+          ) : null}
         </div>
       </SectionCard>
+
+      <SectionCard title="Upcoming reminders" description={upcoming.length ? undefined : "No reminders yet. Add your first reminder."}>
+        {upcoming.length ? (
+          <div className="grid gap-3">
+            {upcoming.map((reminder) => (
+              <div key={reminder.id} className="grid gap-2">
+                <button type="button" onClick={() => toggleComplete(reminder.id)} className="text-left">
+                  <ReminderCard {...reminder} />
+                </button>
+                <EntryActions onEdit={() => startEdit(reminder)} onDelete={() => remove(reminder.id)} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState title="No reminders yet" message="Add your first reminder." />
+        )}
+      </SectionCard>
+
+      {completed.length ? (
+        <SectionCard title="Completed reminders">
+          <div className="grid gap-3">
+            {completed.map((reminder) => (
+              <div key={reminder.id} className="grid gap-2">
+                <button type="button" onClick={() => toggleComplete(reminder.id)} className="text-left">
+                  <ReminderCard {...reminder} />
+                </button>
+                <EntryActions onEdit={() => startEdit(reminder)} onDelete={() => remove(reminder.id)} />
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      ) : null}
     </div>
   );
 }
