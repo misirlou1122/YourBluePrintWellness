@@ -12,7 +12,7 @@ export function ReportsPanel() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-lavender/75">Reports / export</p>
           <h2 className="mt-1 text-xl font-semibold text-white">Wellness summary exports</h2>
           <p className="mt-2 text-sm leading-6 text-periwinkle/85">
-            Placeholder export buttons for doctor visits, lab trends, medications, appointment notes, and wellness summaries.
+            Draft export actions for doctor visits, lab trends, medications, appointment notes, and wellness summaries.
           </p>
         </div>
       </div>

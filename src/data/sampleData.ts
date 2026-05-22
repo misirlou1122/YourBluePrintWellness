@@ -173,7 +173,7 @@ export const labResults: LabResult[] = [
     referenceRange: "Provider-defined range",
     date: "2026-05-08",
     trend: "stable",
-    notes: "Manual entry placeholder."
+    notes: "Manual entry."
   },
   {
     id: "ldl",
@@ -183,7 +183,7 @@ export const labResults: LabResult[] = [
     referenceRange: "Provider-defined range",
     date: "2026-05-08",
     trend: "down",
-    notes: "Placeholder for lipid panel details."
+    notes: "Lipid panel detail."
   },
   {
     id: "hdl",
@@ -193,7 +193,7 @@ export const labResults: LabResult[] = [
     referenceRange: "Provider-defined range",
     date: "2026-05-08",
     trend: "up",
-    notes: "Placeholder for lipid panel details."
+    notes: "Lipid panel detail."
   },
   {
     id: "triglycerides",
@@ -203,7 +203,7 @@ export const labResults: LabResult[] = [
     referenceRange: "Provider-defined range",
     date: "2026-05-08",
     trend: "down",
-    notes: "Placeholder for lipid panel details."
+    notes: "Lipid panel detail."
   }
 ];
 
@@ -250,17 +250,17 @@ export const appointments: Appointment[] = [
 export const medications: MedicationItem[] = [
   {
     id: "med-1",
-    name: "Medication placeholder",
+    name: "Medication example",
     kind: "Medication",
     dose: "Sample dose",
     time: "Morning",
     takenToday: true,
-    refill: "Refill reminder placeholder",
+    refill: "Refill reminder to add",
     notes: "Check with a doctor or pharmacist for interactions."
   },
   {
     id: "sup-1",
-    name: "Supplement placeholder",
+    name: "Supplement example",
     kind: "Supplement",
     dose: "Sample amount",
     time: "Evening",
@@ -272,10 +272,10 @@ export const medications: MedicationItem[] = [
 
 export const vitals: VitalEntry[] = [
   { label: "Blood pressure", value: "118/76", date: "2026-05-21", notes: "Sample resting reading." },
-  { label: "Oxygen", value: "98%", date: "2026-05-21", notes: "Optional placeholder." },
+  { label: "Oxygen", value: "98%", date: "2026-05-21", notes: "Optional tracking." },
   { label: "Heart rate", value: "72 bpm", date: "2026-05-21", notes: "Resting sample." },
-  { label: "Weight", value: "Sample weight", date: "2026-05-21", notes: "Private value placeholder." },
-  { label: "BMI", value: "Placeholder", date: "2026-05-21", notes: "No interpretation." },
+  { label: "Weight", value: "Sample weight", date: "2026-05-21", notes: "Private value example." },
+  { label: "BMI", value: "To calculate", date: "2026-05-21", notes: "No interpretation." },
   { label: "Temperature", value: "98.2 F", date: "2026-05-21", notes: "Sample temperature." }
 ];
 
@@ -306,7 +306,7 @@ export const foodHydration: FoodHydrationSample = {
   fiberPercent: 48,
   meals: ["Greek yogurt with berries", "Chicken salad bowl"],
   snacks: ["String cheese", "Apple slices"],
-  caffeine: "One iced coffee placeholder",
+  caffeine: "One iced coffee",
   nauseaCravings: "Mild sweet craving after dinner."
 };
 
@@ -343,8 +343,8 @@ export const skincareRoutines: BeautyRoutine[] = [
 ];
 
 export const skincareProducts: ProductNote[] = [
-  { name: "Niacinamide serum placeholder", status: "Product to try", notes: "Patch test first." },
-  { name: "Gentle cleanser placeholder", status: "Current product", notes: "No irritation noted." }
+  { name: "Niacinamide serum", status: "Product to try", notes: "Patch test first." },
+  { name: "Gentle cleanser", status: "Current product", notes: "No irritation noted." }
 ];
 
 export const haircareRoutine: BeautyRoutine = {
@@ -353,8 +353,8 @@ export const haircareRoutine: BeautyRoutine = {
 };
 
 export const hairProducts: ProductNote[] = [
-  { name: "Curl cream placeholder", status: "Current product", notes: "Good definition sample note." },
-  { name: "Scalp serum placeholder", status: "Product to try", notes: "Watch for sensitivity." }
+  { name: "Curl cream", status: "Current product", notes: "Good definition sample note." },
+  { name: "Scalp serum", status: "Product to try", notes: "Watch for sensitivity." }
 ];
 
 export const recipeCards: RecipeCard[] = [
@@ -428,7 +428,7 @@ export const sampleReminders: ReminderSample[] = [
     time: "7:30 PM",
     recurrence: "daily",
     category: "Skincare routine",
-    notes: "Evening routine placeholder.",
+    notes: "Evening routine.",
     completed: true
   }
 ];
@@ -449,12 +449,12 @@ export const sampleQuickNotes: QuickNoteSample[] = [
 ];
 
 export const documents: DocumentSample[] = [
-  { id: "doc-1", title: "Sample lab PDF placeholder", category: "Lab documents", date: "2026-05-08", notes: "No real file stored." },
-  { id: "doc-2", title: "Sample appointment note", category: "Doctor documents", date: "2026-04-16", notes: "Placeholder only." }
+  { id: "doc-1", title: "Sample lab PDF note", category: "Lab documents", date: "2026-05-08", notes: "No real file stored." },
+  { id: "doc-2", title: "Sample appointment note", category: "Doctor documents", date: "2026-04-16", notes: "Sample note." }
 ];
 
 export const progressPhotos: ProgressPhotoSample[] = [
-  { id: "photo-1", category: "Body", date: "2026-05-01", notes: "Comparison placeholder, no real image stored." },
-  { id: "photo-2", category: "Skin", date: "2026-05-12", notes: "Progress note placeholder." },
-  { id: "photo-3", category: "Hair", date: "2026-05-18", notes: "Curl routine progress placeholder." }
+  { id: "photo-1", category: "Body", date: "2026-05-01", notes: "Comparison note, no real image stored." },
+  { id: "photo-2", category: "Skin", date: "2026-05-12", notes: "Progress note." },
+  { id: "photo-3", category: "Hair", date: "2026-05-18", notes: "Curl routine progress note." }
 ];

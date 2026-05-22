@@ -9,25 +9,24 @@ export function LoginPreview() {
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Private dashboard</p>
-          <h2 className="mt-1 text-xl font-semibold text-white">Login preview</h2>
+          <h2 className="mt-1 text-xl font-semibold text-white">Sign-in preview</h2>
           <p className="mt-2 text-sm leading-6 text-periwinkle/85">
-            Authentication is intentionally a placeholder. Future login can use Azure Static Web Apps authentication,
-            Microsoft Entra External ID, or another secure provider.
+            Secure sign-in is planned for a later phase. For now, this app stays local and sample-data only.
           </p>
         </div>
       </div>
       <div className="mt-5 grid gap-3">
         <input
-          aria-label="Email placeholder"
+          aria-label="Email"
           disabled
-          placeholder="Email placeholder"
+          placeholder="Email"
           className="min-h-12 rounded-2xl border border-white/10 bg-midnight/50 px-4 text-sm text-white placeholder:text-periwinkle/55"
         />
         <input
-          aria-label="Password placeholder"
+          aria-label="Password"
           disabled
           type="password"
-          placeholder="Password placeholder"
+          placeholder="Password"
           className="min-h-12 rounded-2xl border border-white/10 bg-midnight/50 px-4 text-sm text-white placeholder:text-periwinkle/55"
         />
         <button
@@ -36,7 +35,7 @@ export function LoginPreview() {
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-lavender/25 bg-lavender/15 px-4 text-sm font-semibold text-lavender"
         >
           <ShieldCheck size={18} aria-hidden="true" />
-          Secure sign-in coming later
+          Secure sign-in planned
         </button>
       </div>
     </section>

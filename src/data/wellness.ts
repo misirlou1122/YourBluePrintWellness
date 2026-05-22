@@ -12,7 +12,7 @@ export const dailySnapshot: DailySnapshotItem[] = [
   { label: "Mood", value: "Hopeful", detail: "Gentle morning check-in" },
   { label: "Water intake", value: "56 oz", detail: "Goal: 80 oz" },
   { label: "Medication status", value: "Taken", detail: "Morning routine complete" },
-  { label: "Cycle day", value: "Day 18", detail: "Placeholder estimate" },
+  { label: "Cycle day", value: "Day 18", detail: "Estimated cycle day" },
   { label: "Workout status", value: "Planned", detail: "20 min treadmill" },
   { label: "Upcoming reminder", value: "7:30 PM", detail: "Skincare routine" }
 ];
@@ -24,7 +24,7 @@ export const reportExports: ReportExport[] = [
   },
   {
     title: "Export Lab Trends",
-    description: "Placeholder report for A1C, cholesterol, glucose, blood pressure, and weight trends."
+    description: "Draft report for A1C, cholesterol, glucose, blood pressure, and weight trends."
   },
   {
     title: "Export Medication List",
@@ -90,7 +90,7 @@ export const wellnessTiles: WellnessTile[] = [
       {
         title: "Overview",
         description: "A private snapshot for organizing health history and wellness priorities.",
-        fields: ["Primary focus", "Known conditions placeholder", "Current care team", "Last wellness visit"],
+        fields: ["Primary focus", "Known conditions", "Current care team", "Last wellness visit"],
         cards: [
           { title: "Main goal", body: "Build a clearer picture of patterns over time.", meta: "Sample data only" },
           { title: "Care reminder", body: "Use this space to prepare for visits, not to diagnose symptoms.", meta: "Safety first" }
@@ -100,7 +100,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Symptoms",
         description: "Track symptom notes gently with timing, context, and intensity.",
         fields: ["Symptom", "Date/time", "Intensity", "Possible trigger", "Notes"],
-        cards: [{ title: "Sample symptom note", body: "Mild nausea after dinner. Hydrated and rested.", meta: "Placeholder" }]
+        cards: [{ title: "Sample symptom note", body: "Mild nausea after dinner. Hydrated and rested.", meta: "Sample" }]
       },
       {
         title: "Health goals",
@@ -115,7 +115,7 @@ export const wellnessTiles: WellnessTile[] = [
       },
       {
         title: "Genetics / risk factors",
-        description: "Placeholder only. Future entries can organize risk-factor discussions for a clinician.",
+        description: "Future entries can organize risk-factor discussions for a clinician.",
         fields: ["Risk factor", "Source", "Doctor reviewed?", "Notes"]
       },
       {
@@ -133,7 +133,7 @@ export const wellnessTiles: WellnessTile[] = [
   {
     id: "labs",
     title: "Bloodwork / Labs",
-    subtitle: "Upload placeholders, manual values, trends",
+    subtitle: "Labs, manual values, trends",
     icon: "flask",
     subcategories: [
       "Upload lab PDF",
@@ -179,7 +179,7 @@ export const wellnessTiles: WellnessTile[] = [
     groups: [
       {
         title: "Upload lab PDF",
-        description: "Placeholder upload area for Quest, MyChart, or doctor portal PDFs.",
+        description: "Upload area for future Quest, MyChart, or doctor portal PDFs.",
         fields: ["PDF file", "Lab date", "Ordering doctor", "Notes"]
       },
       {
@@ -232,7 +232,7 @@ export const wellnessTiles: WellnessTile[] = [
           {
             title: "Dr. Sample Rivera",
             body: "Primary care check-in on June 12, 2026 at 10:30 AM.",
-            meta: "Location and phone placeholder"
+            meta: "Location and phone details"
           }
         ]
       },
@@ -256,7 +256,7 @@ export const wellnessTiles: WellnessTile[] = [
       {
         title: "After appointment notes",
         description: "Capture takeaways right after the visit.",
-        fields: ["Summary", "Medication changes placeholder", "Labs ordered", "Next appointment"]
+        fields: ["Summary", "Medication changes", "Labs ordered", "Next appointment"]
       },
       {
         title: "Follow-up tasks",
@@ -284,14 +284,14 @@ export const wellnessTiles: WellnessTile[] = [
     groups: [
       {
         title: "Current medications",
-        description: "Track what you take and when, using safe placeholder language.",
+        description: "Track what you take and when, using safe language.",
         fields: ["Name", "Dosage", "Time of day", "Taken today?", "Notes"],
-        cards: [{ title: "Medication placeholder", body: "Morning dose marked taken today.", meta: "Sample only" }]
+        cards: [{ title: "Medication example", body: "Morning dose marked taken today.", meta: "Sample only" }]
       },
       {
         title: "Supplements",
         description: "Organize supplement timing and notes to review with a professional.",
-        fields: ["Supplement", "Amount", "Time of day", "Reason placeholder", "Notes"]
+        fields: ["Supplement", "Amount", "Time of day", "Reason", "Notes"]
       },
       {
         title: "Missed dose log",
@@ -300,13 +300,13 @@ export const wellnessTiles: WellnessTile[] = [
       },
       {
         title: "Refill reminder",
-        description: "Placeholder reminders for future notifications.",
+        description: "Reminder details for future notifications.",
         fields: ["Medication", "Days remaining", "Pharmacy", "Reminder date"]
       },
       {
         title: "Safety note",
         description: "Check with your doctor or pharmacist for medication interactions.",
-        cards: [{ title: "Alcohol interaction reminder", body: "Placeholder only. Confirm interactions with a licensed professional.", meta: "No medical advice" }]
+        cards: [{ title: "Alcohol interaction reminder", body: "Confirm interactions with a licensed professional.", meta: "No medical advice" }]
       }
     ]
   },
@@ -319,9 +319,9 @@ export const wellnessTiles: WellnessTile[] = [
     groups: [
       {
         title: "Blood pressure",
-        description: "Manual tracking placeholder for readings and context.",
+        description: "Manual tracking for readings and context.",
         fields: ["Systolic", "Diastolic", "Pulse", "Date/time", "Notes"],
-        cards: [{ title: "Sample reading", body: "118/76 with resting heart rate 72.", meta: "Placeholder" }]
+        cards: [{ title: "Sample reading", body: "118/76 with resting heart rate 72.", meta: "Sample" }]
       },
       {
         title: "Oxygen",
@@ -331,7 +331,7 @@ export const wellnessTiles: WellnessTile[] = [
       {
         title: "Weight and BMI",
         description: "Track weight trend gently without turning it into judgment.",
-        fields: ["Weight", "BMI placeholder", "Date", "Notes"]
+        fields: ["Weight", "BMI", "Date", "Notes"]
       },
       {
         title: "Temperature and blood sugar",
@@ -361,7 +361,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Treadmill",
         description: "Track treadmill sessions with simple fields.",
         fields: ["Minutes", "Miles", "Incline", "Speed", "Notes"],
-        cards: [{ title: "Sample treadmill", body: "20 minutes, 1.1 miles, comfortable pace.", meta: "Placeholder" }]
+        cards: [{ title: "Sample treadmill", body: "20 minutes, 1.1 miles, comfortable pace.", meta: "Sample" }]
       },
       {
         title: "Strength",
@@ -386,7 +386,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Meals and snacks",
         description: "A lightweight place to capture what you ate.",
         fields: ["Meal", "Snack", "Caffeine", "Cravings", "Nausea notes", "Food notes"],
-        cards: [{ title: "Sample meal note", body: "Greek yogurt, berries, and water.", meta: "Placeholder" }]
+        cards: [{ title: "Sample meal note", body: "Greek yogurt, berries, and water.", meta: "Sample" }]
       }
     ]
   },
@@ -401,7 +401,7 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Drink log",
         description: "Personal tracking without judgment.",
         fields: ["Date", "Drink type", "Number of drinks", "Context/notes", "Mood before", "Mood after"],
-        cards: [{ title: "Sample entry", body: "One margarita at dinner. Slept lightly.", meta: "Placeholder" }]
+        cards: [{ title: "Sample entry", body: "One margarita at dinner. Slept lightly.", meta: "Sample" }]
       },
       {
         title: "Medication interaction reminder",
@@ -411,7 +411,7 @@ export const wellnessTiles: WellnessTile[] = [
       {
         title: "Trends",
         description: "Future trend views can summarize patterns over time.",
-        cards: [{ title: "Trend preview", body: "No real trend analysis yet. Placeholder cards only.", meta: "Future feature" }]
+        cards: [{ title: "Trend preview", body: "Trend summaries can be added later.", meta: "Future feature" }]
       }
     ]
   },
@@ -425,8 +425,8 @@ export const wellnessTiles: WellnessTile[] = [
       {
         title: "Cycle overview",
         description: "A gentle, non-childish cycle tracking space.",
-        fields: ["Period start date", "Period end date", "Cycle day placeholder", "Notes"],
-        cards: [{ title: "Cycle day", body: "Day 18 placeholder estimate.", meta: "Sample only" }]
+        fields: ["Period start date", "Period end date", "Cycle day", "Notes"],
+        cards: [{ title: "Cycle day", body: "Day 18 estimate.", meta: "Sample only" }]
       },
       {
         title: "Symptoms",
@@ -468,13 +468,13 @@ export const wellnessTiles: WellnessTile[] = [
       },
       {
         title: "PM skincare routine",
-        description: "Routine order placeholder: cleanser -> toner -> serum -> retinol/active -> eye cream -> moisturizer.",
+        description: "Routine order: cleanser -> toner -> serum -> retinol/active -> eye cream -> moisturizer.",
         checklist: ["Cleanser", "Toner", "Serum", "Retinol/active", "Eye cream", "Moisturizer"]
       },
       {
         title: "Products and reactions",
         description: "Track current products, products to try, irritation, and breakouts.",
-        fields: ["Product", "AM or PM", "Reaction", "Breakout note", "Photo placeholder"]
+        fields: ["Product", "AM or PM", "Reaction", "Breakout note", "Photo note"]
       }
     ]
   },
@@ -489,12 +489,12 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Routine log",
         description: "Track wash days, refresh days, and product notes.",
         fields: ["Wash day", "Refresh day", "Products used", "Curl routine", "Scalp notes", "Products to try"],
-        cards: [{ title: "Sample wash day", body: "Gentle shampoo, mask, curl cream, diffuser.", meta: "Placeholder" }]
+        cards: [{ title: "Sample wash day", body: "Gentle shampoo, mask, curl cream, diffuser.", meta: "Sample" }]
       },
       {
         title: "Progress photos",
-        description: "Placeholder only. Real photo storage is not connected yet.",
-        fields: ["Photo type", "Date", "Notes", "Comparison placeholder"]
+        description: "Photo notes are local only. Real photo storage is not connected yet.",
+        fields: ["Photo type", "Date", "Notes", "Comparison notes"]
       }
     ]
   },
@@ -525,7 +525,7 @@ export const wellnessTiles: WellnessTile[] = [
         checklist: ["Breakfast", "Lunch", "Dinner", "Snacks", "Smoothies", "Meal prep", "High protein", "High fiber"]
       },
       {
-        title: "Recipe card placeholder",
+        title: "Recipe card",
         description: "Future recipe cards can include ingredients, directions, nutrition estimates, and notes.",
         fields: ["Ingredients", "Directions", "Protein estimate", "Fiber estimate", "Notes", "Log this meal"]
       }
@@ -540,7 +540,7 @@ export const wellnessTiles: WellnessTile[] = [
     groups: [
       {
         title: "Upload PDF",
-        description: "Placeholder upload UI only. Real storage is intentionally not connected.",
+        description: "Upload UI only. Real storage is intentionally not connected.",
         fields: ["Document type", "File", "Date", "Notes"]
       },
       {
@@ -568,8 +568,8 @@ export const wellnessTiles: WellnessTile[] = [
         fields: ["Note", "Suggested category", "Selected category", "Saved status"]
       },
       {
-        title: "AI suggestion placeholder",
-        description: "Keyword suggestions are local placeholders. Future AI suggestions can use Azure OpenAI through Azure Functions."
+        title: "AI suggestion plan",
+        description: "Keyword suggestions are local now. AI suggestions can be added later."
       }
     ]
   },
@@ -596,7 +596,7 @@ export const wellnessTiles: WellnessTile[] = [
     groups: [
       {
         title: "Reminder types",
-        description: "Create placeholder reminders for future notifications.",
+        description: "Create reminders for future notifications.",
         checklist: [
           "Doctor appointment",
           "Schedule bloodwork",
@@ -623,19 +623,19 @@ export const wellnessTiles: WellnessTile[] = [
   {
     id: "photos",
     title: "Progress Photos",
-    subtitle: "Body, face, skin, hair placeholders",
+    subtitle: "Body, face, skin, hair notes",
     icon: "camera",
     subcategories: ["Body progress photos", "Face progress photos", "Skin progress photos", "Hair progress photos", "Date", "Notes", "Comparison"],
     groups: [
       {
         title: "Photo categories",
-        description: "Placeholder-only layout for private photo tracking.",
+        description: "Private layout for progress photo tracking.",
         checklist: ["Body progress photos", "Face progress photos", "Skin progress photos", "Hair progress photos"]
       },
       {
-        title: "Comparison placeholder",
+        title: "Comparison view",
         description: "Future comparison views can stay private and secure.",
-        fields: ["Photo type", "Date", "Notes", "Comparison placeholder"]
+        fields: ["Photo type", "Date", "Notes", "Comparison notes"]
       }
     ],
     futureNotes: ["Future: store photos securely in Azure Blob Storage with authenticated access only."]

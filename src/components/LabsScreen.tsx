@@ -51,10 +51,10 @@ export function LabsScreen() {
   return (
     <div className="grid gap-4">
       <EmptyState
-        title="Upload lab PDF placeholder"
-        message="Drop-in PDF extraction is not connected yet. Manual lab entries save locally in this browser."
+        title="Upload lab PDF"
+        message="Manual lab entries save locally in this browser. PDF extraction can be added later."
         icon={UploadCloud}
-        actionLabel="Choose lab PDF later"
+        actionLabel="Choose lab PDF"
       />
 
       <div className="grid gap-3">
@@ -77,7 +77,7 @@ export function LabsScreen() {
       <SectionCard
         eyebrow="Manual entry"
         title="Add lab value"
-        description="Manual lab values are saved locally in your browser only."
+        description="Manual lab values save locally in your browser only."
       >
         <div className="grid gap-3">
           <SelectField label="Lab marker" options={markerOptions} value={marker} onChange={setMarker} />

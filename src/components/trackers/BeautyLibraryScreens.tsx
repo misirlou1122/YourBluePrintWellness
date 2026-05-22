@@ -170,8 +170,8 @@ export function RecipesScreen() {
         id: `rec-${Date.now()}`,
         title: title.trim(),
         category,
-        protein: protein || "Estimate placeholder",
-        fiber: fiber || "Estimate placeholder",
+        protein: protein || "Estimate to add",
+        fiber: fiber || "Estimate to add",
         notes: [ingredients, directions].filter(Boolean).join(" | ") || "Local recipe note."
       },
       ...recipes
@@ -284,10 +284,10 @@ export function DocumentsScreen() {
   return (
     <div className="grid gap-4">
       <EmptyState
-        title="Upload PDF/photo placeholder"
-        message="No real storage is connected yet. Document notes save locally, but no files are uploaded."
+        title="Upload PDF/photo"
+        message="Document notes save locally for now. Files are not uploaded yet."
         icon={UploadCloud}
-        actionLabel="Choose file later"
+        actionLabel="Choose file"
       />
 
       <SectionCard title="Document note" description="Document category and notes persist locally.">
@@ -311,7 +311,7 @@ export function DocumentsScreen() {
         </button>
       </SectionCard>
 
-      <SectionCard title="Sample documents" description="Placeholder records only. No real files are stored.">
+      <SectionCard title="Sample documents" description="Sample records only. No real files are stored.">
         <div className="grid gap-3">
           {documents.map((document) => (
             <article key={document.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
@@ -344,7 +344,7 @@ export function ProgressPhotosScreen() {
         id: `photo-${Date.now()}`,
         category,
         date: date || new Date().toISOString().slice(0, 10),
-        notes: notes || "Progress photo placeholder."
+        notes: notes || "Progress photo note."
       },
       ...photos
     ]);
@@ -356,10 +356,10 @@ export function ProgressPhotosScreen() {
   return (
     <div className="grid gap-4">
       <EmptyState
-        title="Progress photo placeholder"
-        message="Body, face, skin, and hair photo flows are UI-only for now. Notes save locally, but no real images are uploaded."
+        title="Progress photo note"
+        message="Body, face, skin, and hair notes save locally. Images are not uploaded yet."
         icon={Camera}
-        actionLabel="Choose photo later"
+        actionLabel="Choose photo"
       />
 
       <SectionCard title="Photo categories" description="Private progress photo categories for a future secure upload flow.">
@@ -382,7 +382,7 @@ export function ProgressPhotosScreen() {
         </button>
       </SectionCard>
 
-      <SectionCard title="Progress photo notes" description="Comparison placeholders without real images.">
+      <SectionCard title="Progress photo notes" description="Comparison notes without real images.">
         <div className="grid gap-3">
           {photos.map((photo) => (
             <article key={photo.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
@@ -398,7 +398,7 @@ export function ProgressPhotosScreen() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Comparison placeholder" description="Future before/after comparisons can live here.">
+      <SectionCard title="Comparison view" description="Future before/after comparisons can live here.">
         <div className="grid grid-cols-2 gap-3">
           <div className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-white/15 bg-midnight/45 text-sm text-periwinkle/70">
             Before

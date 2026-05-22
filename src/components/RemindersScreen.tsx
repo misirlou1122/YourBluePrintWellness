@@ -42,8 +42,8 @@ export function RemindersScreen() {
     const nextReminder: ReminderSample = {
       id: `rem-${Date.now()}`,
       title: title.trim(),
-      date: date || "No date yet",
-      time: time || "No time yet",
+      date: date || "Any date",
+      time: time || "Any time",
       recurrence,
       category,
       notes,

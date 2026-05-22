@@ -38,10 +38,10 @@ export function MedicationsScreen() {
         id: `med-${Date.now()}`,
         name: name.trim(),
         kind,
-        dose: dose || "Dose placeholder",
-        time: time || "Time placeholder",
+        dose: dose || "Dose to add",
+        time: time || "Time to add",
         takenToday,
-        refill: refill || "Refill reminder placeholder",
+        refill: refill || "Refill reminder to add",
         notes: notes || "Check with a doctor or pharmacist for interactions."
       },
       ...items
@@ -250,7 +250,7 @@ export function PeriodScreen() {
 
   return (
     <div className="grid gap-4">
-      <SectionCard title="Cycle entries" description="Locally saved cycle notes and symptom placeholders.">
+      <SectionCard title="Cycle entries" description="Locally saved cycle notes and symptom tracking.">
         <div className="grid gap-3">
           {entries.map((entry, index) => (
             <article key={`${entry.startDate}-${index}`} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
@@ -265,7 +265,7 @@ export function PeriodScreen() {
                 </div>
               </div>
               <p className="mt-3 text-sm leading-6 text-white">
-                Flow: {entry.flow} | Mood: {entry.mood || "Placeholder"} | Energy: {entry.energy || "Placeholder"}
+                Flow: {entry.flow} | Mood: {entry.mood || "Not noted"} | Energy: {entry.energy || "Not noted"}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {entry.symptoms.map((symptom) => (

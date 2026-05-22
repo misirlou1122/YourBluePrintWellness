@@ -147,7 +147,7 @@ export function AlcoholScreen() {
         id: `alc-${Date.now()}`,
         drinkType: drinkType.trim(),
         drinks,
-        date: date || "No date yet",
+        date: date || "Date not set",
         moodBefore,
         moodAfter,
         notes
@@ -207,7 +207,7 @@ export function AlcoholScreen() {
               <p className="mt-1 text-xs text-periwinkle/70">{entry.date}</p>
               <p className="mt-2 text-sm leading-6 text-periwinkle/85">{entry.notes}</p>
               <p className="mt-2 text-xs text-lavender/80">
-                Mood before: {entry.moodBefore || "Placeholder"} | Mood after: {entry.moodAfter || "Placeholder"}
+                Mood before: {entry.moodBefore || "Not noted"} | Mood after: {entry.moodAfter || "Not noted"}
               </p>
             </article>
           ))}
