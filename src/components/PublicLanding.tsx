@@ -21,8 +21,8 @@ export function PublicLanding() {
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             { icon: LockKeyhole, title: "Private dashboard", body: "Sign in before opening your wellness dashboard." },
-            { icon: UploadCloud, title: "Secure uploads next", body: "Labs, documents, and photos can connect to private Azure Blob Storage." },
-            { icon: ShieldCheck, title: "No app passwords", body: "Microsoft handles account login so passwords are never stored in this app." }
+            { icon: UploadCloud, title: "Secure uploads", body: "Save labs, doctor documents, and progress photos privately." },
+            { icon: ShieldCheck, title: "Protected account", body: "Your password is handled by a secure sign-in provider and is never stored in this app." }
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -42,7 +42,7 @@ export function PublicLanding() {
             href="/.auth/login/aad?post_login_redirect_uri=/app"
             className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-5 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
           >
-            Log in with Microsoft
+            Log in or create account
             <ArrowRight size={18} aria-hidden="true" />
           </a>
           <a
@@ -54,7 +54,7 @@ export function PublicLanding() {
         </div>
 
         <p className="text-xs leading-5 text-periwinkle/68">
-          On Azure, opening the dashboard requires Microsoft sign-in. In local development, the dashboard opens directly for testing.
+          Your private dashboard is available after secure sign-in. Local development opens directly for testing.
         </p>
       </section>
       <MedicalDisclaimer />

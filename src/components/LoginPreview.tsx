@@ -40,10 +40,10 @@ export function LoginPreview() {
           <LockKeyhole size={22} aria-hidden="true" />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Optional sign-in</p>
-          <h2 className="mt-1 text-xl font-semibold text-white">Azure login</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Account access</p>
+          <h2 className="mt-1 text-xl font-semibold text-white">Secure sign-in</h2>
           <p className="mt-2 text-sm leading-6 text-periwinkle/85">
-            Your private dashboard is protected through Azure Static Web Apps. Microsoft handles the username and password securely.
+            Sign in to keep your wellness dashboard private. Your password is handled securely and is never stored in this app.
           </p>
         </div>
       </div>
@@ -56,8 +56,8 @@ export function LoginPreview() {
               {principal
                 ? `Signed in as ${principal.userDetails ?? "Microsoft account"}${principal.identityProvider ? ` with ${principal.identityProvider}` : ""}.`
                 : checkedAuth
-                  ? "Not signed in locally. Azure will show your status after deployment login."
-                  : "Checking Azure sign-in status..."}
+                  ? "Not signed in on this device."
+                  : "Checking sign-in status..."}
             </p>
           </div>
         </div>
@@ -68,7 +68,7 @@ export function LoginPreview() {
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
         >
           <LogIn size={18} aria-hidden="true" />
-          Login with Microsoft
+          Log in or create account
         </a>
         <a
           href="/.auth/logout?post_logout_redirect_uri=/"

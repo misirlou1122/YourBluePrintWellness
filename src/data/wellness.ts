@@ -254,9 +254,9 @@ export const wellnessTiles: WellnessTile[] = [
       }
     ],
     futureNotes: [
-      "Future: upload lab PDFs to Azure Blob Storage.",
-      "Future: use Azure AI Document Intelligence to extract A1C, cholesterol, LDL, HDL, triglycerides, glucose, and related values.",
-      "Future: store reviewed lab values in Azure SQL Database through Azure Functions."
+      "Future: upload lab PDFs securely.",
+      "Future: read lab PDFs and organize common values after you review them.",
+      "Future: save reviewed lab values to your private account."
     ]
   },
   {
@@ -820,8 +820,8 @@ export const wellnessTiles: WellnessTile[] = [
       }
     ],
     futureNotes: [
-      "Future: store private uploads in Azure Blob Storage.",
-      "Future: protect access with Azure Static Web Apps authentication or Microsoft Entra External ID.",
+      "Future: save private uploads securely.",
+      "Future: keep documents available only inside your account.",
       "Future: never expose uploaded health documents publicly."
     ]
   },
@@ -908,6 +908,6 @@ export const wellnessTiles: WellnessTile[] = [
         fields: ["Photo type", "Date", "Notes", "Comparison notes"]
       }
     ],
-    futureNotes: ["Future: store photos securely in Azure Blob Storage with authenticated access only."]
+    futureNotes: ["Future: save photos securely inside your private account."]
   }
 ];
