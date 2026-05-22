@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Your Blueprint Wellness icon">
+  <defs>
+    <linearGradient id="bg" x1="88" x2="424" y1="48" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#07143f"/>
+      <stop offset="0.55" stop-color="#6f79ff"/>
+      <stop offset="1" stop-color="#d39cff"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(258 228) rotate(90) scale(206)">
+      <stop stop-color="#d8f7ff"/>
+      <stop offset="1" stop-color="#d8f7ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="#05081d"/>
+  <rect x="58" y="58" width="396" height="396" rx="104" fill="url(#bg)" opacity="0.94"/>
+  <rect x="58" y="58" width="396" height="396" rx="104" fill="url(#shine)" opacity="0.5"/>
+  <path d="M256 132c58 45 94 90 94 144 0 58-41 104-94 104s-94-46-94-104c0-54 36-99 94-144Z" fill="#05081d" opacity="0.78"/>
+  <path d="M256 176c38 32 62 64 62 100 0 37-27 66-62 66s-62-29-62-66c0-36 24-68 62-100Z" fill="#d8f7ff" opacity="0.92"/>
+  <path d="M256 205c24 22 38 43 38 69 0 23-16 41-38 41s-38-18-38-41c0-26 14-47 38-69Z" fill="#d39cff" opacity="0.92"/>
+</svg>

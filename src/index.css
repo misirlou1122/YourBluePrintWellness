@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background: #05081d;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(211, 156, 255, 0.35);
+  color: #fff;
+}
+
+@layer base {
+  input[type="checkbox"] {
+    accent-color: #d39cff;
+  }
+}
+
+@layer components {
+  .luxury-scrollbar {
+    scrollbar-color: rgba(211, 156, 255, 0.45) transparent;
+  }
+}
