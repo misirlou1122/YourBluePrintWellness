@@ -1,4 +1,4 @@
-import type { DailySnapshotItem, ProfileSummary, ReportExport, WellnessTile } from "../types/wellness";
+import type { ProfileSummary, ReportExport, WellnessTile } from "../types/wellness";
 
 export const profileSummary: ProfileSummary = {
   name: "Your Profile",
@@ -7,15 +7,6 @@ export const profileSummary: ProfileSummary = {
   sex: "Female",
   mainGoals: ["Lower stress", "Support labs", "Build strength", "Stay consistent"]
 };
-
-export const dailySnapshot: DailySnapshotItem[] = [
-  { label: "Mood", value: "Hopeful", detail: "Gentle morning check-in" },
-  { label: "Water intake", value: "56 oz", detail: "Goal: 80 oz" },
-  { label: "Medication status", value: "Taken", detail: "Morning routine complete" },
-  { label: "Cycle day", value: "Day 18", detail: "Estimated cycle day" },
-  { label: "Workout status", value: "Planned", detail: "20 min treadmill" },
-  { label: "Upcoming reminder", value: "7:30 PM", detail: "Skincare routine" }
-];
 
 export const reportExports: ReportExport[] = [
   {
@@ -642,7 +633,7 @@ export const wellnessTiles: WellnessTile[] = [
     title: "Prostate Health Notes",
     subtitle: "PSA notes, questions, follow-up",
     icon: "heart",
-    subcategories: ["PSA lab placeholder", "Symptoms notes", "Doctor questions", "Follow-up", "Notes"],
+    subcategories: ["PSA lab", "Symptoms notes", "Doctor questions", "Follow-up", "Notes"],
     groups: [
       {
         title: "Prostate health note",

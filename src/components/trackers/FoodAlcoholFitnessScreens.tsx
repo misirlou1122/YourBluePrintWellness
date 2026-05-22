@@ -6,6 +6,7 @@ import { FormField, TextAreaField } from "../FormField";
 import { ProgressBar } from "../ProgressBar";
 import { SectionCard } from "../SectionCard";
 import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
+import { mergeDailyTracker, todayKey, type DailyTrackerMap } from "../../lib/dailyTracking";
 
 interface FoodLog {
   id: string;
@@ -34,6 +35,7 @@ interface AlcoholLog {
 
 interface FitnessLog {
   id: string;
+  date: string;
   plannedWorkout: string;
   completedWorkout: string;
   cardio: string;
@@ -73,6 +75,7 @@ const emptyAlcohol: Omit<AlcoholLog, "id"> = {
 };
 
 const emptyFitness: Omit<FitnessLog, "id"> = {
+  date: "",
   plannedWorkout: "",
   completedWorkout: "",
   cardio: "",
@@ -100,6 +103,7 @@ function percent(value: string, goal: number) {
 export function FoodHydrationScreen() {
   const { items, add, update, remove } = useLocalCollection<FoodLog>("ybw.foodLogs", [], "food");
   const [draft, setDraft] = useLocalStorage("ybw.foodDraft", emptyFood);
+  const [, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const [editingId, setEditingId] = useState<string | null>(null);
   const latest = items[0];
 
@@ -115,6 +119,14 @@ export function FoodHydrationScreen() {
     const entry = { ...draft, date: draft.date || new Date().toISOString().slice(0, 10) };
     if (editingId) update(editingId, entry);
     else add(entry);
+    setDailyTrackers((current) =>
+      mergeDailyTracker(current, entry.date, {
+        water: Number.parseFloat(entry.waterAmount) || 0,
+        protein: Number.parseFloat(entry.protein) || 0,
+        fiber: Number.parseFloat(entry.fiber) || 0,
+        foodNotes: [entry.meals, entry.snacks, entry.notes].filter(Boolean).join(" | ") || "none logged"
+      })
+    );
     reset();
   };
 
@@ -183,6 +195,7 @@ export function FoodHydrationScreen() {
 export function AlcoholScreen() {
   const { items, add, update, remove } = useLocalCollection<AlcoholLog>("ybw.alcohol", [], "alcohol");
   const [draft, setDraft] = useLocalStorage("ybw.alcoholDraft", emptyAlcohol);
+  const [, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const [editingId, setEditingId] = useState<string | null>(null);
   const setField = (field: keyof typeof emptyAlcohol, value: string) => setDraft((current) => ({ ...current, [field]: value }));
   const reset = () => { setDraft(emptyAlcohol); setEditingId(null); };
@@ -191,6 +204,11 @@ export function AlcoholScreen() {
     const entry = { ...draft, date: draft.date || new Date().toISOString().slice(0, 10) };
     if (editingId) update(editingId, entry);
     else add(entry);
+    setDailyTrackers((current) =>
+      mergeDailyTracker(current, entry.date, {
+        alcohol: `${entry.drinks || "1"} ${Number(entry.drinks) === 1 ? "drink" : "drinks"} logged`
+      })
+    );
     reset();
   };
 
@@ -246,13 +264,20 @@ export function AlcoholScreen() {
 export function FitnessScreen() {
   const { items, add, update, remove, toggleComplete } = useLocalCollection<FitnessLog>("ybw.fitness", [], "fitness");
   const [draft, setDraft] = useLocalStorage("ybw.fitnessDraft", emptyFitness);
+  const [, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const [editingId, setEditingId] = useState<string | null>(null);
   const setField = (field: keyof typeof emptyFitness, value: string | boolean) => setDraft((current) => ({ ...current, [field]: value }));
   const reset = () => { setDraft(emptyFitness); setEditingId(null); };
   const save = () => {
     if (!Object.values(draft).some((value) => String(value).trim())) return;
-    if (editingId) update(editingId, draft);
-    else add(draft);
+    const entry = { ...draft, date: draft.date || todayKey() };
+    if (editingId) update(editingId, entry);
+    else add(entry);
+    setDailyTrackers((current) =>
+      mergeDailyTracker(current, entry.date, {
+        workoutStatus: entry.completed ? entry.completedWorkout || entry.plannedWorkout || "completed" : entry.plannedWorkout || "planned"
+      })
+    );
     reset();
   };
 
@@ -260,6 +285,7 @@ export function FitnessScreen() {
     <div className="grid gap-4">
       <SectionCard eyebrow={editingId ? "Edit workout" : "Add workout"} title="Fitness tracker">
         <div className="grid gap-3">
+          <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
           <FormField label="Planned workout" value={draft.plannedWorkout} onChange={(value) => setField("plannedWorkout", value)} />
           <FormField label="Completed workout" value={draft.completedWorkout} onChange={(value) => setField("completedWorkout", value)} />
           <FormField label="Cardio" value={draft.cardio} onChange={(value) => setField("cardio", value)} />
@@ -293,9 +319,23 @@ export function FitnessScreen() {
               <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <label className="flex flex-1 items-start gap-3 text-sm text-white">
-                    <input type="checkbox" checked={Boolean(entry.completed)} onChange={() => toggleComplete(entry.id)} className="mt-1 size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40" />
+                    <input
+                      type="checkbox"
+                      checked={Boolean(entry.completed)}
+                      onChange={() => {
+                        const nextCompleted = !entry.completed;
+                        toggleComplete(entry.id);
+                        setDailyTrackers((current) =>
+                          mergeDailyTracker(current, entry.date || todayKey(), {
+                            workoutStatus: nextCompleted ? entry.completedWorkout || entry.plannedWorkout || "completed" : entry.plannedWorkout || "planned"
+                          })
+                        );
+                      }}
+                      className="mt-1 size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40"
+                    />
                     <span>
                       <span className="block font-semibold">{entry.completedWorkout || entry.plannedWorkout || entry.cardio || "Workout"}</span>
+                      <span className="mt-1 block text-xs text-lavender/80">{entry.date || "No date"}</span>
                       <span className="mt-1 block text-periwinkle/85">
                         {[entry.treadmillMinutes && `${entry.treadmillMinutes} min treadmill`, entry.strengthExercise, entry.notes].filter(Boolean).join(" | ")}
                       </span>

@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import type { WellnessProfileId } from "../data/wellnessProfiles";
 import type { FeatureGroup, TileId, WellnessTile } from "../types/wellness";
-import { useLocalStorage } from "../lib/useLocalStorage";
+import { createId, useLocalStorage } from "../lib/useLocalStorage";
 import { AppointmentsScreen } from "./AppointmentsScreen";
 import { BodyMeasurementsScreen } from "./BodyMeasurementsScreen";
 import { Checklist } from "./Checklist";
 import { DetailHeader } from "./DetailHeader";
+import { EntryActions } from "./EntryActions";
 import { FormField } from "./FormField";
 import { LabsScreen } from "./LabsScreen";
 import { ProfileSettingsScreen } from "./ProfileSettingsScreen";
@@ -37,13 +38,30 @@ function fallbackGroup(title: string): FeatureGroup {
   };
 }
 
+type GenericEntry = Record<string, string> & {
+  id: string;
+  savedAt: string;
+};
+
 function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: string }) {
   const fields = group.fields?.length ? group.fields : ["Title", "Date", "Notes"];
   const [values, setValues] = useLocalStorage<Record<string, string>>(`${storageKey}.draft`, {});
-  const [entries, setEntries] = useLocalStorage<Record<string, string>[]>(storageKey, []);
+  const [entries, setEntries] = useLocalStorage<GenericEntry[]>(storageKey, []);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (entries.some((entry) => !entry.id)) {
+      setEntries((current) => current.map((entry) => (entry.id ? entry : { ...entry, id: createId("entry") })));
+    }
+  }, [entries, setEntries]);
 
   const updateValue = (field: string, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
+  };
+
+  const resetEntry = () => {
+    setValues({});
+    setEditingId(null);
   };
 
   const saveEntry = () => {
@@ -51,8 +69,19 @@ function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: st
       return;
     }
 
-    setEntries([{ ...values, savedAt: new Date().toLocaleString() }, ...entries]);
-    setValues({});
+    if (editingId) {
+      setEntries((current) => current.map((entry) => (entry.id === editingId ? { ...entry, ...values, savedAt: new Date().toLocaleString() } : entry)));
+    } else {
+      setEntries([{ ...values, id: createId("entry"), savedAt: new Date().toLocaleString() }, ...entries]);
+    }
+
+    resetEntry();
+  };
+
+  const startEdit = (entry: GenericEntry) => {
+    const { id: _id, savedAt: _savedAt, ...rest } = entry;
+    setValues(rest);
+    setEditingId(entry.id);
   };
 
   return (
@@ -71,20 +100,34 @@ function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: st
         onClick={saveEntry}
         className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
       >
-        Save entry locally
+        {editingId ? "Save changes" : "Save entry locally"}
       </button>
+      {editingId ? (
+        <button
+          type="button"
+          onClick={resetEntry}
+          className="mt-3 inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85"
+        >
+          Cancel edit
+        </button>
+      ) : null}
       {entries.length ? (
         <div className="mt-4 grid gap-3">
-          {entries.map((entry, index) => (
-            <article key={`${entry.savedAt}-${index}`} className="rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm text-periwinkle/85">
-              <p className="mb-2 text-xs text-lavender/80">{entry.savedAt}</p>
-              {fields.map((field) =>
-                entry[field] ? (
-                  <p key={field} className="leading-6">
-                    <span className="text-white">{field}:</span> {entry[field]}
-                  </p>
-                ) : null
-              )}
+          {entries.map((entry) => (
+            <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm text-periwinkle/85">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="mb-2 text-xs text-lavender/80">{entry.savedAt}</p>
+                  {fields.map((field) =>
+                    entry[field] ? (
+                      <p key={field} className="leading-6">
+                        <span className="text-white">{field}:</span> {entry[field]}
+                      </p>
+                    ) : null
+                  )}
+                </div>
+                <EntryActions onEdit={() => startEdit(entry)} onDelete={() => setEntries((current) => current.filter((item) => item.id !== entry.id))} />
+              </div>
             </article>
           ))}
         </div>

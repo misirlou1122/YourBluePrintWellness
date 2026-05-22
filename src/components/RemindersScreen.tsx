@@ -6,6 +6,7 @@ import { FormField, SelectField, TextAreaField } from "./FormField";
 import { ReminderCard } from "./ReminderCard";
 import { SectionCard } from "./SectionCard";
 import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
+import { mergeDailyTracker, todayKey, type DailyTrackerMap } from "../lib/dailyTracking";
 
 const reminderCategories = [
   "Doctor appointment",
@@ -49,7 +50,9 @@ const emptyDraft: Omit<ReminderEntry, "id"> = {
 export function RemindersScreen() {
   const { items, add, update, remove, toggleComplete } = useLocalCollection<ReminderEntry>("ybw.reminders", [], "reminder");
   const [draft, setDraft] = useLocalStorage("ybw.reminderDraft", emptyDraft);
+  const [, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const [editingId, setEditingId] = useState<string | null>(null);
+  const today = todayKey();
 
   const setField = (field: keyof typeof emptyDraft, value: string | boolean) => {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -85,6 +88,20 @@ export function RemindersScreen() {
     const { id: _id, ...rest } = entry;
     setDraft(rest);
     setEditingId(entry.id);
+  };
+
+  const updateDailyReminderStatus = (reminder: ReminderEntry, nextCompleted: boolean) => {
+    const nextItems = items.map((item) => (item.id === reminder.id ? { ...item, completed: nextCompleted } : item));
+    const dueToday = nextItems.filter((item) => item.date === today || item.recurrence === "daily");
+    const completedToday = dueToday.filter((item) => item.completed).length;
+    const status = dueToday.length ? `${completedToday} of ${dueToday.length} complete` : "not checked";
+    setDailyTrackers((current) => mergeDailyTracker(current, today, { reminderCompletion: status }));
+  };
+
+  const toggleReminder = (reminder: ReminderEntry) => {
+    const nextCompleted = !reminder.completed;
+    toggleComplete(reminder.id);
+    updateDailyReminderStatus(reminder, nextCompleted);
   };
 
   const upcoming = items.filter((item) => !item.completed);
@@ -138,7 +155,7 @@ export function RemindersScreen() {
           <div className="grid gap-3">
             {upcoming.map((reminder) => (
               <div key={reminder.id} className="grid gap-2">
-                <button type="button" onClick={() => toggleComplete(reminder.id)} className="text-left">
+                <button type="button" onClick={() => toggleReminder(reminder)} className="text-left">
                   <ReminderCard {...reminder} />
                 </button>
                 <EntryActions onEdit={() => startEdit(reminder)} onDelete={() => remove(reminder.id)} />
@@ -155,7 +172,7 @@ export function RemindersScreen() {
           <div className="grid gap-3">
             {completed.map((reminder) => (
               <div key={reminder.id} className="grid gap-2">
-                <button type="button" onClick={() => toggleComplete(reminder.id)} className="text-left">
+                <button type="button" onClick={() => toggleReminder(reminder)} className="text-left">
                   <ReminderCard {...reminder} />
                 </button>
                 <EntryActions onEdit={() => startEdit(reminder)} onDelete={() => remove(reminder.id)} />

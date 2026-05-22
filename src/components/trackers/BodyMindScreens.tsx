@@ -4,6 +4,7 @@ import { EmptyState } from "../EmptyState";
 import { FormField, SelectField, TextAreaField } from "../FormField";
 import { SectionCard } from "../SectionCard";
 import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
+import { mergeDailyTracker, todayKey, type DailyTrackerMap } from "../../lib/dailyTracking";
 
 interface MedicationEntry {
   id: string;
@@ -12,6 +13,7 @@ interface MedicationEntry {
   dose: string;
   timeOfDay: string;
   takenToday: boolean;
+  takenDates: Record<string, boolean>;
   sideEffects: string;
   refillReminderDate: string;
 }
@@ -56,6 +58,7 @@ const emptyMedication: Omit<MedicationEntry, "id"> = {
   dose: "",
   timeOfDay: "",
   takenToday: false,
+  takenDates: {},
   sideEffects: "",
   refillReminderDate: ""
 };
@@ -118,7 +121,35 @@ function useEditableCollection<T extends { id: string }, D extends Omit<T, "id">
 
 export function MedicationsScreen() {
   const store = useEditableCollection<MedicationEntry, Omit<MedicationEntry, "id">>("ybw.medications", "ybw.medicationDraft", emptyMedication, "med");
+  const [, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
+  const today = todayKey();
   const setField = (field: keyof typeof emptyMedication, value: string | boolean) => store.setDraft((current) => ({ ...current, [field]: value }));
+  const markMedicationStatus = (items: MedicationEntry[], changedId?: string, changedValue?: boolean) => {
+    const anyTaken = Boolean(!changedId && changedValue) || items.some((item) => (item.id === changedId ? changedValue : item.takenDates?.[today]) === true);
+    setDailyTrackers((current) => mergeDailyTracker(current, today, { medicationStatus: anyTaken ? "taken" : "not taken" }));
+  };
+  const saveMedication = () => {
+    if (!store.draft.name.trim()) return;
+    const existing = store.items.find((item) => item.id === store.editingId);
+    const nextDraft = {
+      ...store.draft,
+      takenDates: {
+        ...(existing?.takenDates ?? store.draft.takenDates ?? {}),
+        [today]: Boolean(store.draft.takenToday)
+      }
+    };
+
+    store.save(() => true, () => nextDraft);
+    markMedicationStatus(store.items, store.editingId ?? undefined, Boolean(store.draft.takenToday));
+  };
+  const toggleTakenToday = (entry: MedicationEntry) => {
+    const nextTaken = !entry.takenDates?.[today];
+    store.update(entry.id, {
+      takenToday: nextTaken,
+      takenDates: { ...(entry.takenDates ?? {}), [today]: nextTaken }
+    });
+    markMedicationStatus(store.items, entry.id, nextTaken);
+  };
 
   return (
     <div className="grid gap-4">
@@ -143,7 +174,7 @@ export function MedicationsScreen() {
           <TextAreaField label="Side effects notes" value={store.draft.sideEffects} onChange={(value) => setField("sideEffects", value)} />
           <FormField label="Refill reminder date" type="date" value={store.draft.refillReminderDate} onChange={(value) => setField("refillReminderDate", value)} />
         </div>
-        <button type="button" onClick={() => store.save((draft) => Boolean(draft.name.trim()))} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
+        <button type="button" onClick={saveMedication} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Add item"}
         </button>
@@ -155,7 +186,7 @@ export function MedicationsScreen() {
               <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <label className="flex flex-1 items-start gap-3 text-sm text-white">
-                    <input type="checkbox" checked={entry.takenToday} onChange={() => store.update(entry.id, { takenToday: !entry.takenToday })} className="mt-1 size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40" />
+                    <input type="checkbox" checked={Boolean(entry.takenDates?.[today])} onChange={() => toggleTakenToday(entry)} className="mt-1 size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40" />
                     <span>
                       <span className="block font-semibold">{entry.name}</span>
                   <span className="mt-1 block text-periwinkle/85">{entry.type} | {entry.dose} | {entry.timeOfDay}</span>
@@ -262,7 +293,15 @@ export function PeriodScreen() {
 
 export function MoodScreen() {
   const store = useEditableCollection<MoodEntry, Omit<MoodEntry, "id">>("ybw.mood", "ybw.moodDraft", emptyMood, "mood");
+  const [, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const setField = (field: keyof typeof emptyMood, value: string | number) => store.setDraft((current) => ({ ...current, [field]: value }));
+  const saveMood = () => {
+    if (!store.draft.mood && !store.draft.note) return;
+    const dateKey = store.draft.dateTime ? store.draft.dateTime.slice(0, 10) : todayKey();
+    const nextDraft = { ...store.draft, dateTime: store.draft.dateTime || new Date().toLocaleString() };
+    store.save(() => true, () => nextDraft);
+    setDailyTrackers((current) => mergeDailyTracker(current, dateKey, { mood: nextDraft.mood }));
+  };
   return (
     <div className="grid gap-4">
       <SectionCard title="Mood check-in">
@@ -281,7 +320,7 @@ export function MoodScreen() {
           <TextAreaField label="Short note" value={store.draft.note} onChange={(value) => setField("note", value)} />
           <FormField label="Date/time" type="datetime-local" value={store.draft.dateTime} onChange={(value) => setField("dateTime", value)} />
         </div>
-        <button type="button" onClick={() => store.save((draft) => Boolean(draft.mood || draft.note), (draft) => ({ ...draft, dateTime: draft.dateTime || new Date().toLocaleString() }))} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
+        <button type="button" onClick={saveMood} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Save mood check-in"}
         </button>

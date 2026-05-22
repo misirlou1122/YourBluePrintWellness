@@ -1,12 +1,16 @@
-import { ShieldCheck, Sparkles } from "lucide-react";
-import { dailySnapshot, profileSummary } from "../data/wellness";
+import { useEffect } from "react";
+import { RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
+import { profileSummary } from "../data/wellness";
 import { getProfileLabel, type WellnessProfileId } from "../data/wellnessProfiles";
 import type { TileId, WellnessTile } from "../types/wellness";
 import { useLocalStorage } from "../lib/useLocalStorage";
+import { getDailyTracker, mergeDailyTracker, resetDailyTracker, todayKey, type DailyTrackerEntry, type DailyTrackerMap } from "../lib/dailyTracking";
+import { FormField } from "./FormField";
 import { LoginPreview } from "./LoginPreview";
 import { ProgressBar } from "./ProgressBar";
 import { ProgressRing } from "./ProgressRing";
 import { ReportsPanel } from "./ReportsPanel";
+import { SectionCard } from "./SectionCard";
 import { TileCard } from "./TileCard";
 import { WellnessProfileSelector } from "./WellnessProfileSelector";
 
@@ -41,11 +45,48 @@ export function HomeDashboard({
   onCustomTileIdsChange
 }: HomeDashboardProps) {
   const [measurements] = useLocalStorage<BodyMeasurementSummary[]>("ybw.bodyMeasurements", []);
+  const [dailyTrackers, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const visibleTileIds = new Set(tiles.map((tile) => tile.id));
   const latestMeasurement = [...measurements].sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
-  const snapshotItems = dailySnapshot.filter(
-    (item) => item.label !== "Cycle day" || selectedProfile === "female" || (selectedProfile === "custom" && customTileIds.includes("period"))
-  );
+  const today = todayKey();
+  const todayTracker = getDailyTracker(dailyTrackers, today);
+  const dailyHistory = Object.values(dailyTrackers)
+    .filter((entry) => entry.date !== today)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 7);
+  const showCycle = selectedProfile === "female" || (selectedProfile === "custom" && customTileIds.includes("period"));
+
+  useEffect(() => {
+    if (!dailyTrackers[today]) {
+      setDailyTrackers((current) => mergeDailyTracker(current, today, {}));
+    }
+  }, [dailyTrackers, setDailyTrackers, today]);
+
+  const updateToday = (updates: Partial<DailyTrackerEntry>) => {
+    setDailyTrackers((current) => mergeDailyTracker(current, today, updates));
+  };
+
+  const setNumberField = (field: "water" | "protein" | "fiber", value: string) => {
+    updateToday({ [field]: Number.parseFloat(value) || 0 });
+  };
+
+  const resetToday = () => {
+    if (window.confirm("Reset today's daily tracker values? This will not delete saved entries or daily history.")) {
+      setDailyTrackers((current) => resetDailyTracker(current, today));
+    }
+  };
+
+  const snapshotItems = [
+    { label: "Date", value: today, detail: "Daily values reset by date" },
+    { label: "Mood", value: todayTracker.mood, detail: todayTracker.mood === "not checked in" ? "Add a mood check-in" : "Mood checked in" },
+    { label: "Water intake", value: `${todayTracker.water} oz`, detail: "Goal: 80 oz" },
+    { label: "Medication status", value: todayTracker.medicationStatus, detail: todayTracker.medicationStatus === "taken" ? "Marked for today" : "Not marked yet" },
+    ...(showCycle ? [{ label: "Cycle day", value: "Add note", detail: "Track in Period Tracker" }] : []),
+    { label: "Workout status", value: todayTracker.workoutStatus, detail: todayTracker.workoutStatus === "not logged" ? "No workout logged" : "Movement logged" },
+    { label: "Food", value: todayTracker.foodNotes, detail: "Today only" },
+    { label: "Alcohol", value: todayTracker.alcohol, detail: "Today only" },
+    { label: "Reminders", value: todayTracker.reminderCompletion, detail: "Today only" }
+  ];
 
   return (
     <main className="grid gap-5">
@@ -109,13 +150,62 @@ export function HomeDashboard({
       </section>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <ProgressRing label="Daily consistency" value={72} caption="A gentle view of habits and reminders." />
+        <ProgressRing label="Daily consistency" value={todayTracker.dailyConsistency} caption={`${today}: today's daily tracker`} />
         <div className="grid gap-3 sm:col-span-2">
-          <ProgressBar label="Water" value={70} detail="56 oz of 80 oz target" tone="aqua" />
-          <ProgressBar label="Protein" value={62} detail="68 g of 110 g target" tone="lavender" />
-          <ProgressBar label="Fiber" value={48} detail="12 g of 25 g target" tone="blue" />
+          <ProgressBar label="Water" value={Math.min(100, Math.round((todayTracker.water / 80) * 100))} detail={`${todayTracker.water} oz of 80 oz target`} tone="aqua" />
+          <ProgressBar label="Protein" value={Math.min(100, Math.round((todayTracker.protein / 110) * 100))} detail={`${todayTracker.protein} g of 110 g target`} tone="lavender" />
+          <ProgressBar label="Fiber" value={Math.min(100, Math.round((todayTracker.fiber / 25) * 100))} detail={`${todayTracker.fiber} g of 25 g target`} tone="blue" />
         </div>
       </div>
+
+      <SectionCard title="Today's daily trackers" description="These values are stored by date and reset automatically when a new day starts.">
+        <div className="grid gap-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <FormField label="Water" type="number" value={String(todayTracker.water)} onChange={(value) => setNumberField("water", value)} />
+            <FormField label="Protein" type="number" value={String(todayTracker.protein)} onChange={(value) => setNumberField("protein", value)} />
+            <FormField label="Fiber" type="number" value={String(todayTracker.fiber)} onChange={(value) => setNumberField("fiber", value)} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Mood" value={todayTracker.mood} onChange={(value) => updateToday({ mood: value || "not checked in" })} />
+            <FormField label="Medication status" value={todayTracker.medicationStatus} onChange={(value) => updateToday({ medicationStatus: value.toLowerCase().includes("taken") ? "taken" : "not taken" })} />
+            <FormField label="Workout status" value={todayTracker.workoutStatus} onChange={(value) => updateToday({ workoutStatus: value || "not logged" })} />
+            <FormField label="Alcohol" value={todayTracker.alcohol} onChange={(value) => updateToday({ alcohol: value || "none logged" })} />
+            <FormField label="Food notes" value={todayTracker.foodNotes} onChange={(value) => updateToday({ foodNotes: value || "none logged" })} />
+            <FormField label="Reminder completion" value={todayTracker.reminderCompletion} onChange={(value) => updateToday({ reminderCompletion: value || "not checked" })} />
+          </div>
+          <button
+            type="button"
+            onClick={resetToday}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-lavender/25 bg-lavender/10 px-4 text-sm font-semibold text-lavender"
+          >
+            <RotateCcw size={18} aria-hidden="true" />
+            Reset Today
+          </button>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Daily History" description="Previous daily tracker entries are kept by date.">
+        {dailyHistory.length ? (
+          <div className="grid gap-3">
+            {dailyHistory.map((entry) => (
+              <article key={entry.date} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">{entry.date}</h3>
+                    <p className="mt-1 text-xs text-lavender/80">{entry.dailyConsistency}% daily consistency</p>
+                  </div>
+                  <p className="text-xs text-periwinkle/70">{entry.medicationStatus}</p>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-periwinkle/85">
+                  Water {entry.water} oz | Protein {entry.protein} g | Fiber {entry.fiber} g | Mood {entry.mood} | Workout {entry.workoutStatus}
+                </p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-2xl border border-white/10 bg-midnight/45 p-4 text-sm text-periwinkle/85">No daily history yet. Tomorrow, today's tracker will appear here.</p>
+        )}
+      </SectionCard>
 
       {visibleTileIds.has("measurements") && latestMeasurement ? (
         <section className="rounded-[1.75rem] border border-ice/20 bg-ice/10 p-4 shadow-ice">
