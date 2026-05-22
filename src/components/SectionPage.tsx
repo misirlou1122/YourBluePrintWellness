@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Plus, UploadCloud } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Plus, UploadCloud } from "lucide-react";
 import type { FeatureGroup, TileId, WellnessTile } from "../types/wellness";
+import { AppointmentsScreen } from "./AppointmentsScreen";
 import { Checklist } from "./Checklist";
 import { DetailHeader } from "./DetailHeader";
 import { EmptyState } from "./EmptyState";
 import { FormField } from "./FormField";
+import { LabsScreen } from "./LabsScreen";
 import { ProgressBar } from "./ProgressBar";
 import { QuickNotes } from "./QuickNotes";
 import { SectionCard } from "./SectionCard";
-import { TrendCard } from "./TrendCard";
 
 interface SectionPageProps {
   tile: WellnessTile;
@@ -59,32 +60,17 @@ function FieldEntry({ group }: { group: FeatureGroup }) {
   );
 }
 
-function MetricCards({ tile }: { tile: WellnessTile }) {
-  if (!tile.metrics?.length) {
-    return null;
+function TileSpecificContent({ tile }: { tile: WellnessTile }) {
+  if (tile.id === "labs") {
+    return <LabsScreen />;
   }
 
-  return (
-    <div className="grid gap-3">
-      {tile.metrics.map((metric) => (
-        <TrendCard key={metric.label} metric={metric} />
-      ))}
-    </div>
-  );
-}
+  if (tile.id === "appointments") {
+    return <AppointmentsScreen />;
+  }
 
-function TileSpecificContent({ tile }: { tile: WellnessTile }) {
   if (tile.id === "notes") {
     return <QuickNotes />;
-  }
-
-  if (tile.id === "labs") {
-    return (
-      <div className="grid gap-4">
-        <UploadPlaceholder kind="labs" />
-        <MetricCards tile={tile} />
-      </div>
-    );
   }
 
   if (tile.id === "food") {
@@ -99,24 +85,6 @@ function TileSpecificContent({ tile }: { tile: WellnessTile }) {
 
   if (tile.id === "documents" || tile.id === "photos") {
     return <UploadPlaceholder kind={tile.id === "photos" ? "photos" : "documents"} />;
-  }
-
-  if (tile.id === "appointments") {
-    return (
-      <SectionCard className="border-lavender/20 bg-lavender/10 shadow-lavender">
-        <div className="flex items-center gap-2 text-lavender">
-          <CalendarDays size={18} aria-hidden="true" />
-          <h3 className="font-semibold text-white">Appointment summary preview</h3>
-        </div>
-        <div className="mt-4 grid gap-2 text-sm text-periwinkle/85">
-          <p>Doctor: Dr. Sample Rivera</p>
-          <p>Specialty: Primary care</p>
-          <p>Date/time: June 12, 2026 at 10:30 AM</p>
-          <p>Location: Placeholder clinic</p>
-          <p>Phone: (555) 010-2026</p>
-        </div>
-      </SectionCard>
-    );
   }
 
   if (tile.id === "medications" || tile.id === "alcohol") {
@@ -134,6 +102,8 @@ function TileSpecificContent({ tile }: { tile: WellnessTile }) {
 
   return null;
 }
+
+const fullScreenTiles: TileId[] = ["labs", "appointments"];
 
 export function SectionPage({ tile, previousTile, nextTile, onHome, onOpenTile }: SectionPageProps) {
   const [activeCategory, setActiveCategory] = useState(tile.subcategories[0]);
@@ -172,28 +142,30 @@ export function SectionPage({ tile, previousTile, nextTile, onHome, onOpenTile }
 
       <TileSpecificContent tile={tile} />
 
-      <SectionCard eyebrow="Detail entry" title={activeGroup.title} description={activeGroup.description}>
-        <div className="grid gap-4">
-          {activeGroup.checklist?.length ? <Checklist items={activeGroup.checklist} /> : null}
-          {activeGroup.cards?.length ? (
-            <div className="grid gap-3">
-              {activeGroup.cards.map((card) => (
-                <article key={card.title} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-ice" aria-hidden="true" />
-                    <div>
-                      <h3 className="text-sm font-semibold text-white">{card.title}</h3>
-                      <p className="mt-1 text-sm leading-6 text-periwinkle/85">{card.body}</p>
-                      {card.meta ? <p className="mt-2 text-xs text-lavender/75">{card.meta}</p> : null}
+      {!fullScreenTiles.includes(tile.id) ? (
+        <SectionCard eyebrow="Detail entry" title={activeGroup.title} description={activeGroup.description}>
+          <div className="grid gap-4">
+            {activeGroup.checklist?.length ? <Checklist items={activeGroup.checklist} /> : null}
+            {activeGroup.cards?.length ? (
+              <div className="grid gap-3">
+                {activeGroup.cards.map((card) => (
+                  <article key={card.title} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-ice" aria-hidden="true" />
+                      <div>
+                        <h3 className="text-sm font-semibold text-white">{card.title}</h3>
+                        <p className="mt-1 text-sm leading-6 text-periwinkle/85">{card.body}</p>
+                        {card.meta ? <p className="mt-2 text-xs text-lavender/75">{card.meta}</p> : null}
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : null}
-          <FieldEntry group={activeGroup} />
-        </div>
-      </SectionCard>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+            <FieldEntry group={activeGroup} />
+          </div>
+        </SectionCard>
+      ) : null}
 
       {tile.futureNotes?.length ? (
         <SectionCard title="Future notes" className="border-aqua/20 bg-aqua/10">
