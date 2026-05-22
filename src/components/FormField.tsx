@@ -32,6 +32,7 @@ export function FormField({ label, value, placeholder, onChange, type = "text", 
         value={value}
         placeholder={placeholder ?? `${label}...`}
         onChange={(event: ChangeEvent<HTMLInputElement>) => onChange?.(event.target.value)}
+        readOnly={!onChange}
         className={inputClass}
       />
     </label>
@@ -47,6 +48,7 @@ export function TextAreaField({ label, value, placeholder, onChange, rows = 4, c
         value={value}
         placeholder={placeholder ?? `${label}...`}
         onChange={(event: ChangeEvent<HTMLTextAreaElement>) => onChange?.(event.target.value)}
+        readOnly={!onChange}
         className={`${inputClass} min-h-28 resize-none py-3 leading-6`}
       />
     </label>

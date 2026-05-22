@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Plus, UploadCloud } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import type { FeatureGroup, TileId, WellnessTile } from "../types/wellness";
 import { AppointmentsScreen } from "./AppointmentsScreen";
 import { Checklist } from "./Checklist";
 import { DetailHeader } from "./DetailHeader";
-import { EmptyState } from "./EmptyState";
 import { FormField } from "./FormField";
 import { LabsScreen } from "./LabsScreen";
-import { ProgressBar } from "./ProgressBar";
 import { QuickNotes } from "./QuickNotes";
 import { RemindersScreen } from "./RemindersScreen";
 import { SectionCard } from "./SectionCard";
+import { MedicationsScreen, MoodScreen, PeriodScreen, VitalsScreen } from "./trackers/BodyMindScreens";
+import { DocumentsScreen, HairScreen, ProgressPhotosScreen, RecipesScreen, SkinScreen } from "./trackers/BeautyLibraryScreens";
+import { AlcoholScreen, FitnessScreen, FoodHydrationScreen } from "./trackers/FoodAlcoholFitnessScreens";
 
 interface SectionPageProps {
   tile: WellnessTile;
@@ -26,15 +27,6 @@ function fallbackGroup(title: string): FeatureGroup {
     description: `${title} is ready for future entries, charts, and secure storage.`,
     fields: ["Date", "Value or note", "Context", "Follow-up"]
   };
-}
-
-function UploadPlaceholder({ kind }: { kind: "labs" | "documents" | "photos" }) {
-  const message =
-    kind === "labs"
-      ? "Future lab PDFs can be processed later. OCR is not connected in this local sample version."
-      : "Future uploads can be stored privately later. No real files are stored in this version.";
-
-  return <EmptyState title="Upload placeholder" message={message} icon={UploadCloud} actionLabel="Choose file later" />;
 }
 
 function FieldEntry({ group }: { group: FeatureGroup }) {
@@ -79,36 +71,74 @@ function TileSpecificContent({ tile }: { tile: WellnessTile }) {
   }
 
   if (tile.id === "food") {
-    return (
-      <div className="grid gap-3">
-        <ProgressBar label="Water" value={70} detail="56 oz of 80 oz sample target" tone="aqua" />
-        <ProgressBar label="Protein" value={62} detail="68 g of 110 g sample target" tone="lavender" />
-        <ProgressBar label="Fiber" value={48} detail="12 g of 25 g sample target" tone="blue" />
-      </div>
-    );
+    return <FoodHydrationScreen />;
   }
 
-  if (tile.id === "documents" || tile.id === "photos") {
-    return <UploadPlaceholder kind={tile.id === "photos" ? "photos" : "documents"} />;
+  if (tile.id === "alcohol") {
+    return <AlcoholScreen />;
   }
 
-  if (tile.id === "medications" || tile.id === "alcohol") {
-    return (
-      <SectionCard className="border-champagne/20 bg-champagne/10">
-        <div className="flex items-start gap-3 text-champagne">
-          <AlertTriangle size={20} className="mt-0.5 shrink-0" aria-hidden="true" />
-          <p className="text-sm leading-6 text-white">
-            Check with your doctor or pharmacist for medication interactions. This app does not provide medical advice.
-          </p>
-        </div>
-      </SectionCard>
-    );
+  if (tile.id === "fitness") {
+    return <FitnessScreen />;
+  }
+
+  if (tile.id === "medications") {
+    return <MedicationsScreen />;
+  }
+
+  if (tile.id === "vitals") {
+    return <VitalsScreen />;
+  }
+
+  if (tile.id === "period") {
+    return <PeriodScreen />;
+  }
+
+  if (tile.id === "mood") {
+    return <MoodScreen />;
+  }
+
+  if (tile.id === "skin") {
+    return <SkinScreen />;
+  }
+
+  if (tile.id === "hair") {
+    return <HairScreen />;
+  }
+
+  if (tile.id === "recipes") {
+    return <RecipesScreen />;
+  }
+
+  if (tile.id === "documents") {
+    return <DocumentsScreen />;
+  }
+
+  if (tile.id === "photos") {
+    return <ProgressPhotosScreen />;
   }
 
   return null;
 }
 
-const fullScreenTiles: TileId[] = ["labs", "appointments", "notes", "reminders"];
+const fullScreenTiles: TileId[] = [
+  "labs",
+  "appointments",
+  "medications",
+  "vitals",
+  "fitness",
+  "food",
+  "alcohol",
+  "period",
+  "mood",
+  "skin",
+  "hair",
+  "recipes",
+  "documents",
+  "notes",
+  "reminders",
+  "photos"
+];
 
 export function SectionPage({ tile, previousTile, nextTile, onHome, onOpenTile }: SectionPageProps) {
   const [activeCategory, setActiveCategory] = useState(tile.subcategories[0]);
