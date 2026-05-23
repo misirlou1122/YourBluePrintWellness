@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Home, Plus, ArrowUp } from "lucide-react";
 import type { WellnessProfileId } from "../data/wellnessProfiles";
 import type { FeatureGroup, TileId, WellnessTile } from "../types/wellness";
 import { createId, useLocalStorage } from "../lib/useLocalStorage";
 import { AppointmentsScreen } from "./AppointmentsScreen";
 import { BodyMeasurementsScreen } from "./BodyMeasurementsScreen";
 import { Checklist } from "./Checklist";
+import { CollapsibleSectionCard } from "./CollapsibleSectionCard";
 import { DetailHeader } from "./DetailHeader";
 import { EntryActions } from "./EntryActions";
 import { FormField } from "./FormField";
@@ -49,6 +50,7 @@ function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: st
   const [values, setValues] = useLocalStorage<Record<string, string>>(`${storageKey}.draft`, {});
   const [entries, setEntries] = useLocalStorage<GenericEntry[]>(storageKey, []);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const forceOpen = Boolean(editingId);
 
   useEffect(() => {
     if (entries.some((entry) => !entry.id)) {
@@ -86,7 +88,14 @@ function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: st
   };
 
   return (
-    <SectionCard className="bg-white/[0.04]">
+    <CollapsibleSectionCard
+      storageKey={`${storageKey}.open`}
+      title="Manual entry"
+      defaultOpen={false}
+      forceOpen={forceOpen}
+      className="bg-white/[0.04]"
+      sectionLabel={group.title}
+    >
       <div className="mb-4 flex items-center gap-2">
         <Plus size={18} className="text-ice" aria-hidden="true" />
         <h3 className="text-base font-semibold text-white">Manual entry</h3>
@@ -133,7 +142,7 @@ function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: st
           ))}
         </div>
       ) : null}
-    </SectionCard>
+    </CollapsibleSectionCard>
   );
 }
 
@@ -274,8 +283,26 @@ export function SectionPage({
     [activeCategory, tile.groups]
   );
 
+  const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+  const scrollToSection = (subcategory: string) => {
+    setActiveCategory(subcategory);
+    window.setTimeout(() => {
+      const content = document.getElementById("tile-detail-content");
+      const normalizedTarget = normalize(subcategory);
+      const candidates = Array.from(content?.querySelectorAll<HTMLElement>("[data-section-label], h2, h3, article, label") ?? []);
+      const match = candidates.find((element) => normalize(element.dataset.sectionLabel ?? element.textContent ?? "").includes(normalizedTarget));
+
+      (match ?? content)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const backToTop = () => {
+    document.getElementById("tile-detail-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <main className="grid gap-5">
+    <main id="tile-detail-top" className="grid gap-5">
       <DetailHeader tile={tile} onHome={onHome} />
 
       <nav aria-label={`${tile.title} subcategories`} className="-mx-4 overflow-x-auto px-4">
@@ -284,7 +311,7 @@ export function SectionPage({
             <button
               key={subcategory}
               type="button"
-              onClick={() => setActiveCategory(subcategory)}
+              onClick={() => scrollToSection(subcategory)}
               className={`min-h-11 rounded-full border px-4 text-sm font-semibold transition ${
                 activeCategory === subcategory
                   ? "border-ice/70 bg-ice/15 text-ice shadow-ice"
@@ -297,42 +324,44 @@ export function SectionPage({
         </div>
       </nav>
 
-      <TileSpecificContent
-        tile={tile}
-        selectedProfile={selectedProfile}
-        customTileIds={customTileIds}
-        onProfileChange={onProfileChange}
-        onCustomTileIdsChange={onCustomTileIdsChange}
-      />
+      <div id="tile-detail-content" className="grid gap-5">
+        <TileSpecificContent
+          tile={tile}
+          selectedProfile={selectedProfile}
+          customTileIds={customTileIds}
+          onProfileChange={onProfileChange}
+          onCustomTileIdsChange={onCustomTileIdsChange}
+        />
 
-      {!fullScreenTiles.includes(tile.id) ? (
-        <SectionCard eyebrow="Detail entry" title={activeGroup.title} description={activeGroup.description}>
-          <div className="grid gap-4">
-            {activeGroup.checklist?.length ? <Checklist items={activeGroup.checklist} /> : null}
-            {activeGroup.cards?.length ? (
-              <div className="grid gap-3">
-                {activeGroup.cards.map((card) => (
-                  <article key={card.title} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-ice" aria-hidden="true" />
-                      <div>
-                        <h3 className="text-sm font-semibold text-white">{card.title}</h3>
-                        <p className="mt-1 text-sm leading-6 text-periwinkle/85">{card.body}</p>
-                        {card.meta ? <p className="mt-2 text-xs text-lavender/75">{card.meta}</p> : null}
+        {!fullScreenTiles.includes(tile.id) ? (
+          <SectionCard eyebrow="Detail entry" title={activeGroup.title} description={activeGroup.description} sectionLabel={activeGroup.title}>
+            <div className="grid gap-4">
+              {activeGroup.checklist?.length ? <Checklist items={activeGroup.checklist} /> : null}
+              {activeGroup.cards?.length ? (
+                <div className="grid gap-3">
+                  {activeGroup.cards.map((card) => (
+                    <article key={card.title} className="rounded-2xl border border-white/10 bg-midnight/45 p-4" data-section-label={card.title}>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-ice" aria-hidden="true" />
+                        <div>
+                          <h3 className="text-sm font-semibold text-white">{card.title}</h3>
+                          <p className="mt-1 text-sm leading-6 text-periwinkle/85">{card.body}</p>
+                          {card.meta ? <p className="mt-2 text-xs text-lavender/75">{card.meta}</p> : null}
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : null}
-            <FieldEntry
-              key={`${tile.id}-${activeGroup.title}`}
-              group={activeGroup}
-              storageKey={`ybw.genericEntries.${tile.id}.${activeGroup.title}`}
-            />
-          </div>
-        </SectionCard>
-      ) : null}
+                    </article>
+                  ))}
+                </div>
+              ) : null}
+              <FieldEntry
+                key={`${tile.id}-${activeGroup.title}`}
+                group={activeGroup}
+                storageKey={`ybw.genericEntries.${tile.id}.${activeGroup.title}`}
+              />
+            </div>
+          </SectionCard>
+        ) : null}
+      </div>
 
       {tile.futureNotes?.length ? (
         <SectionCard title="Future notes" className="border-aqua/20 bg-aqua/10">
@@ -364,6 +393,24 @@ export function SectionPage({
         >
           Next
           <ChevronRight size={18} aria-hidden="true" />
+        </button>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={onHome}
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
+        >
+          <Home size={18} aria-hidden="true" />
+          Return Home
+        </button>
+        <button
+          type="button"
+          onClick={backToTop}
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-lavender/25 bg-lavender/10 px-4 text-sm font-semibold text-lavender shadow-lavender"
+        >
+          <ArrowUp size={18} aria-hidden="true" />
+          Back to Top
         </button>
       </div>
     </main>

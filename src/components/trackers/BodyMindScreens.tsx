@@ -2,6 +2,7 @@ import { AlertTriangle, Plus, Printer } from "lucide-react";
 import { EntryActions } from "../EntryActions";
 import { EmptyState } from "../EmptyState";
 import { FormField, SelectField, TextAreaField } from "../FormField";
+import { CollapsibleSectionCard } from "../CollapsibleSectionCard";
 import { ReferenceRangeCard } from "../ReferenceRangeCard";
 import { SectionCard } from "../SectionCard";
 import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
@@ -161,7 +162,7 @@ export function MedicationsScreen() {
           <p className="text-sm leading-6 text-white">Check with your doctor or pharmacist for medication, supplement, and alcohol interactions.</p>
         </div>
       </SectionCard>
-      <SectionCard eyebrow={store.editingId ? "Edit" : "Add"} title="Medication or supplement">
+      <CollapsibleSectionCard storageKey="ybw.medications.formOpen" forceOpen={Boolean(store.editingId)} eyebrow={store.editingId ? "Edit" : "Add"} title="Medication or supplement" sectionLabel="Current medications">
         <div className="grid gap-3">
           <FormField label="Name" value={store.draft.name} onChange={(value) => setField("name", value)} />
           <SelectField label="Type" options={["Medication", "Supplement"]} value={store.draft.type} onChange={(value) => setField("type", value)} />
@@ -180,7 +181,7 @@ export function MedicationsScreen() {
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Add item"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       {store.items.length ? (
         <SectionCard title="Medications and supplements">
           <div className="grid gap-3">
@@ -224,7 +225,7 @@ export function VitalsScreen() {
         description="Quick common adult ranges for comparing saved entries without making medical decisions in the app."
         items={vitalsReferenceRanges}
       />
-      <SectionCard title="Vitals entry">
+      <CollapsibleSectionCard storageKey="ybw.vitals.formOpen" forceOpen={Boolean(store.editingId)} title="Vitals entry" sectionLabel="Blood pressure">
         <div className="grid gap-3 sm:grid-cols-2">
           <FormField label="Date" type="date" value={store.draft.date} onChange={(value) => setField("date", value)} />
           <FormField label="Blood pressure" value={store.draft.bloodPressure} onChange={(value) => setField("bloodPressure", value)} />
@@ -238,7 +239,7 @@ export function VitalsScreen() {
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Add vitals"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       {store.items.length ? (
         <SectionCard title="Vitals history">
           <div className="grid gap-3">
@@ -270,7 +271,7 @@ export function PeriodScreen() {
   const setField = (field: keyof typeof emptyPeriod, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
   return (
     <div className="grid gap-4">
-      <SectionCard title="Period tracker entry">
+      <CollapsibleSectionCard storageKey="ybw.period.formOpen" forceOpen={Boolean(store.editingId)} title="Period tracker entry" sectionLabel="Start date">
         <div className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <FormField label="Start date" type="date" value={store.draft.startDate} onChange={(value) => setField("startDate", value)} />
@@ -288,7 +289,7 @@ export function PeriodScreen() {
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Add period entry"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       {store.items.length ? (
         <SectionCard title="Period history">
           <div className="grid gap-3">
@@ -324,7 +325,7 @@ export function MoodScreen() {
   };
   return (
     <div className="grid gap-4">
-      <SectionCard title="Mood check-in">
+      <CollapsibleSectionCard storageKey="ybw.mood.formOpen" forceOpen={Boolean(store.editingId)} title="Mood check-in" sectionLabel="Quick tap mood">
         <div className="flex flex-wrap gap-2">
           {moodOptions.map((option) => (
             <button key={option} type="button" onClick={() => setField("mood", option)} className={`min-h-10 rounded-full border px-3 text-xs font-semibold ${store.draft.mood === option ? "border-ice/70 bg-ice/15 text-ice shadow-ice" : "border-white/10 bg-white/[0.05] text-periwinkle/80"}`}>
@@ -344,7 +345,7 @@ export function MoodScreen() {
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Save mood check-in"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       {store.items.length ? (
         <SectionCard title="Mood history">
           <div className="grid gap-3">

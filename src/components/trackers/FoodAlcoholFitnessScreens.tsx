@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AlertTriangle, Plus } from "lucide-react";
+import { CollapsibleSectionCard } from "../CollapsibleSectionCard";
 import { EntryActions } from "../EntryActions";
 import { EmptyState } from "../EmptyState";
 import { FormField, TextAreaField } from "../FormField";
@@ -138,7 +139,7 @@ export function FoodHydrationScreen() {
         <ProgressBar label="Fiber" value={percent(latest?.fiber ?? "0", 25)} detail={latest ? `${latest.fiber} g logged` : "No fiber logged yet"} tone="blue" />
       </div>
 
-      <SectionCard eyebrow={editingId ? "Edit food log" : "Add food log"} title={editingId ? "Update food and hydration" : "Food and hydration log"}>
+      <CollapsibleSectionCard storageKey="ybw.food.formOpen" forceOpen={Boolean(editingId)} eyebrow={editingId ? "Edit food log" : "Add food log"} title={editingId ? "Update food and hydration" : "Food and hydration log"} sectionLabel="Meals">
         <div className="grid gap-3">
           <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
           <div className="grid gap-3 sm:grid-cols-3">
@@ -162,7 +163,7 @@ export function FoodHydrationScreen() {
           </button>
           {editingId ? <button type="button" onClick={reset} className="min-h-12 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85">Cancel edit</button> : null}
         </div>
-      </SectionCard>
+      </CollapsibleSectionCard>
 
       {items.length ? (
         <SectionCard title="Food and hydration history">
@@ -220,7 +221,7 @@ export function AlcoholScreen() {
           <p className="text-sm leading-6 text-white">Check with your doctor or pharmacist for medication interactions.</p>
         </div>
       </SectionCard>
-      <SectionCard eyebrow={editingId ? "Edit alcohol log" : "Add alcohol log"} title="Alcohol tracker">
+      <CollapsibleSectionCard storageKey="ybw.alcohol.formOpen" forceOpen={Boolean(editingId)} eyebrow={editingId ? "Edit alcohol log" : "Add alcohol log"} title="Alcohol tracker" sectionLabel="Drink type">
         <div className="grid gap-3">
           <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
           <FormField label="Drink type" value={draft.drinkType} onChange={(value) => setField("drinkType", value)} />
@@ -236,7 +237,7 @@ export function AlcoholScreen() {
           <Plus size={18} aria-hidden="true" />
           {editingId ? "Save changes" : "Add alcohol log"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       {items.length ? (
         <SectionCard title="Alcohol history">
           <div className="grid gap-3">
@@ -283,7 +284,7 @@ export function FitnessScreen() {
 
   return (
     <div className="grid gap-4">
-      <SectionCard eyebrow={editingId ? "Edit workout" : "Add workout"} title="Fitness tracker">
+      <CollapsibleSectionCard storageKey="ybw.fitness.formOpen" forceOpen={Boolean(editingId)} eyebrow={editingId ? "Edit workout" : "Add workout"} title="Fitness tracker" sectionLabel="What I Did Today">
         <div className="grid gap-3">
           <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
           <FormField label="Planned workout" value={draft.plannedWorkout} onChange={(value) => setField("plannedWorkout", value)} />
@@ -311,7 +312,7 @@ export function FitnessScreen() {
           <Plus size={18} aria-hidden="true" />
           {editingId ? "Save changes" : "Add workout"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       {items.length ? (
         <SectionCard title="Fitness history">
           <div className="grid gap-3">

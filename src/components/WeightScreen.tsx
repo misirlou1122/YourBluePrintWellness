@@ -3,6 +3,7 @@ import { LineChart, Plus, Scale } from "lucide-react";
 import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
 import { FormField, SelectField, TextAreaField } from "./FormField";
+import { CollapsibleSectionCard } from "./CollapsibleSectionCard";
 import { ReferenceRangeCard } from "./ReferenceRangeCard";
 import { SectionCard } from "./SectionCard";
 import { calculateBmi, parseWeightPounds } from "../lib/bodyMetrics";
@@ -185,7 +186,7 @@ export function WeightScreen() {
 
       <WeightGraph entries={items} />
 
-      <SectionCard eyebrow={editingId ? "Edit weight" : "Add weight"} title={editingId ? "Update weight entry" : "Weight entry"}>
+      <CollapsibleSectionCard storageKey="ybw.weight.formOpen" forceOpen={Boolean(editingId)} eyebrow={editingId ? "Edit weight" : "Add weight"} title={editingId ? "Update weight entry" : "Weight entry"} sectionLabel="Add entry">
         <div className="grid gap-3">
           <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
           <div className="grid gap-3 sm:grid-cols-2">
@@ -201,7 +202,7 @@ export function WeightScreen() {
           </button>
           {editingId ? <button type="button" onClick={reset} className="min-h-12 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85">Cancel edit</button> : null}
         </div>
-      </SectionCard>
+      </CollapsibleSectionCard>
 
       {items.length ? (
         <SectionCard title="Weight history">

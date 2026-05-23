@@ -3,6 +3,7 @@ import { Camera, Plus, UploadCloud } from "lucide-react";
 import { EntryActions } from "../EntryActions";
 import { EmptyState } from "../EmptyState";
 import { FormField, SelectField, TextAreaField } from "../FormField";
+import { CollapsibleSectionCard } from "../CollapsibleSectionCard";
 import { SectionCard } from "../SectionCard";
 import { uploadMedicalDocument } from "../../lib/medicalDocuments";
 import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
@@ -132,7 +133,7 @@ export function SkinScreen() {
   const setField = (field: keyof typeof emptyBeauty, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
   return (
     <div className="grid gap-4">
-      <SectionCard title="Skin & Beauty entry">
+      <CollapsibleSectionCard storageKey="ybw.skin.formOpen" forceOpen={Boolean(store.editingId)} title="Skin & Beauty entry" sectionLabel="Current products">
         <div className="grid gap-3">
           <FormField label="Title" value={store.draft.title} onChange={(value) => setField("title", value)} />
           <SelectField label="Category" options={["AM routine", "PM routine", "Current products", "Products to try", "Irritation/breakout log"]} value={store.draft.category} onChange={(value) => setField("category", value)} />
@@ -143,7 +144,7 @@ export function SkinScreen() {
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Add skin entry"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       <BeautyList entries={store.items} onEdit={store.startEdit} onDelete={store.remove} emptyTitle="No skin entries yet" emptyMessage="Add your first routine, product, or skin note." />
     </div>
   );
@@ -154,7 +155,7 @@ export function HairScreen() {
   const setField = (field: keyof typeof emptyHair, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
   return (
     <div className="grid gap-4">
-      <SectionCard title="Hair care entry">
+      <CollapsibleSectionCard storageKey="ybw.hair.formOpen" forceOpen={Boolean(store.editingId)} title="Hair care entry" sectionLabel="Products used">
         <div className="grid gap-3">
           <FormField label="Title" value={store.draft.title} onChange={(value) => setField("title", value)} />
           <SelectField label="Category" options={["Wash day", "Refresh day", "Products used", "Curl routine", "Scalp notes"]} value={store.draft.category} onChange={(value) => setField("category", value)} />
@@ -165,7 +166,7 @@ export function HairScreen() {
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Add hair entry"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       <BeautyList entries={store.items} onEdit={store.startEdit} onDelete={store.remove} emptyTitle="No hair entries yet" emptyMessage="Add your first wash day, product, or scalp note." />
     </div>
   );
@@ -177,7 +178,7 @@ export function RecipesScreen() {
   const setField = (field: keyof typeof emptyRecipe, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
   return (
     <div className="grid gap-4">
-      <SectionCard title="Recipe form">
+      <CollapsibleSectionCard storageKey="ybw.recipes.formOpen" forceOpen={Boolean(store.editingId)} title="Recipe form" sectionLabel="Saved recipes">
         <div className="grid gap-3">
           <FormField label="Title" value={store.draft.title} onChange={(value) => setField("title", value)} />
           <SelectField label="Category" options={recipeCategories} value={store.draft.category} onChange={(value) => setField("category", value)} />
@@ -190,7 +191,7 @@ export function RecipesScreen() {
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Add recipe"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       {store.items.length ? (
         <SectionCard title="Recipes">
           <div className="grid gap-3">
@@ -284,7 +285,7 @@ export function DocumentsScreen() {
           {uploadStatus ? <p className="rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm leading-6 text-white">{uploadStatus}</p> : null}
         </div>
       </SectionCard>
-      <SectionCard title="Document note">
+      <CollapsibleSectionCard storageKey="ybw.documents.formOpen" forceOpen={Boolean(store.editingId)} title="Document note" sectionLabel="Notes/documents">
         <div className="grid gap-3">
           <FormField label="Title" value={store.draft.title} onChange={(value) => setField("title", value)} />
           <SelectField label="Category" options={["Lab documents", "Doctor documents", "Exported reports", "Progress photos", "Notes/documents"]} value={store.draft.category} onChange={(value) => setField("category", value)} />
@@ -296,7 +297,7 @@ export function DocumentsScreen() {
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Add document note"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       <DocumentList items={store.items} onEdit={store.startEdit} onDelete={store.remove} emptyTitle="No documents yet" emptyMessage="Add your first document note." />
     </div>
   );
@@ -382,7 +383,7 @@ export function ProgressPhotosScreen() {
           {uploadStatus ? <p className="rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm leading-6 text-white">{uploadStatus}</p> : null}
         </div>
       </SectionCard>
-      <SectionCard title="Progress photo note">
+      <CollapsibleSectionCard storageKey="ybw.photos.formOpen" forceOpen={Boolean(store.editingId)} title="Progress photo note" sectionLabel="Progress photos">
         <div className="grid gap-3">
           <SelectField label="Category" options={["Body", "Face", "Skin", "Hair"]} value={store.draft.category} onChange={(value) => setField("category", value)} />
           <FormField label="Date" type="date" value={store.draft.date} onChange={(value) => setField("date", value)} />
@@ -393,7 +394,7 @@ export function ProgressPhotosScreen() {
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Add photo note"}
         </button>
-      </SectionCard>
+      </CollapsibleSectionCard>
       {store.items.length ? (
         <SectionCard title="Progress photo notes">
           <div className="grid gap-3">

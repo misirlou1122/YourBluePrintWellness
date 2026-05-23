@@ -2,6 +2,7 @@ import { Plus, Printer, Ruler } from "lucide-react";
 import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
 import { FormField, TextAreaField } from "./FormField";
+import { CollapsibleSectionCard } from "./CollapsibleSectionCard";
 import { SectionCard } from "./SectionCard";
 import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
 
@@ -230,7 +231,7 @@ export function BodyMeasurementsScreen() {
         <EmptyState title="No measurements yet" message="Add your first body measurement entry for shopping and wellness reference." icon={Ruler} />
       )}
 
-      <SectionCard eyebrow={editingId ? "Edit measurements" : "Add measurements"} title={editingId ? "Update measurement entry" : "Measurement entry"} description="Use inches, centimeters, or your preferred units consistently.">
+      <CollapsibleSectionCard storageKey="ybw.measurements.formOpen" forceOpen={Boolean(editingId)} eyebrow={editingId ? "Edit measurements" : "Add measurements"} title={editingId ? "Update measurement entry" : "Measurement entry"} description="Use inches, centimeters, or your preferred units consistently." sectionLabel="Measurement History">
         <div className="grid gap-3">
           <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
           <details open className="rounded-2xl border border-white/10 bg-midnight/35 p-3">
@@ -278,7 +279,7 @@ export function BodyMeasurementsScreen() {
             </button>
           ) : null}
         </div>
-      </SectionCard>
+      </CollapsibleSectionCard>
 
       <SectionCard title="Shopping Reference" description="Keep fit notes handy while shopping online. These notes save locally as you type.">
         <div className="grid gap-3">

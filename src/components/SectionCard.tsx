@@ -6,11 +6,13 @@ interface SectionCardProps {
   description?: string;
   children: ReactNode;
   className?: string;
+  id?: string;
+  sectionLabel?: string;
 }
 
-export function SectionCard({ eyebrow, title, description, children, className = "" }: SectionCardProps) {
+export function SectionCard({ eyebrow, title, description, children, className = "", id, sectionLabel }: SectionCardProps) {
   return (
-    <section className={`rounded-[1.75rem] border border-white/10 bg-white/[0.055] p-4 shadow-ice ${className}`}>
+    <section id={id} data-section-label={sectionLabel ?? title ?? eyebrow} className={`scroll-mt-5 rounded-[1.75rem] border border-white/10 bg-white/[0.055] p-4 shadow-ice ${className}`}>
       {(eyebrow || title || description) && (
         <div className="mb-4">
           {eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.2em] text-aqua/75">{eyebrow}</p> : null}

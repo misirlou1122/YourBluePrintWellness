@@ -3,6 +3,7 @@ import { CalendarDays, Plus, Printer } from "lucide-react";
 import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
 import { FormField, TextAreaField } from "./FormField";
+import { CollapsibleSectionCard } from "./CollapsibleSectionCard";
 import { SectionCard } from "./SectionCard";
 import { useLocalCollection, useLocalStorage, createId } from "../lib/useLocalStorage";
 
@@ -214,10 +215,13 @@ export function AppointmentsScreen() {
 
   return (
     <div className="grid gap-4">
-      <SectionCard
+      <CollapsibleSectionCard
+        storageKey="ybw.appointments.formOpen"
+        forceOpen={Boolean(editingId)}
         eyebrow={editingId ? "Edit appointment" : "Add appointment"}
         title={editingId ? "Update appointment" : "New doctor appointment"}
         description="Appointments save locally in this browser."
+        sectionLabel="Upcoming appointments"
       >
         <div className="grid gap-3">
           <FormField label="Doctor name" value={draft.doctor} onChange={(value) => setField("doctor", value)} />
@@ -251,7 +255,7 @@ export function AppointmentsScreen() {
             </button>
           ) : null}
         </div>
-      </SectionCard>
+      </CollapsibleSectionCard>
 
       {items.length ? (
         <SectionCard title="Appointments" description="Select a visit to manage questions, discussion items, and follow-up tasks.">

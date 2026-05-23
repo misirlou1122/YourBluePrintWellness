@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Brain, CheckCircle2, Save } from "lucide-react";
 import { noteCategories, noteSuggestionRules } from "../data/wellness";
 import { EntryActions } from "./EntryActions";
+import { CollapsibleSectionCard } from "./CollapsibleSectionCard";
 import { SectionCard } from "./SectionCard";
 import { TextAreaField } from "./FormField";
 import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
@@ -76,7 +77,7 @@ export function QuickNotes() {
 
   return (
     <section className="grid gap-4">
-      <SectionCard className="border-lavender/20 bg-lavender/10 shadow-lavender">
+      <CollapsibleSectionCard storageKey="ybw.quickNotes.formOpen" title="Quick Notes / Brain Dump" defaultOpen className="border-lavender/20 bg-lavender/10 shadow-lavender" sectionLabel="Blank note">
         <div className="flex items-start gap-3">
           <div className="grid size-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-midnight/45 text-lavender">
             <Brain size={21} aria-hidden="true" />
@@ -107,7 +108,7 @@ export function QuickNotes() {
             Suggested: <span className="font-semibold">{suggestedCategory}</span>
           </div>
         </div>
-      </SectionCard>
+      </CollapsibleSectionCard>
 
       {pendingNote ? (
         <SectionCard>

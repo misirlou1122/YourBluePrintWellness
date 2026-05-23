@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
 import { FormField, SelectField, TextAreaField } from "./FormField";
+import { CollapsibleSectionCard } from "./CollapsibleSectionCard";
 import { ReminderCard } from "./ReminderCard";
 import { SectionCard } from "./SectionCard";
 import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
@@ -109,7 +110,7 @@ export function RemindersScreen() {
 
   return (
     <div className="grid gap-4">
-      <SectionCard eyebrow={editingId ? "Edit reminder" : "Add reminder"} title={editingId ? "Update reminder" : "Reminder form"} description="Reminders save locally in this browser.">
+      <CollapsibleSectionCard storageKey="ybw.reminders.formOpen" forceOpen={Boolean(editingId)} eyebrow={editingId ? "Edit reminder" : "Add reminder"} title={editingId ? "Update reminder" : "Reminder form"} description="Reminders save locally in this browser." sectionLabel="Custom reminder">
         <div className="grid gap-3">
           <FormField label="Title" value={draft.title} onChange={(value) => setField("title", value)} />
           <div className="grid gap-3 sm:grid-cols-2">
@@ -148,7 +149,7 @@ export function RemindersScreen() {
             </button>
           ) : null}
         </div>
-      </SectionCard>
+      </CollapsibleSectionCard>
 
       <SectionCard title="Upcoming reminders" description={upcoming.length ? undefined : "No reminders yet. Add your first reminder."}>
         {upcoming.length ? (
