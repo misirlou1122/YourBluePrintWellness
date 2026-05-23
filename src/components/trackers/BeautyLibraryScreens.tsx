@@ -255,7 +255,7 @@ export function DocumentsScreen() {
       setSelectedFile(null);
       setUploadStatus("File saved privately to your account.");
     } catch (error) {
-      setUploadStatus(error instanceof Error ? error.message : "File storage is not ready yet.");
+      setUploadStatus(error instanceof Error ? `${error.message} If this is a phone photo, try saving it as JPG or PDF and upload again.` : "File storage is not ready yet.");
     } finally {
       setIsUploading(false);
     }
@@ -269,7 +269,7 @@ export function DocumentsScreen() {
             <span>PDF or photo</span>
             <input
               type="file"
-              accept="application/pdf,image/*"
+              accept=".pdf,application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
               onChange={(event) => {
                 setSelectedFile(event.target.files?.[0] ?? null);
                 setUploadStatus("");
@@ -353,7 +353,7 @@ export function ProgressPhotosScreen() {
       setSelectedFile(null);
       setUploadStatus("Photo saved privately to your account.");
     } catch (error) {
-      setUploadStatus(error instanceof Error ? error.message : "Photo storage is not ready yet.");
+      setUploadStatus(error instanceof Error ? `${error.message} If this is a phone photo, try saving it as JPG and upload again.` : "Photo storage is not ready yet.");
     } finally {
       setIsUploading(false);
     }
@@ -367,7 +367,7 @@ export function ProgressPhotosScreen() {
             <span>Photo</span>
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
               onChange={(event) => {
                 setSelectedFile(event.target.files?.[0] ?? null);
                 setUploadStatus("");

@@ -179,7 +179,7 @@ export function LabsScreen() {
       await uploadMedicalDocument(selectedFile, "Lab documents", uploadTitle);
       setUploadStatus("File saved privately to your account.");
     } catch (error) {
-      setUploadStatus(error instanceof Error ? error.message : "File storage is not ready yet.");
+      setUploadStatus(error instanceof Error ? `${error.message} If this is from your phone, try saving it as a PDF or JPG and upload again.` : "File storage is not ready yet.");
     } finally {
       setIsWorking(false);
     }
@@ -206,7 +206,7 @@ export function LabsScreen() {
             <span>PDF or photo</span>
             <input
               type="file"
-              accept="application/pdf,image/*"
+              accept=".pdf,application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
               onChange={(event) => {
                 setSelectedFile(event.target.files?.[0] ?? null);
                 setSuggestions([]);

@@ -115,20 +115,22 @@ const titles: Record<PrintReportType, string> = {
 };
 
 export function printFocusedReport(type: PrintReportType) {
-  const printWindow = window.open("", "_blank", "noopener,noreferrer");
+  const printDocument = buildPrintDocument(type);
+  const blobUrl = URL.createObjectURL(new Blob([printDocument], { type: "text/html" }));
+  const printWindow = window.open(blobUrl, "_blank");
 
   if (!printWindow) {
+    URL.revokeObjectURL(blobUrl);
     window.alert("Please allow pop-ups to print this report.");
     return;
   }
 
-  printWindow.document.write(buildPrintDocument(type));
-  printWindow.document.close();
-  printWindow.focus();
-
   window.setTimeout(() => {
-    printWindow.print();
-  }, 250);
+    if (!printWindow.closed) {
+      printWindow.focus();
+    }
+    URL.revokeObjectURL(blobUrl);
+  }, 30_000);
 }
 
 function buildPrintDocument(type: PrintReportType) {
@@ -168,6 +170,14 @@ function buildPrintDocument(type: PrintReportType) {
     ${body}
     <footer>This app is for personal tracking and organization only. It does not diagnose, treat, or replace medical advice. Always consult a licensed medical professional.</footer>
   </main>
+  <script>
+    window.addEventListener("load", function () {
+      window.setTimeout(function () {
+        window.focus();
+        window.print();
+      }, 350);
+    });
+  </script>
 </body>
 </html>`;
 }

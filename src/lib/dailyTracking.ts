@@ -4,7 +4,7 @@ export interface DailyTrackerEntry {
   protein: number;
   fiber: number;
   dailyConsistency: number;
-  medicationStatus: "not taken" | "taken";
+  medicationStatus: string;
   mood: string;
   workoutStatus: string;
   alcohol: string;
@@ -38,16 +38,17 @@ export function emptyDailyTracker(date = todayKey()): DailyTrackerEntry {
 }
 
 export function calculateDailyConsistency(entry: DailyTrackerEntry) {
+  const isFilled = (value: string, defaultValue: string) => Boolean(value.trim()) && value !== defaultValue;
   const completed = [
     entry.water > 0,
     entry.protein > 0,
     entry.fiber > 0,
-    entry.medicationStatus === "taken",
-    entry.mood !== "not checked in",
-    entry.workoutStatus !== "not logged",
-    entry.alcohol !== "none logged",
-    entry.foodNotes !== "none logged",
-    entry.reminderCompletion !== "not checked"
+    isFilled(entry.medicationStatus, "not taken"),
+    isFilled(entry.mood, "not checked in"),
+    isFilled(entry.workoutStatus, "not logged"),
+    isFilled(entry.alcohol, "none logged"),
+    isFilled(entry.foodNotes, "none logged"),
+    isFilled(entry.reminderCompletion, "not checked")
   ].filter(Boolean).length;
 
   return Math.round((completed / 9) * 100);

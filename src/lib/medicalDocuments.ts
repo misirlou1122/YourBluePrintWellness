@@ -25,6 +25,21 @@ function categoryFolder(category: string) {
   return category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "documents";
 }
 
+function contentTypeForFile(file: File) {
+  if (file.type) {
+    return file.type;
+  }
+
+  const lowerName = file.name.toLowerCase();
+  if (lowerName.endsWith(".pdf")) return "application/pdf";
+  if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) return "image/jpeg";
+  if (lowerName.endsWith(".png")) return "image/png";
+  if (lowerName.endsWith(".webp")) return "image/webp";
+  if (lowerName.endsWith(".heic")) return "image/heic";
+  if (lowerName.endsWith(".heif")) return "image/heif";
+  return "application/octet-stream";
+}
+
 export async function uploadMedicalDocument(file: File, category: string, title: string): Promise<MedicalDocumentRecord> {
   if (!supabase) {
     throw new Error("Secure file storage is not configured yet.");
@@ -36,10 +51,11 @@ export async function uploadMedicalDocument(file: File, category: string, title:
   }
 
   const filePath = `${userData.user.id}/${categoryFolder(category)}/${Date.now()}-${safeFileName(file.name)}`;
+  const contentType = contentTypeForFile(file);
   const { error: uploadError } = await supabase.storage
     .from(MEDICAL_DOCUMENTS_BUCKET)
     .upload(filePath, file, {
-      contentType: file.type || "application/octet-stream",
+      contentType,
       upsert: false
     });
 
@@ -52,7 +68,7 @@ export async function uploadMedicalDocument(file: File, category: string, title:
     category,
     file_name: file.name,
     file_path: filePath,
-    content_type: file.type || "application/octet-stream",
+    content_type: contentType,
     file_size: file.size,
     extraction_status: "not_started"
   };

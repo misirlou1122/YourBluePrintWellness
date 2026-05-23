@@ -220,7 +220,7 @@ export function MedicationsScreen() {
       await uploadMedicalDocument(selectedFile, "Medication documents", uploadTitle || selectedFile.name);
       setUploadStatus("File saved privately to your account.");
     } catch (error) {
-      setUploadStatus(error instanceof Error ? error.message : "File storage is not ready yet.");
+      setUploadStatus(error instanceof Error ? `${error.message} If this is from your phone, try saving it as a PDF and upload again.` : "File storage is not ready yet.");
     } finally {
       setIsWorking(false);
     }
@@ -239,7 +239,7 @@ export function MedicationsScreen() {
             <span>Medication or supplement PDF</span>
             <input
               type="file"
-              accept="application/pdf"
+              accept=".pdf,application/pdf"
               onChange={(event) => {
                 setSelectedFile(event.target.files?.[0] ?? null);
                 setSuggestions([]);

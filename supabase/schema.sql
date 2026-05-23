@@ -88,7 +88,7 @@ values (
   'medical-documents',
   false,
   52428800,
-  array['application/pdf', 'image/jpeg', 'image/png', 'image/webp']::text[]
+  array['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/octet-stream']::text[]
 )
 on conflict (id) do update
 set public = false,

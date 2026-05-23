@@ -43,6 +43,23 @@ interface WeightSummary {
   unit: "lb" | "kg";
 }
 
+const dailyDefaults = {
+  mood: "not checked in",
+  medicationStatus: "not taken",
+  workoutStatus: "not logged",
+  alcohol: "none logged",
+  foodNotes: "none logged",
+  reminderCompletion: "not checked"
+};
+
+function dailyInputValue(value: string, defaultValue: string) {
+  return value === defaultValue ? "" : value;
+}
+
+function dailyDisplayValue(value: string, defaultValue: string) {
+  return value.trim() ? value : defaultValue;
+}
+
 export function HomeDashboard({
   tiles,
   selectedProfile,
@@ -98,14 +115,14 @@ export function HomeDashboard({
 
   const snapshotItems = [
     { label: "Date", value: today, detail: "Daily values reset by date" },
-    { label: "Mood", value: todayTracker.mood, detail: todayTracker.mood === "not checked in" ? "Add a mood check-in" : "Mood checked in" },
+    { label: "Mood", value: dailyDisplayValue(todayTracker.mood, dailyDefaults.mood), detail: todayTracker.mood === dailyDefaults.mood || !todayTracker.mood.trim() ? "Add a mood check-in" : "Mood checked in" },
     { label: "Water intake", value: `${todayTracker.water} oz`, detail: "Goal: 80 oz" },
-    { label: "Medication status", value: todayTracker.medicationStatus, detail: todayTracker.medicationStatus === "taken" ? "Marked for today" : "Not marked yet" },
+    { label: "Medication status", value: dailyDisplayValue(todayTracker.medicationStatus, dailyDefaults.medicationStatus), detail: todayTracker.medicationStatus === "taken" ? "Marked for today" : "Not marked yet" },
     ...(showCycle ? [{ label: "Cycle day", value: "Add note", detail: "Track in Period Tracker" }] : []),
-    { label: "Workout status", value: todayTracker.workoutStatus, detail: todayTracker.workoutStatus === "not logged" ? "No workout logged" : "Movement logged" },
-    { label: "Food", value: todayTracker.foodNotes, detail: "Today only" },
-    { label: "Alcohol", value: todayTracker.alcohol, detail: "Today only" },
-    { label: "Reminders", value: todayTracker.reminderCompletion, detail: "Today only" }
+    { label: "Workout status", value: dailyDisplayValue(todayTracker.workoutStatus, dailyDefaults.workoutStatus), detail: todayTracker.workoutStatus === dailyDefaults.workoutStatus || !todayTracker.workoutStatus.trim() ? "No workout logged" : "Movement logged" },
+    { label: "Food", value: dailyDisplayValue(todayTracker.foodNotes, dailyDefaults.foodNotes), detail: "Today only" },
+    { label: "Alcohol", value: dailyDisplayValue(todayTracker.alcohol, dailyDefaults.alcohol), detail: "Today only" },
+    { label: "Reminders", value: dailyDisplayValue(todayTracker.reminderCompletion, dailyDefaults.reminderCompletion), detail: "Today only" }
   ];
 
   return (
@@ -209,12 +226,12 @@ export function HomeDashboard({
             <FormField label="Fiber" type="number" value={todayTracker.fiber ? String(todayTracker.fiber) : ""} onChange={(value) => setNumberField("fiber", value)} placeholder="grams" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <FormField label="Mood" value={todayTracker.mood} onChange={(value) => updateToday({ mood: value || "not checked in" })} />
-            <FormField label="Medication status" value={todayTracker.medicationStatus} onChange={(value) => updateToday({ medicationStatus: value.toLowerCase().includes("taken") ? "taken" : "not taken" })} />
-            <FormField label="Workout status" value={todayTracker.workoutStatus} onChange={(value) => updateToday({ workoutStatus: value || "not logged" })} />
-            <FormField label="Alcohol" value={todayTracker.alcohol} onChange={(value) => updateToday({ alcohol: value || "none logged" })} />
-            <FormField label="Food notes" value={todayTracker.foodNotes} onChange={(value) => updateToday({ foodNotes: value || "none logged" })} />
-            <FormField label="Reminder completion" value={todayTracker.reminderCompletion} onChange={(value) => updateToday({ reminderCompletion: value || "not checked" })} />
+            <FormField label="Mood" value={dailyInputValue(todayTracker.mood, dailyDefaults.mood)} onChange={(value) => updateToday({ mood: value })} placeholder={dailyDefaults.mood} />
+            <FormField label="Medication status" value={dailyInputValue(todayTracker.medicationStatus, dailyDefaults.medicationStatus)} onChange={(value) => updateToday({ medicationStatus: value })} placeholder={dailyDefaults.medicationStatus} />
+            <FormField label="Workout status" value={dailyInputValue(todayTracker.workoutStatus, dailyDefaults.workoutStatus)} onChange={(value) => updateToday({ workoutStatus: value })} placeholder={dailyDefaults.workoutStatus} />
+            <FormField label="Alcohol" value={dailyInputValue(todayTracker.alcohol, dailyDefaults.alcohol)} onChange={(value) => updateToday({ alcohol: value })} placeholder={dailyDefaults.alcohol} />
+            <FormField label="Food notes" value={dailyInputValue(todayTracker.foodNotes, dailyDefaults.foodNotes)} onChange={(value) => updateToday({ foodNotes: value })} placeholder={dailyDefaults.foodNotes} />
+            <FormField label="Reminder completion" value={dailyInputValue(todayTracker.reminderCompletion, dailyDefaults.reminderCompletion)} onChange={(value) => updateToday({ reminderCompletion: value })} placeholder={dailyDefaults.reminderCompletion} />
           </div>
           <button
             type="button"

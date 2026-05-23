@@ -7,6 +7,16 @@ import { LoginPreview } from "./LoginPreview";
 import { ProblemReportPanel } from "./ProblemReportPanel";
 import { SectionCard } from "./SectionCard";
 
+const dailyDefaults = {
+  mood: "not checked in",
+  medicationStatus: "not taken",
+  workoutStatus: "not logged"
+};
+
+function dailyDisplayValue(value: string, defaultValue: string) {
+  return value.trim() ? value : defaultValue;
+}
+
 interface ProfileSettingsScreenProps {
   selectedProfile: WellnessProfileId;
   customTileIds: TileId[];
@@ -46,9 +56,9 @@ export function ProfileSettingsScreen({
             ["Water", `${todayTracker.water} oz`],
             ["Protein", `${todayTracker.protein} g`],
             ["Fiber", `${todayTracker.fiber} g`],
-            ["Mood", todayTracker.mood],
-            ["Medication", todayTracker.medicationStatus],
-            ["Workout", todayTracker.workoutStatus]
+            ["Mood", dailyDisplayValue(todayTracker.mood, dailyDefaults.mood)],
+            ["Medication", dailyDisplayValue(todayTracker.medicationStatus, dailyDefaults.medicationStatus)],
+            ["Workout", dailyDisplayValue(todayTracker.workoutStatus, dailyDefaults.workoutStatus)]
           ].map(([label, value]) => (
             <div key={label} className="rounded-2xl border border-white/10 bg-midnight/45 p-3">
               <p className="text-xs text-periwinkle/70">{label}</p>
