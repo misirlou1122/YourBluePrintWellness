@@ -1,5 +1,5 @@
-export function parseHeightInInches(height: string) {
-  const value = height.trim().toLowerCase();
+export function parseHeightInInches(height?: string | null) {
+  const value = String(height ?? "").trim().toLowerCase();
   if (!value) return null;
 
   const feetInches = value.match(/(\d+(?:\.\d+)?)\s*(?:'|ft|feet)\s*(\d+(?:\.\d+)?)?/);
@@ -20,8 +20,8 @@ export function parseHeightInInches(height: string) {
   return plainNumber > 96 ? plainNumber / 2.54 : plainNumber;
 }
 
-export function parseWeightPounds(weight: string) {
-  const value = weight.trim().toLowerCase();
+export function parseWeightPounds(weight?: string | null) {
+  const value = String(weight ?? "").trim().toLowerCase();
   if (!value) return null;
 
   const numeric = Number.parseFloat(value);
@@ -30,7 +30,7 @@ export function parseWeightPounds(weight: string) {
   return value.includes("kg") ? numeric * 2.20462 : numeric;
 }
 
-export function calculateBmi(weight: string, height: string) {
+export function calculateBmi(weight?: string | null, height?: string | null) {
   const pounds = parseWeightPounds(weight);
   const inches = parseHeightInInches(height);
 
@@ -39,7 +39,7 @@ export function calculateBmi(weight: string, height: string) {
   return Number(((pounds / (inches * inches)) * 703).toFixed(1));
 }
 
-export function formatBmi(weight: string, height: string) {
+export function formatBmi(weight?: string | null, height?: string | null) {
   const bmi = calculateBmi(weight, height);
   return bmi ? String(bmi) : "Add height and weight";
 }
