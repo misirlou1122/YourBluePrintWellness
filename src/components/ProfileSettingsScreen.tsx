@@ -3,7 +3,6 @@ import type { WellnessProfileId } from "../data/wellnessProfiles";
 import type { TileId } from "../types/wellness";
 import { LoginPreview } from "./LoginPreview";
 import { SectionCard } from "./SectionCard";
-import { WellnessProfileSelector } from "./WellnessProfileSelector";
 
 interface ProfileSettingsScreenProps {
   selectedProfile: WellnessProfileId;
@@ -20,20 +19,19 @@ export function ProfileSettingsScreen({
 }: ProfileSettingsScreenProps) {
   return (
     <div className="grid gap-4">
-      <WellnessProfileSelector
-        selectedProfile={selectedProfile}
-        customTileIds={customTileIds}
-        onProfileChange={onProfileChange}
-        onCustomTileIdsChange={onCustomTileIdsChange}
-      />
-
       <SectionCard title="Body Measurements / Shopping Reference" description="Body Measurements can stay visible in any profile and can be turned on or off in Custom.">
         <div className="rounded-2xl border border-ice/20 bg-ice/10 p-4 text-sm leading-6 text-periwinkle/90">
           Use it for online clothes shopping, fit notes, and body progress tracking. Entries stay local in this browser.
         </div>
       </SectionCard>
 
-      <LoginPreview />
+      <LoginPreview
+        selectedProfile={selectedProfile}
+        customTileIds={customTileIds}
+        onProfileChange={onProfileChange}
+        onCustomTileIdsChange={onCustomTileIdsChange}
+        showProfileSelector
+      />
 
       <SectionCard className="border-ice/20 bg-ice/10">
         <div className="flex items-start gap-3">

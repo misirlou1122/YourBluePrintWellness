@@ -3,6 +3,7 @@ import { RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
 import { profileSummary } from "../data/wellness";
 import { getProfileLabel, type WellnessProfileId } from "../data/wellnessProfiles";
 import type { TileId, WellnessTile } from "../types/wellness";
+import { emptyUserProfile } from "../types/userProfile";
 import { useLocalStorage } from "../lib/useLocalStorage";
 import { getDailyTracker, mergeDailyTracker, resetDailyTracker, todayKey, type DailyTrackerEntry, type DailyTrackerMap } from "../lib/dailyTracking";
 import { FormField } from "./FormField";
@@ -12,7 +13,6 @@ import { ProgressRing } from "./ProgressRing";
 import { ReportsPanel } from "./ReportsPanel";
 import { SectionCard } from "./SectionCard";
 import { TileCard } from "./TileCard";
-import { WellnessProfileSelector } from "./WellnessProfileSelector";
 
 interface HomeDashboardProps {
   tiles: WellnessTile[];
@@ -47,6 +47,8 @@ export function HomeDashboard({
   const [measurements] = useLocalStorage<BodyMeasurementSummary[]>("ybw.bodyMeasurements", []);
   const [dailyTrackers, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const [lastDailyDate, setLastDailyDate] = useLocalStorage("ybw.lastDailyTrackingDate", todayKey());
+  const [userProfile] = useLocalStorage("ybw.userProfile", emptyUserProfile);
+  const [profileSetupComplete, setProfileSetupComplete] = useLocalStorage("ybw.profileSetupComplete", false);
   const visibleTileIds = new Set(tiles.map((tile) => tile.id));
   const latestMeasurement = [...measurements].sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
   const today = todayKey();
@@ -56,6 +58,7 @@ export function HomeDashboard({
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 7);
   const showCycle = selectedProfile === "female" || (selectedProfile === "custom" && customTileIds.includes("period"));
+  const displayName = userProfile.preferredName || userProfile.displayName || profileSummary.name;
 
   useEffect(() => {
     setDailyTrackers((current) => (current[today] ? current : mergeDailyTracker(current, today, {})));
@@ -97,7 +100,9 @@ export function HomeDashboard({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Your Blueprint Wellness</p>
-            <h1 className="mt-2 text-3xl font-semibold leading-tight text-white">Private wellness blueprint</h1>
+            <h1 className="mt-2 text-3xl font-semibold leading-tight text-white">
+              {displayName === profileSummary.name ? "Private wellness blueprint" : `${displayName}'s wellness blueprint`}
+            </h1>
             <p className="mt-2 text-sm leading-6 text-periwinkle/85">Mobile-first wellness tracking for yourblueprintwellness.com.</p>
           </div>
           <div className="grid size-12 shrink-0 place-items-center rounded-2xl border border-lavender/25 bg-lavender/15 text-lavender shadow-lavender">
@@ -107,9 +112,9 @@ export function HomeDashboard({
 
         <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-midnight/50 p-4">
           <div className="flex flex-wrap items-center gap-2 text-xs text-periwinkle/85">
-            <span className="rounded-full border border-ice/20 bg-ice/10 px-3 py-1 text-ice">Name: {profileSummary.name}</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Age: {profileSummary.age}</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Height: {profileSummary.height}</span>
+            <span className="rounded-full border border-ice/20 bg-ice/10 px-3 py-1 text-ice">Name: {displayName}</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Age: {userProfile.age || profileSummary.age}</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Height: {userProfile.height || profileSummary.height}</span>
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Profile: {getProfileLabel(selectedProfile)}</span>
           </div>
           <div className="mt-4">
@@ -125,13 +130,26 @@ export function HomeDashboard({
         </div>
       </section>
 
-      <WellnessProfileSelector
-        selectedProfile={selectedProfile}
-        customTileIds={customTileIds}
-        onProfileChange={onProfileChange}
-        onCustomTileIdsChange={onCustomTileIdsChange}
-        onOpenSettings={onOpenSettings}
-      />
+      {!profileSetupComplete ? (
+        <LoginPreview
+          selectedProfile={selectedProfile}
+          customTileIds={customTileIds}
+          onProfileChange={onProfileChange}
+          onCustomTileIdsChange={onCustomTileIdsChange}
+          showProfileSelector
+          onSaved={() => setProfileSetupComplete(true)}
+        />
+      ) : (
+        <SectionCard title="Wellness profile saved" description={`${getProfileLabel(selectedProfile)} is active. Your history and trackers stay saved under your account on this device.`}>
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
+          >
+            Manage profile
+          </button>
+        </SectionCard>
+      )}
 
       <section className="grid gap-3 rounded-[1.75rem] border border-white/10 bg-white/[0.055] p-4 shadow-ice">
         <div className="flex items-center justify-between gap-3">
@@ -260,7 +278,7 @@ export function HomeDashboard({
       </section>
 
       <ReportsPanel />
-      <LoginPreview />
+      {profileSetupComplete ? <LoginPreview /> : null}
     </main>
   );
 }
