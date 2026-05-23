@@ -14,7 +14,7 @@ export function TileCard({ tile, onOpen }: TileCardProps) {
     <button
       type="button"
       onClick={() => onOpen(tile.id)}
-      className="group min-h-32 rounded-[1.65rem] border border-periwinkle/25 bg-white/[0.075] p-4 text-left shadow-glow outline-none transition duration-300 hover:-translate-y-0.5 hover:border-lavender/70 hover:bg-white/[0.1] focus-visible:ring-2 focus-visible:ring-ice/80 active:scale-[0.99]"
+      className="group min-h-32 rounded-[1.65rem] border border-periwinkle/25 bg-gradient-to-br from-deepblue/95 via-[#181447]/95 to-midnight/95 p-4 text-left shadow-glow outline-none transition duration-300 hover:-translate-y-0.5 hover:border-lavender/70 hover:from-deepblue hover:via-[#20185c] hover:to-midnight focus-visible:ring-2 focus-visible:ring-ice/80 active:scale-[0.99]"
     >
       <div className="flex h-full flex-col justify-between gap-5">
         <div className="flex items-start justify-between gap-3">
