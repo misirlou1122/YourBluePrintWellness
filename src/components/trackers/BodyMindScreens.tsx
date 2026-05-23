@@ -1,4 +1,5 @@
-import { AlertTriangle, Plus, Printer } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, Plus, Printer, UploadCloud } from "lucide-react";
 import { EntryActions } from "../EntryActions";
 import { EmptyState } from "../EmptyState";
 import { FormField, SelectField, TextAreaField } from "../FormField";
@@ -9,6 +10,8 @@ import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
 import { mergeDailyTracker, todayKey, type DailyTrackerMap } from "../../lib/dailyTracking";
 import { getBloodPressureReferenceLabel, vitalsReferenceRanges } from "../../lib/referenceRanges";
 import { printFocusedReport } from "../../lib/printReports";
+import { extractMedicationSuggestions, extractTextFromPdf, type ExtractedMedicationSuggestion } from "../../lib/labExtraction";
+import { uploadMedicalDocument } from "../../lib/medicalDocuments";
 
 interface MedicationEntry {
   id: string;
@@ -126,6 +129,11 @@ function useEditableCollection<T extends { id: string }, D extends Omit<T, "id">
 export function MedicationsScreen() {
   const store = useEditableCollection<MedicationEntry, Omit<MedicationEntry, "id">>("ybw.medications", "ybw.medicationDraft", emptyMedication, "med");
   const [, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+  const [suggestions, setSuggestions] = useLocalStorage<ExtractedMedicationSuggestion[]>("ybw.medicationImportSuggestions", []);
   const today = todayKey();
   const setField = (field: keyof typeof emptyMedication, value: string | boolean) => store.setDraft((current) => ({ ...current, [field]: value }));
   const markMedicationStatus = (items: MedicationEntry[], changedId?: string, changedValue?: boolean) => {
@@ -154,9 +162,155 @@ export function MedicationsScreen() {
     });
     markMedicationStatus(store.items, entry.id, nextTaken);
   };
+  const addImportedItem = (suggestion: ExtractedMedicationSuggestion) => {
+    store.add({
+      ...emptyMedication,
+      name: suggestion.name,
+      type: suggestion.type,
+      dose: suggestion.dose,
+      timeOfDay: suggestion.timeOfDay,
+      sideEffects: suggestion.notes,
+      takenToday: false,
+      takenDates: {}
+    });
+    setSuggestions((current) => current.filter((item) => item !== suggestion));
+  };
+  const addAllImportedItems = () => {
+    suggestions.forEach(addImportedItem);
+  };
+  const readMedicationPdf = async () => {
+    if (!selectedFile) {
+      setUploadStatus("Choose a PDF first.");
+      return;
+    }
+
+    if (selectedFile.type !== "application/pdf") {
+      setUploadStatus("Choose a PDF for automatic medication reading.");
+      return;
+    }
+
+    setIsWorking(true);
+    setUploadStatus("Reading the PDF...");
+
+    try {
+      const text = await extractTextFromPdf(selectedFile);
+      const extracted = extractMedicationSuggestions(text);
+      setSuggestions(extracted);
+      setUploadStatus(
+        extracted.length
+          ? `Found ${extracted.length} possible medication or supplement item${extracted.length === 1 ? "" : "s"}. Please review before adding.`
+          : "No medication or supplement items were found automatically. You can still enter them manually."
+      );
+    } catch (error) {
+      setUploadStatus(error instanceof Error ? error.message : "The PDF could not be read automatically.");
+    } finally {
+      setIsWorking(false);
+    }
+  };
+  const saveMedicationPdf = async () => {
+    if (!selectedFile) {
+      setUploadStatus("Choose a file first.");
+      return;
+    }
+
+    setIsWorking(true);
+    setUploadStatus("Saving file...");
+
+    try {
+      await uploadMedicalDocument(selectedFile, "Medication documents", uploadTitle || selectedFile.name);
+      setUploadStatus("File saved privately to your account.");
+    } catch (error) {
+      setUploadStatus(error instanceof Error ? error.message : "File storage is not ready yet.");
+    } finally {
+      setIsWorking(false);
+    }
+  };
 
   return (
     <div className="grid gap-4">
+      <SectionCard
+        title="Medication PDF import"
+        description="Upload a typed medication or supplement PDF, then review anything the app can read before adding it."
+        sectionLabel="Upload medication PDF"
+      >
+        <div className="grid gap-3">
+          <FormField label="Document title" value={uploadTitle} onChange={setUploadTitle} placeholder="Medication list" />
+          <label className="grid gap-1 text-sm text-periwinkle/85">
+            <span>Medication or supplement PDF</span>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(event) => {
+                setSelectedFile(event.target.files?.[0] ?? null);
+                setSuggestions([]);
+                setUploadStatus("");
+              }}
+              className="min-h-12 rounded-2xl border border-white/10 bg-midnight/55 px-4 py-3 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-lavender/20 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-lavender"
+            />
+          </label>
+          {selectedFile ? <p className="text-sm text-ice">{selectedFile.name}</p> : null}
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={saveMedicationPdf}
+            disabled={isWorking}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice disabled:opacity-60"
+          >
+            <UploadCloud size={18} aria-hidden="true" />
+            Save file
+          </button>
+          <button
+            type="button"
+            onClick={readMedicationPdf}
+            disabled={isWorking}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow disabled:opacity-60"
+          >
+            <Plus size={18} aria-hidden="true" />
+            Read medications
+          </button>
+        </div>
+        {uploadStatus ? <p className="mt-4 rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm leading-6 text-white">{uploadStatus}</p> : null}
+        <p className="mt-3 text-xs leading-5 text-periwinkle/70">
+          Automatic reading works best on typed PDFs. Please verify each item against the original document before saving.
+        </p>
+      </SectionCard>
+
+      {suggestions.length ? (
+        <SectionCard title="Review imported medications" description="Add only the medications or supplements that look correct.">
+          <div className="grid gap-3">
+            {suggestions.map((suggestion, index) => (
+              <article key={`${suggestion.name}-${suggestion.dose}-${index}`} className="rounded-2xl border border-lavender/20 bg-lavender/10 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lavender/75">{suggestion.type}</p>
+                    <h3 className="mt-1 text-lg font-semibold text-white">{suggestion.name}</h3>
+                    <p className="mt-1 text-sm text-ice">
+                      {[suggestion.dose, suggestion.timeOfDay].filter(Boolean).join(" | ")}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-periwinkle/75">{suggestion.notes}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => addImportedItem(suggestion)}
+                    className="min-h-10 rounded-2xl border border-ice/25 bg-ice/10 px-3 text-xs font-semibold text-ice"
+                  >
+                    Add
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={addAllImportedItems}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
+          >
+            Add all reviewed items
+          </button>
+        </SectionCard>
+      ) : null}
+
       <SectionCard className="border-champagne/20 bg-champagne/10">
         <div className="flex items-start gap-3 text-champagne">
           <AlertTriangle size={20} className="mt-0.5 shrink-0" aria-hidden="true" />

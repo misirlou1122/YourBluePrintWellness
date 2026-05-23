@@ -1,5 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 import type { WellnessProfileId } from "../data/wellnessProfiles";
+import { getDailyTracker, todayKey, type DailyTrackerMap } from "../lib/dailyTracking";
+import { useLocalStorage } from "../lib/useLocalStorage";
 import type { TileId } from "../types/wellness";
 import { LoginPreview } from "./LoginPreview";
 import { ProblemReportPanel } from "./ProblemReportPanel";
@@ -18,6 +20,10 @@ export function ProfileSettingsScreen({
   onProfileChange,
   onCustomTileIdsChange
 }: ProfileSettingsScreenProps) {
+  const [dailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
+  const today = todayKey();
+  const todayTracker = getDailyTracker(dailyTrackers, today);
+
   return (
     <div className="grid gap-4">
       <SectionCard title="Body Measurements / Shopping Reference" description="Body Measurements can stay visible in any profile and can be turned on or off in Custom.">
@@ -33,6 +39,24 @@ export function ProfileSettingsScreen({
         onCustomTileIdsChange={onCustomTileIdsChange}
         showProfileSelector
       />
+
+      <SectionCard title="Today's profile summary" description={`Daily tracker values for ${today}.`}>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {[
+            ["Water", `${todayTracker.water} oz`],
+            ["Protein", `${todayTracker.protein} g`],
+            ["Fiber", `${todayTracker.fiber} g`],
+            ["Mood", todayTracker.mood],
+            ["Medication", todayTracker.medicationStatus],
+            ["Workout", todayTracker.workoutStatus]
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-2xl border border-white/10 bg-midnight/45 p-3">
+              <p className="text-xs text-periwinkle/70">{label}</p>
+              <p className="mt-1 text-sm font-semibold text-white">{value}</p>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
 
       <ProblemReportPanel />
 

@@ -8,6 +8,14 @@ export interface ExtractedLabSuggestion {
   notes: string;
 }
 
+export interface ExtractedMedicationSuggestion {
+  name: string;
+  type: "Medication" | "Supplement";
+  dose: string;
+  timeOfDay: string;
+  notes: string;
+}
+
 interface LabMarkerConfig {
   category: string;
   labName: string;
@@ -39,6 +47,8 @@ const labMarkers: LabMarkerConfig[] = [
 ];
 
 const unitPattern = /(%|mg\/dL|mg\/dl|mmol\/L|mmol\/l|ng\/mL|ng\/ml|pg\/mL|pg\/ml|mcg\/dL|mcg\/dl|ug\/dL|ug\/dl|mIU\/L|miu\/l|uIU\/mL|uiu\/ml|IU\/L|iu\/l|U\/L|u\/l|g\/dL|g\/dl|mL\/min\/1\.73m2|ml\/min\/1\.73m2)/i;
+const medicationDosePattern = /\b\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|mL|units?|iu|IU|tablet|tablets|capsule|capsules|cap|caps|spray|sprays|drop|drops|patch|puff|puffs)\b/i;
+const supplementKeywords = /\b(vitamin|supplement|magnesium|zinc|omega|fish oil|probiotic|fiber|collagen|biotin|iron|ferritin|calcium|folate|b12|d3|coq10|turmeric|melatonin)\b/i;
 
 export async function extractTextFromPdf(file: File) {
   const pdfjs = await import("pdfjs-dist");
@@ -86,6 +96,23 @@ export function extractLabSuggestions(text: string): ExtractedLabSuggestion[] {
   return [...suggestions.values()];
 }
 
+export function extractMedicationSuggestions(text: string): ExtractedMedicationSuggestion[] {
+  const candidates = splitMedicationCandidateLines(text);
+  const suggestions = new Map<string, ExtractedMedicationSuggestion>();
+
+  for (const line of candidates) {
+    const parsed = parseMedicationLine(line);
+    if (!parsed) continue;
+
+    const key = `${parsed.name.toLowerCase()}-${parsed.dose.toLowerCase()}`;
+    if (!suggestions.has(key)) {
+      suggestions.set(key, parsed);
+    }
+  }
+
+  return [...suggestions.values()].slice(0, 30);
+}
+
 function splitIntoCandidateLines(text: string) {
   const naturalLines = text
     .split(/\n| {3,}/)
@@ -101,6 +128,66 @@ function splitIntoCandidateLines(text: string) {
     .split(/(?=\b(?:hemoglobin\s*a1c|a1c|glucose|cholesterol|ldl|hdl|triglycerides|ferritin|vitamin\s*d|alt|ast|bilirubin|creatinine|egfr|bun|tsh|testosterone|psa|protein|albumin)\b)/i)
     .map((line) => line.trim())
     .filter(Boolean);
+}
+
+function splitMedicationCandidateLines(text: string) {
+  const naturalLines = text
+    .split(/\n| {3,}|•|\u2022/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter((line) => line.length >= 5 && line.length <= 180);
+
+  const lines = naturalLines.length > 4
+    ? naturalLines
+    : text
+        .replace(/\s+/g, " ")
+        .split(/(?=\b[A-Z][a-zA-Z-]{2,}\s+\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|mL|units?|iu|IU|tablet|capsule))/)
+        .map((line) => line.trim())
+        .filter((line) => line.length >= 5 && line.length <= 180);
+
+  return lines.filter((line) => medicationDosePattern.test(line));
+}
+
+function parseMedicationLine(line: string): ExtractedMedicationSuggestion | null {
+  const doseMatch = line.match(medicationDosePattern);
+  if (!doseMatch || doseMatch.index === undefined) return null;
+
+  const beforeDose = line.slice(0, doseMatch.index).replace(/^(medication|supplement|current medications?|active medications?)\s*[:\-]?\s*/i, "").trim();
+  const name = beforeDose
+    .replace(/^[^a-zA-Z]+/, "")
+    .replace(/\s+(tablet|capsule|oral|by mouth)$/i, "")
+    .trim();
+
+  if (!name || name.length < 2 || /\b(date|provider|patient|instructions|directions|allergies)\b/i.test(name)) {
+    return null;
+  }
+
+  const afterDose = line.slice(doseMatch.index + doseMatch[0].length).trim();
+  const timeOfDay = inferMedicationTime(afterDose);
+
+  return {
+    name: titleCaseMedicationName(name),
+    type: supplementKeywords.test(line) ? "Supplement" : "Medication",
+    dose: doseMatch[0],
+    timeOfDay,
+    notes: `Imported from PDF. Please verify against the original document.${afterDose ? ` ${afterDose.slice(0, 90)}` : ""}`
+  };
+}
+
+function inferMedicationTime(value: string) {
+  if (/morning|breakfast|am\b/i.test(value)) return "Morning";
+  if (/night|bedtime|evening|pm\b/i.test(value)) return "Evening";
+  if (/twice daily|2 times|bid\b/i.test(value)) return "Twice daily";
+  if (/daily|once daily|qd\b/i.test(value)) return "Daily";
+  if (/weekly/i.test(value)) return "Weekly";
+  return "";
+}
+
+function titleCaseMedicationName(value: string) {
+  return value
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 function parseLabLine(line: string, marker: LabMarkerConfig): ExtractedLabSuggestion | null {

@@ -204,9 +204,9 @@ export function HomeDashboard({
       <SectionCard title="Today's daily trackers" description="These values are stored by date and reset automatically when a new day starts.">
         <div className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-3">
-            <FormField label="Water" type="number" value={String(todayTracker.water)} onChange={(value) => setNumberField("water", value)} />
-            <FormField label="Protein" type="number" value={String(todayTracker.protein)} onChange={(value) => setNumberField("protein", value)} />
-            <FormField label="Fiber" type="number" value={String(todayTracker.fiber)} onChange={(value) => setNumberField("fiber", value)} />
+            <FormField label="Water" type="number" value={todayTracker.water ? String(todayTracker.water) : ""} onChange={(value) => setNumberField("water", value)} placeholder="oz" />
+            <FormField label="Protein" type="number" value={todayTracker.protein ? String(todayTracker.protein) : ""} onChange={(value) => setNumberField("protein", value)} placeholder="grams" />
+            <FormField label="Fiber" type="number" value={todayTracker.fiber ? String(todayTracker.fiber) : ""} onChange={(value) => setNumberField("fiber", value)} placeholder="grams" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <FormField label="Mood" value={todayTracker.mood} onChange={(value) => updateToday({ mood: value || "not checked in" })} />
