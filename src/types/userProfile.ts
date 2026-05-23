@@ -5,6 +5,9 @@ export interface UserProfileInfo {
   age: string;
   height: string;
   weight: string;
+  avatarType?: "emoji" | "image";
+  avatarEmoji?: string;
+  avatarImage?: string;
 }
 
 export const emptyUserProfile: UserProfileInfo = {
@@ -13,5 +16,8 @@ export const emptyUserProfile: UserProfileInfo = {
   email: "",
   age: "",
   height: "",
-  weight: ""
+  weight: "",
+  avatarType: "emoji",
+  avatarEmoji: "✨",
+  avatarImage: ""
 };

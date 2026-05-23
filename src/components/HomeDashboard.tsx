@@ -71,6 +71,8 @@ export function HomeDashboard({
   const displayName = userProfile.preferredName || userProfile.displayName || profileSummary.name;
   const displayWeight = userProfile.weight || (latestWeight ? `${latestWeight.weight} ${latestWeight.unit}` : "");
   const displayBmi = formatBmi(displayWeight, userProfile.height);
+  const avatarEmoji = userProfile.avatarEmoji || "✨";
+  const showAvatarImage = userProfile.avatarType === "image" && Boolean(userProfile.avatarImage);
 
   useEffect(() => {
     setDailyTrackers((current) => (current[today] ? current : mergeDailyTracker(current, today, {})));
@@ -117,8 +119,14 @@ export function HomeDashboard({
             </h1>
             <p className="mt-2 text-sm leading-6 text-periwinkle/85">Mobile-first wellness tracking for yourblueprintwellness.com.</p>
           </div>
-          <div className="grid size-12 shrink-0 place-items-center rounded-2xl border border-lavender/25 bg-lavender/15 text-lavender shadow-lavender">
-            <Sparkles size={23} aria-hidden="true" />
+          <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-2xl border border-lavender/25 bg-lavender/15 text-2xl text-lavender shadow-lavender">
+            {showAvatarImage ? (
+              <img src={userProfile.avatarImage} alt="Profile avatar" className="h-full w-full object-cover" />
+            ) : avatarEmoji ? (
+              <span aria-hidden="true">{avatarEmoji}</span>
+            ) : (
+              <Sparkles size={23} aria-hidden="true" />
+            )}
           </div>
         </div>
 

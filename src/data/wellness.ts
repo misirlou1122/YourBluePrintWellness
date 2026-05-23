@@ -36,7 +36,7 @@ export const profileSettingsTile: WellnessTile = {
   title: "Wellness Profile",
   subtitle: "Profile selector and custom tile settings",
   icon: "settings",
-  subcategories: ["Profile selector", "Custom tiles", "Safety note"],
+  subcategories: ["Profile selector", "Profile picture", "Custom tiles", "Report a problem", "Safety note"],
   groups: [
     {
       title: "Profile selector",

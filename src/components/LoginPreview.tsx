@@ -1,4 +1,5 @@
-import { CheckCircle2, Cloud, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { CheckCircle2, Cloud, ImagePlus, LogOut, ShieldCheck, UserRound, X } from "lucide-react";
+import type { ChangeEvent } from "react";
 import type { WellnessProfileId } from "../data/wellnessProfiles";
 import { useLocalStorage } from "../lib/useLocalStorage";
 import { useSupabaseAuth } from "../lib/useSupabaseAuth";
@@ -16,6 +17,42 @@ interface LoginPreviewProps {
   onSaved?: () => void;
 }
 
+const avatarEmojis = ["✨", "🌙", "💜", "🦋", "🌸", "💧", "⭐", "🧘"];
+
+function resizeAvatarImage(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const size = 256;
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          reject(new Error("Unable to prepare image."));
+          return;
+        }
+
+        const smallestSide = Math.min(image.width, image.height);
+        const sourceX = (image.width - smallestSide) / 2;
+        const sourceY = (image.height - smallestSide) / 2;
+
+        canvas.width = size;
+        canvas.height = size;
+        context.drawImage(image, sourceX, sourceY, smallestSide, smallestSide, 0, 0, size, size);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      image.onerror = () => reject(new Error("That image could not be loaded."));
+      image.src = String(reader.result);
+    };
+
+    reader.onerror = () => reject(new Error("That image could not be read."));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function LoginPreview({
   selectedProfile,
   customTileIds = [],
@@ -31,6 +68,25 @@ export function LoginPreview({
   const updateProfile = (field: keyof UserProfileInfo, value: string) => {
     setSavedMessage("");
     setProfile((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateProfileFields = (updates: Partial<UserProfileInfo>) => {
+    setSavedMessage("");
+    setProfile((current) => ({ ...current, ...updates }));
+  };
+
+  const uploadAvatar = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const avatarImage = await resizeAvatarImage(file);
+      updateProfileFields({ avatarType: "image", avatarImage });
+    } catch {
+      setSavedMessage("That picture could not be added. Try a different image.");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const saveProfile = () => {
@@ -79,6 +135,57 @@ export function LoginPreview({
               Your profile, wellness profile, trackers, notes, and daily history save under your signed-in account when cloud sync is enabled.
             </p>
           </div>
+        </div>
+      </div>
+
+      <div data-section-label="Profile picture" className="mt-5 rounded-[1.5rem] border border-white/10 bg-midnight/45 p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-3xl border border-lavender/30 bg-lavender/15 text-3xl shadow-lavender">
+              {profile.avatarType === "image" && profile.avatarImage ? (
+                <img src={profile.avatarImage} alt="Profile avatar" className="h-full w-full object-cover" />
+              ) : (
+                <span aria-hidden="true">{profile.avatarEmoji || "✨"}</span>
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Profile picture</p>
+              <p className="mt-1 text-sm leading-6 text-periwinkle/80">Choose an emoji or add a photo.</p>
+            </div>
+          </div>
+          <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice">
+            <ImagePlus size={18} aria-hidden="true" />
+            Upload photo
+            <input type="file" accept="image/*" className="sr-only" onChange={uploadAvatar} />
+          </label>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {avatarEmojis.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => updateProfileFields({ avatarType: "emoji", avatarEmoji: emoji, avatarImage: "" })}
+              className={`grid min-h-12 min-w-12 place-items-center rounded-2xl border text-2xl ${
+                profile.avatarType !== "image" && (profile.avatarEmoji || "✨") === emoji
+                  ? "border-lavender/60 bg-lavender/20 shadow-lavender"
+                  : "border-white/10 bg-white/[0.05]"
+              }`}
+              aria-label={`Use ${emoji} as profile avatar`}
+            >
+              <span aria-hidden="true">{emoji}</span>
+            </button>
+          ))}
+          {profile.avatarImage ? (
+            <button
+              type="button"
+              onClick={() => updateProfileFields({ avatarType: "emoji", avatarImage: "" })}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85"
+            >
+              <X size={16} aria-hidden="true" />
+              Remove photo
+            </button>
+          ) : null}
         </div>
       </div>
 
