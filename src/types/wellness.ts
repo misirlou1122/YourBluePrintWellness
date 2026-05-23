@@ -1,4 +1,6 @@
 export type TileId =
+  | "daily"
+  | "reports"
   | "health"
   | "labs"
   | "appointments"

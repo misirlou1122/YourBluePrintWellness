@@ -24,13 +24,14 @@ function PrivateDashboard({ user }: { user: User }) {
   const selectedProfile: WellnessProfileId = ["female", "male", "general", "custom"].includes(storedProfile) ? storedProfile : "female";
   const customTileIds = Array.isArray(storedCustomTileIds) ? storedCustomTileIds : defaultCustomTileIds;
 
+  const allTiles = useMemo(() => [...wellnessTiles, profileSettingsTile], []);
+
   const visibleTiles = useMemo(() => {
     const selectedTileIds = getTileIdsForProfile(selectedProfile, customTileIds);
-    const selectedSet = new Set(selectedTileIds);
-    return wellnessTiles.filter((tile) => selectedSet.has(tile.id));
-  }, [customTileIds, selectedProfile]);
-
-  const allTiles = useMemo(() => [...wellnessTiles, profileSettingsTile], []);
+    return selectedTileIds
+      .map((tileId) => allTiles.find((tile) => tile.id === tileId))
+      .filter((tile): tile is NonNullable<typeof tile> => Boolean(tile));
+  }, [allTiles, customTileIds, selectedProfile]);
 
   const activeIndex = useMemo(
     () => visibleTiles.findIndex((tile) => tile.id === activeTileId),
@@ -63,11 +64,7 @@ function PrivateDashboard({ user }: { user: User }) {
         <HomeDashboard
           tiles={visibleTiles}
           selectedProfile={selectedProfile}
-          customTileIds={customTileIds}
           onOpenTile={setActiveTileId}
-          onOpenSettings={() => setActiveTileId("settings")}
-          onProfileChange={setSelectedProfile}
-          onCustomTileIdsChange={setCustomTileIds}
         />
       )}
       <MedicalDisclaimer />

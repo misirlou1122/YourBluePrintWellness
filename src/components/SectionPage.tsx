@@ -7,6 +7,7 @@ import { AppointmentsScreen } from "./AppointmentsScreen";
 import { BodyMeasurementsScreen } from "./BodyMeasurementsScreen";
 import { Checklist } from "./Checklist";
 import { CollapsibleSectionCard } from "./CollapsibleSectionCard";
+import { DailyTrackersScreen } from "./DailyTrackersScreen";
 import { DetailHeader } from "./DetailHeader";
 import { EntryActions } from "./EntryActions";
 import { FormField } from "./FormField";
@@ -14,6 +15,7 @@ import { LabsScreen } from "./LabsScreen";
 import { ProfileSettingsScreen } from "./ProfileSettingsScreen";
 import { QuickNotes } from "./QuickNotes";
 import { RemindersScreen } from "./RemindersScreen";
+import { ReportsPanel } from "./ReportsPanel";
 import { SectionCard } from "./SectionCard";
 import { WeightScreen } from "./WeightScreen";
 import { MedicationsScreen, MoodScreen, PeriodScreen, VitalsScreen } from "./trackers/BodyMindScreens";
@@ -164,6 +166,14 @@ function TileSpecificContent({
     );
   }
 
+  if (tile.id === "daily") {
+    return <DailyTrackersScreen selectedProfile={selectedProfile} customTileIds={customTileIds} />;
+  }
+
+  if (tile.id === "reports") {
+    return <ReportsPanel />;
+  }
+
   if (tile.id === "labs") {
     return <LabsScreen />;
   }
@@ -240,6 +250,8 @@ function TileSpecificContent({
 }
 
 const fullScreenTiles: TileId[] = [
+  "daily",
+  "reports",
   "labs",
   "appointments",
   "medications",

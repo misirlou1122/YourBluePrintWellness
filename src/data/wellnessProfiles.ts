@@ -14,6 +14,8 @@ export interface CustomTileOption {
   group: "Core tiles" | "Optional reproductive / hormone tiles";
 }
 
+const dashboardUtilityTileIds: TileId[] = ["daily", "reports", "settings"];
+
 export const wellnessProfileOptions: WellnessProfileOption[] = [
   {
     id: "female",
@@ -38,6 +40,9 @@ export const wellnessProfileOptions: WellnessProfileOption[] = [
 ];
 
 export const coreTileIds: TileId[] = [
+  "daily",
+  "reports",
+  "settings",
   "health",
   "labs",
   "appointments",
@@ -87,6 +92,9 @@ export const generalTileIds: TileId[] = [...coreTileIds];
 export const defaultCustomTileIds: TileId[] = [...coreTileIds];
 
 export const customTileOptions: CustomTileOption[] = [
+  { id: "daily", label: "Daily Snapshot", group: "Core tiles" },
+  { id: "reports", label: "Print Reports", group: "Core tiles" },
+  { id: "settings", label: "Account / Profile", group: "Core tiles" },
   { id: "health", label: "Health", group: "Core tiles" },
   { id: "labs", label: "Bloodwork / Labs", group: "Core tiles" },
   { id: "appointments", label: "Doctor Appointments", group: "Core tiles" },
@@ -124,7 +132,7 @@ export const customTileOptions: CustomTileOption[] = [
 export function getTileIdsForProfile(profile: WellnessProfileId, customTileIds: TileId[]) {
   if (profile === "female") return femaleTileIds;
   if (profile === "male") return maleTileIds;
-  if (profile === "custom") return customTileIds;
+  if (profile === "custom") return Array.from(new Set([...dashboardUtilityTileIds, ...customTileIds]));
   return generalTileIds;
 }
 

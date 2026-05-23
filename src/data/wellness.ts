@@ -33,14 +33,14 @@ export const reportExports: ReportExport[] = [
 
 export const profileSettingsTile: WellnessTile = {
   id: "settings",
-  title: "Wellness Profile",
-  subtitle: "Profile selector and custom tile settings",
+  title: "Account / Profile",
+  subtitle: "Profile, sign-in, avatar, support",
   icon: "settings",
-  subcategories: ["Profile selector", "Profile picture", "Custom tiles", "Report a problem", "Safety note"],
+  subcategories: ["Profile and sign-in", "Profile picture", "Wellness profile", "Custom tiles", "Report a problem", "Safety note"],
   groups: [
     {
-      title: "Profile selector",
-      description: "Choose which tracking areas appear on the dashboard.",
+      title: "Profile and sign-in",
+      description: "Manage account details, wellness profile, avatar, and support options.",
       fields: ["Selected profile", "Custom tiles", "Notes"]
     }
   ]
@@ -124,6 +124,34 @@ export const noteSuggestionRules = [
 ];
 
 export const wellnessTiles: WellnessTile[] = [
+  {
+    id: "daily",
+    title: "Daily Snapshot",
+    subtitle: "Today at a glance, trackers, history",
+    icon: "activity",
+    subcategories: ["Today at a glance", "Today's daily tracker", "Daily History", "Reset Today"],
+    groups: [
+      {
+        title: "Today at a glance",
+        description: "View and update today's water, protein, fiber, mood, medication, workout, food, alcohol, and reminder status.",
+        fields: ["Water", "Protein", "Fiber", "Mood", "Medication status", "Workout status"]
+      }
+    ]
+  },
+  {
+    id: "reports",
+    title: "Print Reports",
+    subtitle: "Wellness, labs, meds, appointments",
+    icon: "book",
+    subcategories: ["Wellness Summary", "Lab Summary", "Appointment Summary", "Medication List", "Measurements"],
+    groups: [
+      {
+        title: "Printable reports",
+        description: "Open focused print views for wellness summaries, labs, appointment prep, medication lists, and body measurements.",
+        fields: ["Report type", "Print preview", "Save as PDF"]
+      }
+    ]
+  },
   {
     id: "health",
     title: "Health",
