@@ -4,6 +4,8 @@ import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
 import { FormField, SelectField, TextAreaField } from "./FormField";
 import { SectionCard } from "./SectionCard";
+import { extractLabSuggestions, extractTextFromPdf, type ExtractedLabSuggestion } from "../lib/labExtraction";
+import { uploadMedicalDocument } from "../lib/medicalDocuments";
 import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
 import type { TrendDirection } from "../types/wellness";
 
@@ -72,6 +74,11 @@ export function LabsScreen() {
   const { items, add, update, remove } = useLocalCollection<LabEntry>("ybw.labs", [], "lab");
   const [draft, setDraft] = useLocalStorage("ybw.labsDraft", emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+  const [suggestions, setSuggestions] = useState<ExtractedLabSuggestion[]>([]);
 
   const setField = (field: keyof Omit<LabEntry, "id">, value: string) => {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -109,6 +116,72 @@ export function LabsScreen() {
     setEditingId(entry.id);
   };
 
+  const saveSuggestion = (suggestion: ExtractedLabSuggestion) => {
+    add({
+      category: suggestion.category,
+      labName: suggestion.labName,
+      value: suggestion.value,
+      unit: suggestion.unit,
+      referenceRange: suggestion.referenceRange,
+      date: suggestion.date || new Date().toISOString().slice(0, 10),
+      notes: suggestion.notes
+    });
+    setSuggestions((current) => current.filter((item) => item !== suggestion));
+  };
+
+  const saveAllSuggestions = () => {
+    suggestions.forEach(saveSuggestion);
+  };
+
+  const extractSelectedPdf = async () => {
+    if (!selectedFile) {
+      setUploadStatus("Choose a PDF first.");
+      return;
+    }
+
+    if (selectedFile.type !== "application/pdf") {
+      setUploadStatus("Choose a PDF for automatic lab reading. Photos can still be saved as documents.");
+      return;
+    }
+
+    setIsWorking(true);
+    setUploadStatus("Reading the PDF...");
+
+    try {
+      const text = await extractTextFromPdf(selectedFile);
+      const extracted = extractLabSuggestions(text);
+      setSuggestions(extracted);
+      setUploadStatus(
+        extracted.length
+          ? `Found ${extracted.length} possible lab result${extracted.length === 1 ? "" : "s"}. Please review before saving.`
+          : "No lab values were found automatically. You can still enter them manually."
+      );
+    } catch (error) {
+      setUploadStatus(error instanceof Error ? error.message : "The PDF could not be read automatically.");
+    } finally {
+      setIsWorking(false);
+    }
+  };
+
+  const saveSelectedFile = async () => {
+    if (!selectedFile) {
+      setUploadStatus("Choose a file first.");
+      return;
+    }
+
+    setIsWorking(true);
+    setUploadStatus("Saving file...");
+
+    try {
+      await uploadMedicalDocument(selectedFile, "Lab documents", uploadTitle);
+      setUploadStatus("File saved privately to your account.");
+    } catch (error) {
+      setUploadStatus(error instanceof Error ? error.message : "File storage is not ready yet.");
+    } finally {
+      setIsWorking(false);
+    }
+  };
+
   const grouped = labCategories
     .map((category) => ({
       category,
@@ -120,11 +193,87 @@ export function LabsScreen() {
 
   return (
     <div className="grid gap-4">
-      <EmptyState
-        title="Upload lab PDF"
-        message="Manual lab tracking works now. Secure PDF upload and extraction can be connected next."
-        icon={UploadCloud}
-      />
+      <SectionCard
+        title="Lab PDF upload"
+        description="Choose a lab PDF, save it privately, and review any lab values the app can read before adding them to your trends."
+      >
+        <div className="grid gap-3">
+          <FormField label="Document title" value={uploadTitle} onChange={setUploadTitle} placeholder="April blood test" />
+          <label className="grid gap-1 text-sm text-periwinkle/85">
+            <span>PDF or photo</span>
+            <input
+              type="file"
+              accept="application/pdf,image/*"
+              onChange={(event) => {
+                setSelectedFile(event.target.files?.[0] ?? null);
+                setSuggestions([]);
+                setUploadStatus("");
+              }}
+              className="min-h-12 rounded-2xl border border-white/10 bg-midnight/55 px-4 py-3 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-lavender/20 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-lavender"
+            />
+          </label>
+          {selectedFile ? <p className="text-sm text-ice">{selectedFile.name}</p> : null}
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={saveSelectedFile}
+            disabled={isWorking}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice disabled:opacity-60"
+          >
+            <UploadCloud size={18} aria-hidden="true" />
+            Save file
+          </button>
+          <button
+            type="button"
+            onClick={extractSelectedPdf}
+            disabled={isWorking}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow disabled:opacity-60"
+          >
+            <Plus size={18} aria-hidden="true" />
+            Read lab values
+          </button>
+        </div>
+        {uploadStatus ? <p className="mt-4 rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm leading-6 text-white">{uploadStatus}</p> : null}
+        <p className="mt-3 text-xs leading-5 text-periwinkle/70">
+          Automatic reading works best on typed PDFs. If a PDF is a scan or photo, save the file and enter the values manually for now.
+        </p>
+      </SectionCard>
+
+      {suggestions.length ? (
+        <SectionCard title="Review extracted lab values" description="Check each value against your report before saving it.">
+          <div className="grid gap-3">
+            {suggestions.map((suggestion, index) => (
+              <article key={`${suggestion.labName}-${suggestion.value}-${index}`} className="rounded-2xl border border-lavender/20 bg-lavender/10 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lavender/75">{suggestion.category}</p>
+                    <h3 className="mt-1 text-lg font-semibold text-white">{suggestion.labName}</h3>
+                    <p className="mt-1 text-sm text-ice">
+                      {suggestion.value} {suggestion.unit}
+                      {suggestion.referenceRange ? ` | Range: ${suggestion.referenceRange}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => saveSuggestion(suggestion)}
+                    className="min-h-10 rounded-2xl border border-ice/25 bg-ice/10 px-3 text-xs font-semibold text-ice"
+                  >
+                    Add
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={saveAllSuggestions}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
+          >
+            Add all reviewed values
+          </button>
+        </SectionCard>
+      ) : null}
 
       <SectionCard
         title="Lab reference ranges"
@@ -139,7 +288,7 @@ export function LabsScreen() {
       <SectionCard
         eyebrow={editingId ? "Edit lab result" : "Add lab result"}
         title={editingId ? "Update lab entry" : "Manual lab entry"}
-        description="Saved lab results stay in this browser."
+        description="Saved lab results stay with your wellness account when cloud sync is set up."
       >
         <div className="grid gap-3">
           <SelectField label="Category" options={labCategories} value={draft.category} onChange={(value) => setField("category", value)} />

@@ -1,0 +1,144 @@
+export interface ExtractedLabSuggestion {
+  category: string;
+  labName: string;
+  value: string;
+  unit: string;
+  referenceRange: string;
+  date: string;
+  notes: string;
+}
+
+interface LabMarkerConfig {
+  category: string;
+  labName: string;
+  patterns: RegExp[];
+}
+
+const labMarkers: LabMarkerConfig[] = [
+  { category: "A1C", labName: "A1C", patterns: [/hemoglobin\s*a1c/i, /\ba1c\b/i, /\bhba1c\b/i] },
+  { category: "Glucose", labName: "Glucose", patterns: [/\bglucose\b/i] },
+  { category: "Cholesterol", labName: "Total cholesterol", patterns: [/total\s+cholesterol/i, /\bcholesterol,\s*total\b/i, /\bcholesterol\b/i] },
+  { category: "LDL", labName: "LDL", patterns: [/\bldl\b/i, /ldl\s+cholesterol/i] },
+  { category: "HDL", labName: "HDL", patterns: [/\bhdl\b/i, /hdl\s+cholesterol/i] },
+  { category: "Triglycerides", labName: "Triglycerides", patterns: [/\btriglycerides\b/i] },
+  { category: "Iron / Ferritin", labName: "Ferritin", patterns: [/\bferritin\b/i] },
+  { category: "Iron / Ferritin", labName: "Iron", patterns: [/\biron\b/i] },
+  { category: "Vitamin D", labName: "Vitamin D", patterns: [/vitamin\s*d/i, /25[-\s]?hydroxy/i] },
+  { category: "Liver", labName: "ALT", patterns: [/\balt\b/i] },
+  { category: "Liver", labName: "AST", patterns: [/\bast\b/i] },
+  { category: "Liver", labName: "Bilirubin", patterns: [/\bbilirubin\b/i] },
+  { category: "Kidney", labName: "Creatinine", patterns: [/\bcreatinine\b/i] },
+  { category: "Kidney", labName: "eGFR", patterns: [/\begfr\b/i] },
+  { category: "Kidney", labName: "BUN", patterns: [/\bbun\b/i, /urea\s+nitrogen/i] },
+  { category: "Thyroid", labName: "TSH", patterns: [/\btsh\b/i] },
+  { category: "Thyroid", labName: "Free T4", patterns: [/free\s*t4/i, /\bt4,\s*free\b/i] },
+  { category: "Testosterone", labName: "Testosterone", patterns: [/\btestosterone\b/i] },
+  { category: "PSA", labName: "PSA", patterns: [/\bpsa\b/i] },
+  { category: "Other", labName: "Protein", patterns: [/\bprotein\b/i] },
+  { category: "Other", labName: "Albumin", patterns: [/\balbumin\b/i] }
+];
+
+const unitPattern = /(%|mg\/dL|mg\/dl|mmol\/L|mmol\/l|ng\/mL|ng\/ml|pg\/mL|pg\/ml|mcg\/dL|mcg\/dl|ug\/dL|ug\/dl|mIU\/L|miu\/l|uIU\/mL|uiu\/ml|IU\/L|iu\/l|U\/L|u\/l|g\/dL|g\/dl|mL\/min\/1\.73m2|ml\/min\/1\.73m2)/i;
+
+export async function extractTextFromPdf(file: File) {
+  const pdfjs = await import("pdfjs-dist");
+  const worker = await import("pdfjs-dist/build/pdf.worker.mjs?url");
+
+  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+
+  const document = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  const pages: string[] = [];
+
+  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+    const page = await document.getPage(pageNumber);
+    const textContent = await page.getTextContent();
+    const text = textContent.items
+      .map((item) => ("str" in item ? item.str : ""))
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    pages.push(text);
+  }
+
+  return pages.join("\n");
+}
+
+export function extractLabSuggestions(text: string): ExtractedLabSuggestion[] {
+  const resultDate = findResultDate(text);
+  const candidates = splitIntoCandidateLines(text);
+  const suggestions = new Map<string, ExtractedLabSuggestion>();
+
+  for (const line of candidates) {
+    for (const marker of labMarkers) {
+      if (!marker.patterns.some((pattern) => pattern.test(line))) continue;
+
+      const parsed = parseLabLine(line, marker);
+      if (!parsed) continue;
+
+      const key = `${parsed.category}-${parsed.labName}`;
+      if (!suggestions.has(key)) {
+        suggestions.set(key, { ...parsed, date: resultDate });
+      }
+    }
+  }
+
+  return [...suggestions.values()];
+}
+
+function splitIntoCandidateLines(text: string) {
+  const naturalLines = text
+    .split(/\n| {3,}/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+
+  if (naturalLines.length > 8) {
+    return naturalLines;
+  }
+
+  return text
+    .replace(/\s+/g, " ")
+    .split(/(?=\b(?:hemoglobin\s*a1c|a1c|glucose|cholesterol|ldl|hdl|triglycerides|ferritin|vitamin\s*d|alt|ast|bilirubin|creatinine|egfr|bun|tsh|testosterone|psa|protein|albumin)\b)/i)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function parseLabLine(line: string, marker: LabMarkerConfig): ExtractedLabSuggestion | null {
+  const markerMatch = marker.patterns.map((pattern) => line.match(pattern)).find(Boolean);
+  const markerIndex = markerMatch?.index ?? 0;
+  const afterMarker = line.slice(markerIndex + (markerMatch?.[0].length ?? 0));
+  const valueMatch = afterMarker.match(/(?:result|value)?\s*[:\-]?\s*([<>]?\d+(?:\.\d+)?)/i);
+
+  if (!valueMatch) return null;
+
+  const value = valueMatch[1];
+  const afterValue = afterMarker.slice((valueMatch.index ?? 0) + valueMatch[0].length);
+  const unitMatch = afterValue.match(unitPattern);
+  const unit = unitMatch?.[0] ?? "";
+  const afterUnit = unitMatch ? afterValue.slice((unitMatch.index ?? 0) + unitMatch[0].length) : afterValue;
+  const referenceRange = cleanReferenceRange(afterUnit);
+
+  return {
+    category: marker.category,
+    labName: marker.labName,
+    value,
+    unit,
+    referenceRange,
+    date: "",
+    notes: "Extracted from PDF. Please verify against the original report."
+  };
+}
+
+function cleanReferenceRange(value: string) {
+  const referenceMatch = value.match(/(?:reference|ref\.?\s*range|range|normal)?\s*[:\-]?\s*([<>]?\d+(?:\.\d+)?\s*(?:-|to|–)\s*[<>]?\d+(?:\.\d+)?|[<>]=?\s*\d+(?:\.\d+)?)/i);
+  return referenceMatch?.[1]?.replace(/\s+/g, " ").trim() ?? "";
+}
+
+function findResultDate(text: string) {
+  const match = text.match(/(?:collection date|collected|result date|reported|date of service)\s*[:\-]?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/i);
+  if (!match) return "";
+
+  const [month, day, year] = match[1].split(/[/-]/);
+  const fullYear = year.length === 2 ? `20${year}` : year;
+  return `${fullYear.padStart(4, "20")}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}

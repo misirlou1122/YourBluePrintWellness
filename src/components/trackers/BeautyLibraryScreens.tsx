@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Camera, Plus, UploadCloud } from "lucide-react";
 import { EntryActions } from "../EntryActions";
 import { EmptyState } from "../EmptyState";
 import { FormField, SelectField, TextAreaField } from "../FormField";
 import { SectionCard } from "../SectionCard";
+import { uploadMedicalDocument } from "../../lib/medicalDocuments";
 import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
 
 interface BeautyEntry {
@@ -29,6 +31,7 @@ interface DocumentEntry {
   category: string;
   date: string;
   fileName: string;
+  filePath?: string;
   notes: string;
 }
 
@@ -37,6 +40,7 @@ interface PhotoEntry {
   category: string;
   date: string;
   fileName: string;
+  filePath?: string;
   notes: string;
 }
 
@@ -223,10 +227,63 @@ export function RecipesScreen() {
 
 export function DocumentsScreen() {
   const store = useEditable<DocumentEntry, Omit<DocumentEntry, "id">>("ybw.documents", "ybw.documentDraft", emptyDocument, "doc");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const setField = (field: keyof typeof emptyDocument, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
+
+  const savePrivateFile = async () => {
+    if (!selectedFile) {
+      setUploadStatus("Choose a file first.");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadStatus("Saving file...");
+
+    try {
+      const uploaded = await uploadMedicalDocument(selectedFile, store.draft.category, store.draft.title || selectedFile.name);
+      store.add({
+        title: store.draft.title || uploaded.title,
+        category: store.draft.category,
+        date: store.draft.date || new Date().toISOString().slice(0, 10),
+        fileName: uploaded.file_name,
+        filePath: uploaded.file_path,
+        notes: store.draft.notes
+      });
+      setSelectedFile(null);
+      setUploadStatus("File saved privately to your account.");
+    } catch (error) {
+      setUploadStatus(error instanceof Error ? error.message : "File storage is not ready yet.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="grid gap-4">
-      <EmptyState title="Document notes" message="Add document details and optional file names. Actual file storage is not connected yet." icon={UploadCloud} />
+      <SectionCard title="Save document" description="Add lab reports, doctor documents, or notes to your private wellness account.">
+        <div className="grid gap-3">
+          <label className="grid gap-1 text-sm text-periwinkle/85">
+            <span>PDF or photo</span>
+            <input
+              type="file"
+              accept="application/pdf,image/*"
+              onChange={(event) => {
+                setSelectedFile(event.target.files?.[0] ?? null);
+                setUploadStatus("");
+              }}
+              className="min-h-12 rounded-2xl border border-white/10 bg-midnight/55 px-4 py-3 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-lavender/20 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-lavender"
+            />
+          </label>
+          {selectedFile ? <p className="text-sm text-ice">{selectedFile.name}</p> : null}
+          <button type="button" onClick={savePrivateFile} disabled={isUploading} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice disabled:opacity-60">
+            <UploadCloud size={18} aria-hidden="true" />
+            Save file privately
+          </button>
+          {uploadStatus ? <p className="rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm leading-6 text-white">{uploadStatus}</p> : null}
+        </div>
+      </SectionCard>
       <SectionCard title="Document note">
         <div className="grid gap-3">
           <FormField label="Title" value={store.draft.title} onChange={(value) => setField("title", value)} />
@@ -269,10 +326,62 @@ function DocumentList({ items, onEdit, onDelete, emptyTitle, emptyMessage }: { i
 
 export function ProgressPhotosScreen() {
   const store = useEditable<PhotoEntry, Omit<PhotoEntry, "id">>("ybw.progressPhotos", "ybw.photoDraft", emptyPhoto, "photo");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const setField = (field: keyof typeof emptyPhoto, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
+
+  const savePrivatePhoto = async () => {
+    if (!selectedFile) {
+      setUploadStatus("Choose a photo first.");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadStatus("Saving photo...");
+
+    try {
+      const uploaded = await uploadMedicalDocument(selectedFile, "Progress photos", `${store.draft.category} progress photo`);
+      store.add({
+        category: store.draft.category,
+        date: store.draft.date || new Date().toISOString().slice(0, 10),
+        fileName: uploaded.file_name,
+        filePath: uploaded.file_path,
+        notes: store.draft.notes
+      });
+      setSelectedFile(null);
+      setUploadStatus("Photo saved privately to your account.");
+    } catch (error) {
+      setUploadStatus(error instanceof Error ? error.message : "Photo storage is not ready yet.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="grid gap-4">
-      <EmptyState title="Progress photo notes" message="Add photo categories, dates, optional file names, and notes. Actual photo storage is not connected yet." icon={Camera} />
+      <SectionCard title="Save progress photo" description="Save a private body, face, skin, or hair progress photo with notes.">
+        <div className="grid gap-3">
+          <label className="grid gap-1 text-sm text-periwinkle/85">
+            <span>Photo</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                setSelectedFile(event.target.files?.[0] ?? null);
+                setUploadStatus("");
+              }}
+              className="min-h-12 rounded-2xl border border-white/10 bg-midnight/55 px-4 py-3 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-lavender/20 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-lavender"
+            />
+          </label>
+          {selectedFile ? <p className="text-sm text-ice">{selectedFile.name}</p> : null}
+          <button type="button" onClick={savePrivatePhoto} disabled={isUploading} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice disabled:opacity-60">
+            <Camera size={18} aria-hidden="true" />
+            Save photo privately
+          </button>
+          {uploadStatus ? <p className="rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm leading-6 text-white">{uploadStatus}</p> : null}
+        </div>
+      </SectionCard>
       <SectionCard title="Progress photo note">
         <div className="grid gap-3">
           <SelectField label="Category" options={["Body", "Face", "Skin", "Hair"]} value={store.draft.category} onChange={(value) => setField("category", value)} />
