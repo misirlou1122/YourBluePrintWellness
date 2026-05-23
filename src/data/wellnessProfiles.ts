@@ -53,39 +53,67 @@ export const wellnessProfileOptions: WellnessProfileOption[] = [
 ];
 
 export const coreTileIds: TileId[] = [
-  "alcohol",
-  "appointments",
-  "measurements",
   "daily",
-  "documents",
-  "hair",
   "health",
-  "fitness",
   "labs",
   "medications",
+  "appointments",
+  "weight",
+  "measurements",
+  "fitness",
+  "alcohol",
   "mood",
-  "recipes",
-  "settings",
   "skin",
-  "weight"
+  "hair",
+  "recipes",
+  "documents",
+  "settings"
 ];
 
 export const femaleTileIds: TileId[] = [
-  ...coreTileIds,
+  "daily",
+  "health",
+  "labs",
+  "medications",
+  "appointments",
+  "weight",
+  "measurements",
+  "fitness",
+  "alcohol",
+  "mood",
   "period",
   "hormone-notes",
+  "skin",
+  "hair",
+  "recipes",
+  "documents",
+  "settings"
 ];
 
 export const maleTileIds: TileId[] = [
-  ...coreTileIds,
+  "daily",
+  "health",
+  "labs",
   "testosterone",
-  "muscle-strength",
   "mens-health",
-  "prostate",
+  "medications",
+  "appointments",
+  "weight",
+  "measurements",
+  "fitness",
+  "muscle-strength",
+  "alcohol",
+  "mood",
   "libido-energy-mood",
+  "prostate",
+  "hormone-notes",
   "hair-loss",
   "sleep-recovery",
-  "hormone-notes"
+  "skin",
+  "hair",
+  "recipes",
+  "documents",
+  "settings"
 ];
 
 export const generalTileIds: TileId[] = [...coreTileIds];
@@ -94,20 +122,20 @@ export const defaultCustomTileIds: TileId[] = [...coreTileIds];
 
 export const customTileOptions: CustomTileOption[] = [
   { id: "daily", label: "Daily Snapshot", group: "Core tiles" },
-  { id: "settings", label: "Account / Profile", group: "Core tiles" },
-  { id: "alcohol", label: "Alcohol Tracker", group: "Core tiles" },
-  { id: "appointments", label: "Doctor Appointments", group: "Core tiles" },
-  { id: "measurements", label: "Body Measurements", group: "Core tiles" },
-  { id: "documents", label: "Documents & Uploads", group: "Core tiles" },
-  { id: "fitness", label: "Fitness", group: "Core tiles" },
-  { id: "hair", label: "Hair Care", group: "Core tiles" },
   { id: "health", label: "Health & Vitals", group: "Core tiles" },
   { id: "labs", label: "Bloodwork / Labs", group: "Core tiles" },
   { id: "medications", label: "Medications & Supplements", group: "Core tiles" },
-  { id: "mood", label: "Mood / Mental Health + Notes", group: "Core tiles" },
-  { id: "recipes", label: "Recipes", group: "Core tiles" },
-  { id: "skin", label: "Skin & Beauty", group: "Core tiles" },
+  { id: "appointments", label: "Doctor Appointments", group: "Core tiles" },
   { id: "weight", label: "Weight / BMI", group: "Core tiles" },
+  { id: "measurements", label: "Body Measurements", group: "Core tiles" },
+  { id: "fitness", label: "Fitness", group: "Core tiles" },
+  { id: "alcohol", label: "Alcohol Tracker", group: "Core tiles" },
+  { id: "mood", label: "Mood / Mental Health + Notes", group: "Core tiles" },
+  { id: "skin", label: "Skin & Beauty", group: "Core tiles" },
+  { id: "hair", label: "Hair Care", group: "Core tiles" },
+  { id: "recipes", label: "Recipes", group: "Core tiles" },
+  { id: "documents", label: "Documents & Uploads", group: "Core tiles" },
+  { id: "settings", label: "Account / Profile", group: "Core tiles" },
   { id: "period", label: "Period Tracker", group: "Optional reproductive / hormone tiles" },
   { id: "hormone-notes", label: "Hormone & Cycle Notes", group: "Optional reproductive / hormone tiles" },
   { id: "testosterone", label: "Testosterone Tracker", group: "Optional reproductive / hormone tiles" },
@@ -123,7 +151,8 @@ export function getTileIdsForProfile(profile: WellnessProfileId, customTileIds: 
   if (profile === "female") return femaleTileIds;
   if (profile === "male") return maleTileIds;
   if (profile === "custom") {
-    return Array.from(new Set([...dashboardUtilityTileIds, ...customTileIds.filter((tileId) => !hiddenDashboardTileIds.has(tileId))]));
+    const selectedTileIds = new Set([...dashboardUtilityTileIds, ...customTileIds.filter((tileId) => !hiddenDashboardTileIds.has(tileId))]);
+    return customTileOptions.map((option) => option.id).filter((tileId) => selectedTileIds.has(tileId));
   }
   return generalTileIds;
 }

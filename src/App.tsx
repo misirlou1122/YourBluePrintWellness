@@ -30,8 +30,7 @@ function PrivateDashboard({ user }: { user: User }) {
     const selectedTileIds = getTileIdsForProfile(selectedProfile, customTileIds);
     return selectedTileIds
       .map((tileId) => allTiles.find((tile) => tile.id === tileId))
-      .filter((tile): tile is NonNullable<typeof tile> => Boolean(tile))
-      .sort((a, b) => a.title.localeCompare(b.title));
+      .filter((tile): tile is NonNullable<typeof tile> => Boolean(tile));
   }, [allTiles, customTileIds, selectedProfile]);
 
   const activeIndex = useMemo(
