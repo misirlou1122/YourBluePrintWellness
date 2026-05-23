@@ -115,7 +115,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(211,156,255,0.28),transparent_34%),radial-gradient(circle_at_top_right,rgba(85,215,255,0.22),transparent_32%),linear-gradient(145deg,#fffdf8_0%,#f8fbff_44%,#f2f0ff_100%)] text-white">
+    <div className="min-h-screen overflow-x-hidden bg-[linear-gradient(145deg,#05081d_0%,#09153b_42%,#171046_74%,#05081d_100%)] text-white">
       <AppErrorBoundary>{content}</AppErrorBoundary>
     </div>
   );
