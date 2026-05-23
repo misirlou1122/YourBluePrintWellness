@@ -1,8 +1,12 @@
 export function parseHeightInInches(height?: string | null) {
-  const value = String(height ?? "").trim().toLowerCase();
+  const value = String(height ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[’‘]/g, "'")
+    .replace(/[“”]/g, '"');
   if (!value) return null;
 
-  const feetInches = value.match(/(\d+(?:\.\d+)?)\s*(?:'|ft|feet)\s*(\d+(?:\.\d+)?)?/);
+  const feetInches = value.match(/(\d+(?:\.\d+)?)\s*(?:'|ft|feet)\s*(\d+(?:\.\d+)?)?\s*(?:"|in|inch|inches)?/);
   if (feetInches) {
     const feet = Number.parseFloat(feetInches[1]);
     const inches = feetInches[2] ? Number.parseFloat(feetInches[2]) : 0;
