@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Printer, UploadCloud } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Printer, UploadCloud } from "lucide-react";
 import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
 import { FormField, SelectField, TextAreaField } from "./FormField";
@@ -79,6 +79,7 @@ export function LabsScreen() {
   const [uploadStatus, setUploadStatus] = useState("");
   const [isWorking, setIsWorking] = useState(false);
   const [suggestions, setSuggestions] = useState<ExtractedLabSuggestion[]>([]);
+  const [manualEntryOpen, setManualEntryOpen] = useLocalStorage("ybw.labsManualEntryOpen", false);
 
   const setField = (field: keyof Omit<LabEntry, "id">, value: string) => {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -114,6 +115,7 @@ export function LabsScreen() {
     const { id: _id, ...rest } = entry;
     setDraft(rest);
     setEditingId(entry.id);
+    setManualEntryOpen(true);
   };
 
   const saveSuggestion = (suggestion: ExtractedLabSuggestion) => {
@@ -290,36 +292,50 @@ export function LabsScreen() {
         title={editingId ? "Update lab entry" : "Manual lab entry"}
         description="Saved lab results stay with your wellness account when cloud sync is set up."
       >
-        <div className="grid gap-3">
-          <SelectField label="Category" options={labCategories} value={draft.category} onChange={(value) => setField("category", value)} />
-          <FormField label="Lab name" value={draft.labName} onChange={(value) => setField("labName", value)} />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FormField label="Value" value={draft.value} onChange={(value) => setField("value", value)} />
-            <FormField label="Unit" value={draft.unit} onChange={(value) => setField("unit", value)} />
-          </div>
-          <FormField label="Reference/goal range" value={draft.referenceRange} onChange={(value) => setField("referenceRange", value)} />
-          <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
-          <TextAreaField label="Notes" value={draft.notes} onChange={(value) => setField("notes", value)} />
-        </div>
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={saveEntry}
-            className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-          >
-            <Plus size={18} aria-hidden="true" />
-            {editingId ? "Save changes" : "Add lab result"}
-          </button>
-          {editingId ? (
-            <button
-              type="button"
-              onClick={resetDraft}
-              className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85"
-            >
-              Cancel edit
-            </button>
-          ) : null}
-        </div>
+        <button
+          type="button"
+          onClick={() => setManualEntryOpen((current) => !current)}
+          className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
+          aria-expanded={manualEntryOpen}
+        >
+          {manualEntryOpen ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}
+          {manualEntryOpen ? "Hide manual entry" : "Show manual entry"}
+        </button>
+
+        {manualEntryOpen ? (
+          <>
+            <div className="mt-4 grid gap-3">
+              <SelectField label="Category" options={labCategories} value={draft.category} onChange={(value) => setField("category", value)} />
+              <FormField label="Lab name" value={draft.labName} onChange={(value) => setField("labName", value)} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <FormField label="Value" value={draft.value} onChange={(value) => setField("value", value)} />
+                <FormField label="Unit" value={draft.unit} onChange={(value) => setField("unit", value)} />
+              </div>
+              <FormField label="Reference/goal range" value={draft.referenceRange} onChange={(value) => setField("referenceRange", value)} />
+              <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
+              <TextAreaField label="Notes" value={draft.notes} onChange={(value) => setField("notes", value)} />
+            </div>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={saveEntry}
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
+              >
+                <Plus size={18} aria-hidden="true" />
+                {editingId ? "Save changes" : "Add lab result"}
+              </button>
+              {editingId ? (
+                <button
+                  type="button"
+                  onClick={resetDraft}
+                  className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85"
+                >
+                  Cancel edit
+                </button>
+              ) : null}
+            </div>
+          </>
+        ) : null}
       </SectionCard>
 
       {grouped.length ? (

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { LineChart, Plus, Scale } from "lucide-react";
 import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
@@ -28,6 +29,19 @@ const emptyWeight: Omit<WeightEntry, "id"> = {
 
 function sortedEntries(entries: WeightEntry[]) {
   return [...entries].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+}
+
+function parseProfileWeight(weight: string) {
+  const normalized = weight.trim().toLowerCase();
+  if (!normalized) return null;
+
+  const value = Number.parseFloat(normalized);
+  if (Number.isNaN(value)) return null;
+
+  return {
+    weight: String(value),
+    unit: normalized.includes("kg") ? "kg" : "lb"
+  } as const;
 }
 
 function WeightGraph({ entries }: { entries: WeightEntry[] }) {
@@ -86,6 +100,22 @@ export function WeightScreen() {
   const [draft, setDraft] = useLocalStorage("ybw.weightDraft", emptyWeight);
   const [editingId, setEditingId] = useLocalStorage<string | null>("ybw.weightEditingId", null);
   const [profile, setProfile] = useLocalStorage("ybw.userProfile", emptyUserProfile);
+
+  useEffect(() => {
+    if (items.length || !profile.weight) return;
+
+    const parsed = parseProfileWeight(profile.weight);
+    if (!parsed) return;
+
+    const bmi = calculateBmi(`${parsed.weight} ${parsed.unit}`, profile.height);
+    add({
+      date: new Date().toISOString().slice(0, 10),
+      weight: parsed.weight,
+      unit: parsed.unit,
+      notes: "Added from profile setup.",
+      bmi: bmi ? String(bmi) : ""
+    });
+  }, [add, items.length, profile.height, profile.weight]);
 
   const setField = (field: keyof typeof emptyWeight, value: string) => {
     setDraft((current) => ({ ...current, [field]: value }));
