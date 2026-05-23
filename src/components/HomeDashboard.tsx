@@ -61,16 +61,6 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile }: HomeDashbo
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">BMI: {displayBmi}</span>
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Profile: {getProfileLabel(selectedProfile)}</span>
           </div>
-          <div className="mt-4">
-            <p className="text-sm font-semibold text-white">Main goals</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {profileSummary.mainGoals.map((goal) => (
-                <span key={goal} className="rounded-full border border-lavender/20 bg-lavender/10 px-3 py-1 text-xs text-lavender">
-                  {goal}
-                </span>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
@@ -78,7 +68,7 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile }: HomeDashbo
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-lavender/75">Dashboard</p>
-            <h2 className="mt-1 text-xl font-semibold text-white">Choose an area</h2>
+            <h2 className="mt-1 text-xl font-semibold text-slate-950">Choose an area</h2>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

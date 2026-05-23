@@ -431,10 +431,10 @@ export const wellnessTiles: WellnessTile[] = [
   },
   {
     id: "weight",
-    title: "Weight / BMI",
-    subtitle: "Weight log, BMI, visual trend",
+    title: "Weight / BMI & Measurements",
+    subtitle: "Weight trend, BMI, measurements, shopping",
     icon: "activity",
-    subcategories: ["Latest weight", "Weight trend", "Add entry", "History", "BMI"],
+    subcategories: ["Latest weight", "Weight trend", "Add weight", "BMI", "Body measurements", "Shopping Reference", "History"],
     groups: [
       {
         title: "Latest weight",
@@ -445,6 +445,11 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Weight trend",
         description: "A graph helps you see saved weight entries over time.",
         fields: ["Start date", "End date", "Trend note", "Notes"]
+      },
+      {
+        title: "Body measurements",
+        description: "Reference measurements and fit notes for progress tracking and online shopping.",
+        fields: ["Date", "Waist", "Hips", "Bust/chest", "Inseam", "Notes"]
       }
     ]
   },

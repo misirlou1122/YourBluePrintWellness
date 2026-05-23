@@ -215,7 +215,12 @@ function TileSpecificContent({
   }
 
   if (tile.id === "weight") {
-    return <WeightScreen />;
+    return (
+      <div className="grid gap-4">
+        <WeightScreen />
+        <BodyMeasurementsScreen />
+      </div>
+    );
   }
 
   if (tile.id === "measurements") {
