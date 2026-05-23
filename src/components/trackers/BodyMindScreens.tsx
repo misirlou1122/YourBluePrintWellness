@@ -2,9 +2,11 @@ import { AlertTriangle, Plus, Printer } from "lucide-react";
 import { EntryActions } from "../EntryActions";
 import { EmptyState } from "../EmptyState";
 import { FormField, SelectField, TextAreaField } from "../FormField";
+import { ReferenceRangeCard } from "../ReferenceRangeCard";
 import { SectionCard } from "../SectionCard";
 import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
 import { mergeDailyTracker, todayKey, type DailyTrackerMap } from "../../lib/dailyTracking";
+import { getBloodPressureReferenceLabel, vitalsReferenceRanges } from "../../lib/referenceRanges";
 
 interface MedicationEntry {
   id: string;
@@ -217,6 +219,11 @@ export function VitalsScreen() {
   const setField = (field: keyof typeof emptyVitals, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
   return (
     <div className="grid gap-4">
+      <ReferenceRangeCard
+        title="Vitals reference guide"
+        description="Quick common adult ranges for comparing saved entries without making medical decisions in the app."
+        items={vitalsReferenceRanges}
+      />
       <SectionCard title="Vitals entry">
         <div className="grid gap-3 sm:grid-cols-2">
           <FormField label="Date" type="date" value={store.draft.date} onChange={(value) => setField("date", value)} />
@@ -240,7 +247,12 @@ export function VitalsScreen() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-semibold text-white">{entry.date}</h3>
-              <p className="mt-2 text-sm leading-6 text-periwinkle/85">{[entry.bloodPressure && `BP ${entry.bloodPressure}`, entry.oxygen && `O2 ${entry.oxygen}`, entry.heartRate && `HR ${entry.heartRate}`, entry.weight && `Weight ${entry.weight}`, entry.bmi && `BMI ${entry.bmi}`, entry.temperature && `Temp ${entry.temperature}`].filter(Boolean).join(" | ")}</p>
+                    <p className="mt-2 text-sm leading-6 text-periwinkle/85">{[entry.bloodPressure && `BP ${entry.bloodPressure}`, entry.oxygen && `O2 ${entry.oxygen}`, entry.heartRate && `HR ${entry.heartRate}`, entry.weight && `Weight ${entry.weight}`, entry.bmi && `BMI ${entry.bmi}`, entry.temperature && `Temp ${entry.temperature}`].filter(Boolean).join(" | ")}</p>
+                    {entry.bloodPressure ? (
+                      <p className="mt-2 inline-flex rounded-full border border-lavender/20 bg-lavender/10 px-3 py-1 text-xs font-semibold text-lavender">
+                        BP reference: {getBloodPressureReferenceLabel(entry.bloodPressure)}
+                      </p>
+                    ) : null}
                   </div>
                   <EntryActions onEdit={() => store.startEdit(entry)} onDelete={() => store.remove(entry.id)} />
                 </div>

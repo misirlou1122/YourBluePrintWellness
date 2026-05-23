@@ -122,9 +122,19 @@ export function LabsScreen() {
     <div className="grid gap-4">
       <EmptyState
         title="Upload lab PDF"
-        message="Manual lab tracking works now. PDF upload and OCR can be added later."
+        message="Manual lab tracking works now. Secure PDF upload and extraction can be connected next."
         icon={UploadCloud}
       />
+
+      <SectionCard
+        title="Lab reference ranges"
+        description="Use the reference range printed on your lab report when entering results. Ranges can vary by lab, test method, age, sex, and health history."
+        className="border-ice/15 bg-ice/[0.07]"
+      >
+        <p className="rounded-2xl border border-champagne/20 bg-champagne/10 p-3 text-sm leading-6 text-white">
+          This app can help you compare your own results over time, but your doctor should review what the numbers mean for you.
+        </p>
+      </SectionCard>
 
       <SectionCard
         eyebrow={editingId ? "Edit lab result" : "Add lab result"}

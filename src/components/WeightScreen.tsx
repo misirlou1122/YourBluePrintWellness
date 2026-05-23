@@ -2,8 +2,10 @@ import { LineChart, Plus, Scale } from "lucide-react";
 import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
 import { FormField, SelectField, TextAreaField } from "./FormField";
+import { ReferenceRangeCard } from "./ReferenceRangeCard";
 import { SectionCard } from "./SectionCard";
 import { calculateBmi, parseWeightPounds } from "../lib/bodyMetrics";
+import { bmiReferenceRanges, getBmiReferenceLabel } from "../lib/referenceRanges";
 import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
 import { emptyUserProfile } from "../types/userProfile";
 
@@ -120,6 +122,7 @@ export function WeightScreen() {
 
   const latest = sortedEntries(items)[items.length - 1];
   const profileBmi = calculateBmi(profile.weight || (latest ? `${latest.weight} ${latest.unit}` : ""), profile.height);
+  const bmiLabel = getBmiReferenceLabel(profileBmi ?? latest?.bmi ?? null);
 
   return (
     <div className="grid gap-4">
@@ -129,7 +132,9 @@ export function WeightScreen() {
             <div className="rounded-2xl border border-ice/20 bg-ice/10 p-4">
               <p className="text-xs text-ice/75">Current BMI</p>
               <p className="mt-1 text-2xl font-semibold text-white">{profileBmi ?? (latest.bmi || "Add height")}</p>
-              <p className="mt-2 text-xs leading-5 text-periwinkle/75">BMI is a basic calculation from height and weight for personal tracking.</p>
+              <p className="mt-2 text-xs leading-5 text-periwinkle/75">
+                {bmiLabel ? `${bmiLabel}. ` : ""}BMI is a basic calculation from height and weight for personal tracking.
+              </p>
             </div>
             <div className="rounded-2xl border border-lavender/20 bg-lavender/10 p-4">
               <p className="text-xs text-lavender/75">Profile height</p>
@@ -141,6 +146,12 @@ export function WeightScreen() {
       ) : (
         <EmptyState title="No weight entries yet" message="Add your first weight entry to start tracking." icon={Scale} />
       )}
+
+      <ReferenceRangeCard
+        title="BMI reference guide"
+        description="A simple adult reference chart for comparing your calculated BMI. BMI does not describe body composition or personal health by itself."
+        items={bmiReferenceRanges}
+      />
 
       <WeightGraph entries={items} />
 
