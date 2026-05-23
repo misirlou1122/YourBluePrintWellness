@@ -1,4 +1,10 @@
 {
+  "globalHeaders": {
+    "Cache-Control": "no-cache"
+  },
+  "mimeTypes": {
+    ".webmanifest": "application/manifest+json"
+  },
   "navigationFallback": {
     "rewrite": "/index.html"
   }
