@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, ChevronLeft, ChevronRight, Home, Plus, ArrowUp } from "lucide-react";
+import { Bell, Camera, CheckCircle2, ChevronLeft, ChevronRight, Home, Plus, ArrowUp } from "lucide-react";
 import type { WellnessProfileId } from "../data/wellnessProfiles";
 import type { FeatureGroup, TileId, WellnessTile } from "../types/wellness";
 import { createId, useLocalStorage } from "../lib/useLocalStorage";
@@ -210,6 +210,10 @@ function TileSpecificContent({
     return <VitalsScreen />;
   }
 
+  if (tile.id === "health") {
+    return <VitalsScreen />;
+  }
+
   if (tile.id === "weight") {
     return <WeightScreen />;
   }
@@ -223,7 +227,12 @@ function TileSpecificContent({
   }
 
   if (tile.id === "mood") {
-    return <MoodScreen />;
+    return (
+      <div className="grid gap-4">
+        <MoodScreen />
+        <QuickNotes />
+      </div>
+    );
   }
 
   if (tile.id === "skin") {
@@ -313,6 +322,8 @@ export function SectionPage({
     document.getElementById("tile-detail-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const showQuickActions = tile.id !== "reminders" && tile.id !== "photos";
+
   return (
     <main id="tile-detail-top" className="grid gap-5">
       <DetailHeader tile={tile} onHome={onHome} />
@@ -383,6 +394,32 @@ export function SectionPage({
                 {note}
               </p>
             ))}
+          </div>
+        </SectionCard>
+      ) : null}
+
+      {showQuickActions ? (
+        <SectionCard
+          title="Quick actions"
+          description="Add a reminder or progress photo from this section without keeping extra tiles on the dashboard."
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => onOpenTile("reminders")}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
+            >
+              <Bell size={18} aria-hidden="true" />
+              Add reminder
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenTile("photos")}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-lavender/25 bg-lavender/10 px-4 text-sm font-semibold text-lavender shadow-lavender"
+            >
+              <Camera size={18} aria-hidden="true" />
+              Add progress photo
+            </button>
           </div>
         </SectionCard>
       ) : null}

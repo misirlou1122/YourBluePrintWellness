@@ -4,6 +4,7 @@ import { EntryActions } from "../EntryActions";
 import { EmptyState } from "../EmptyState";
 import { FormField, SelectField, TextAreaField } from "../FormField";
 import { CollapsibleSectionCard } from "../CollapsibleSectionCard";
+import { ReportsPanel } from "../ReportsPanel";
 import { SectionCard } from "../SectionCard";
 import { uploadMedicalDocument } from "../../lib/medicalDocuments";
 import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
@@ -299,6 +300,7 @@ export function DocumentsScreen() {
         </button>
       </CollapsibleSectionCard>
       <DocumentList items={store.items} onEdit={store.startEdit} onDelete={store.remove} emptyTitle="No documents yet" emptyMessage="Add your first document note." />
+      <ReportsPanel />
     </div>
   );
 }

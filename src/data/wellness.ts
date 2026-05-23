@@ -155,10 +155,14 @@ export const wellnessTiles: WellnessTile[] = [
   {
     id: "health",
     title: "Health",
-    subtitle: "History, goals, symptoms, questions",
+    subtitle: "History, vitals, symptoms, questions",
     icon: "heart",
     subcategories: [
       "Overview",
+      "Vitals",
+      "Blood pressure",
+      "Heart rate",
+      "Weight",
       "Symptoms",
       "Health goals",
       "Family history",
@@ -175,6 +179,11 @@ export const wellnessTiles: WellnessTile[] = [
           { title: "Main goal", body: "Build a clearer picture of patterns over time.", meta: "Personal tracking" },
           { title: "Care reminder", body: "Use this space to prepare for visits, not to diagnose symptoms.", meta: "Safety first" }
         ]
+      },
+      {
+        title: "Vitals",
+        description: "Track blood pressure, heart rate, oxygen, temperature, weight, BMI, and related context.",
+        fields: ["Blood pressure", "Heart rate", "Oxygen", "Temperature", "Weight", "BMI", "Notes"]
       },
       {
         title: "Symptoms",
@@ -597,14 +606,31 @@ export const wellnessTiles: WellnessTile[] = [
   },
   {
     id: "hormone-notes",
-    title: "Hormone-Related Notes",
-    subtitle: "Mood, skin, energy, sleep, appetite",
+    title: "Hormone / Cycle Notes",
+    subtitle: "Symptoms, hormones, fertility, menopause",
     icon: "sparkles",
-    subcategories: ["Mood changes", "Skin changes", "Energy changes", "Sleep changes", "Appetite/cravings", "Questions for doctor", "Notes"],
+    subcategories: [
+      "Cycle symptoms",
+      "Mood changes",
+      "Cramps",
+      "Flow tracking",
+      "PMS / mood symptoms",
+      "Birth control notes",
+      "Ovulation",
+      "Fertility notes",
+      "Perimenopause / Menopause",
+      "Questions for doctor",
+      "Notes"
+    ],
     groups: [
       {
+        title: "Cycle symptoms",
+        description: "Track cycle-related symptoms and context for personal organization only.",
+        fields: ["Date", "Cycle day", "Symptoms", "Intensity", "Sleep changes", "Skin changes", "Notes"]
+      },
+      {
         title: "Hormone-related note",
-        description: "General notes for patterns and doctor questions without diagnosis or medical advice.",
+        description: "General notes for patterns, hormones, cycle changes, fertility, menopause, and doctor questions without diagnosis or medical advice.",
         fields: ["Date", "Pattern or concern", "Context", "Question for doctor", "Notes"]
       }
     ]
@@ -757,9 +783,9 @@ export const wellnessTiles: WellnessTile[] = [
   {
     id: "mood",
     title: "Mood / Mental Health",
-    subtitle: "Quick check-ins, notes, intensity",
+    subtitle: "Check-ins, notes, brain dump",
     icon: "brain",
-    subcategories: ["Quick tap mood", "Sentence field", "Notes", "Intensity", "Date/time", "Patterns"],
+    subcategories: ["Quick tap mood", "Quick Notes / Brain Dump", "Sentence field", "Notes", "Intensity", "Date/time", "Patterns"],
     groups: [
       {
         title: "Quick tap options",
@@ -853,9 +879,9 @@ export const wellnessTiles: WellnessTile[] = [
   {
     id: "documents",
     title: "Documents & Uploads",
-    subtitle: "PDFs, photos, reports, notes",
+    subtitle: "PDFs, photos, print reports, notes",
     icon: "upload",
-    subcategories: ["Upload PDF", "Upload photo", "Lab documents", "Doctor documents", "Exported reports", "Progress photos", "Notes/documents"],
+    subcategories: ["Upload PDF", "Upload photo", "Lab documents", "Doctor documents", "Print Reports", "Progress photos", "Notes/documents"],
     groups: [
       {
         title: "Upload PDF",

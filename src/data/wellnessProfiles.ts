@@ -14,7 +14,20 @@ export interface CustomTileOption {
   group: "Core tiles" | "Optional reproductive / hormone tiles";
 }
 
-const dashboardUtilityTileIds: TileId[] = ["daily", "reports", "settings"];
+const dashboardUtilityTileIds: TileId[] = ["daily", "settings"];
+const hiddenDashboardTileIds = new Set<TileId>([
+  "reports",
+  "vitals",
+  "food",
+  "notes",
+  "reminders",
+  "photos",
+  "cycle-symptoms",
+  "birth-control",
+  "ovulation",
+  "fertility",
+  "menopause"
+]);
 
 export const wellnessProfileOptions: WellnessProfileOption[] = [
   {
@@ -40,38 +53,27 @@ export const wellnessProfileOptions: WellnessProfileOption[] = [
 ];
 
 export const coreTileIds: TileId[] = [
-  "daily",
-  "reports",
-  "settings",
-  "health",
-  "labs",
-  "appointments",
-  "medications",
-  "vitals",
-  "weight",
-  "measurements",
-  "fitness",
-  "food",
   "alcohol",
-  "mood",
-  "skin",
-  "hair",
-  "recipes",
+  "appointments",
+  "measurements",
+  "daily",
   "documents",
-  "notes",
-  "reminders",
-  "photos"
+  "hair",
+  "health",
+  "fitness",
+  "labs",
+  "medications",
+  "mood",
+  "recipes",
+  "settings",
+  "skin",
+  "weight"
 ];
 
 export const femaleTileIds: TileId[] = [
   ...coreTileIds,
   "period",
-  "cycle-symptoms",
   "hormone-notes",
-  "birth-control",
-  "ovulation",
-  "fertility",
-  "menopause"
 ];
 
 export const maleTileIds: TileId[] = [
@@ -83,7 +85,6 @@ export const maleTileIds: TileId[] = [
   "libido-energy-mood",
   "hair-loss",
   "sleep-recovery",
-  "fertility",
   "hormone-notes"
 ];
 
@@ -93,33 +94,22 @@ export const defaultCustomTileIds: TileId[] = [...coreTileIds];
 
 export const customTileOptions: CustomTileOption[] = [
   { id: "daily", label: "Daily Snapshot", group: "Core tiles" },
-  { id: "reports", label: "Print Reports", group: "Core tiles" },
   { id: "settings", label: "Account / Profile", group: "Core tiles" },
-  { id: "health", label: "Health", group: "Core tiles" },
-  { id: "labs", label: "Bloodwork / Labs", group: "Core tiles" },
-  { id: "appointments", label: "Doctor Appointments", group: "Core tiles" },
-  { id: "medications", label: "Medications & Supplements", group: "Core tiles" },
-  { id: "vitals", label: "Vitals", group: "Core tiles" },
-  { id: "weight", label: "Weight / BMI", group: "Core tiles" },
-  { id: "measurements", label: "Body Measurements", group: "Core tiles" },
-  { id: "fitness", label: "Fitness", group: "Core tiles" },
-  { id: "food", label: "Food & Hydration", group: "Core tiles" },
   { id: "alcohol", label: "Alcohol Tracker", group: "Core tiles" },
-  { id: "mood", label: "Mood / Mental Health Check-In", group: "Core tiles" },
-  { id: "skin", label: "Skin & Beauty", group: "Core tiles" },
-  { id: "hair", label: "Hair Care", group: "Core tiles" },
-  { id: "recipes", label: "Recipes", group: "Core tiles" },
+  { id: "appointments", label: "Doctor Appointments", group: "Core tiles" },
+  { id: "measurements", label: "Body Measurements", group: "Core tiles" },
   { id: "documents", label: "Documents & Uploads", group: "Core tiles" },
-  { id: "notes", label: "Quick Notes / Brain Dump", group: "Core tiles" },
-  { id: "reminders", label: "Reminders", group: "Core tiles" },
-  { id: "photos", label: "Progress Photos", group: "Core tiles" },
+  { id: "fitness", label: "Fitness", group: "Core tiles" },
+  { id: "hair", label: "Hair Care", group: "Core tiles" },
+  { id: "health", label: "Health & Vitals", group: "Core tiles" },
+  { id: "labs", label: "Bloodwork / Labs", group: "Core tiles" },
+  { id: "medications", label: "Medications & Supplements", group: "Core tiles" },
+  { id: "mood", label: "Mood / Mental Health + Notes", group: "Core tiles" },
+  { id: "recipes", label: "Recipes", group: "Core tiles" },
+  { id: "skin", label: "Skin & Beauty", group: "Core tiles" },
+  { id: "weight", label: "Weight / BMI", group: "Core tiles" },
   { id: "period", label: "Period Tracker", group: "Optional reproductive / hormone tiles" },
-  { id: "cycle-symptoms", label: "Cycle Symptoms", group: "Optional reproductive / hormone tiles" },
-  { id: "hormone-notes", label: "Hormone-Related Notes", group: "Optional reproductive / hormone tiles" },
-  { id: "birth-control", label: "Birth Control Notes", group: "Optional reproductive / hormone tiles" },
-  { id: "ovulation", label: "Ovulation", group: "Optional reproductive / hormone tiles" },
-  { id: "fertility", label: "Fertility Notes", group: "Optional reproductive / hormone tiles" },
-  { id: "menopause", label: "Perimenopause / Menopause", group: "Optional reproductive / hormone tiles" },
+  { id: "hormone-notes", label: "Hormone & Cycle Notes", group: "Optional reproductive / hormone tiles" },
   { id: "testosterone", label: "Testosterone Tracker", group: "Optional reproductive / hormone tiles" },
   { id: "muscle-strength", label: "Muscle / Strength Progress", group: "Optional reproductive / hormone tiles" },
   { id: "mens-health", label: "Men's Health", group: "Optional reproductive / hormone tiles" },
@@ -132,7 +122,9 @@ export const customTileOptions: CustomTileOption[] = [
 export function getTileIdsForProfile(profile: WellnessProfileId, customTileIds: TileId[]) {
   if (profile === "female") return femaleTileIds;
   if (profile === "male") return maleTileIds;
-  if (profile === "custom") return Array.from(new Set([...dashboardUtilityTileIds, ...customTileIds]));
+  if (profile === "custom") {
+    return Array.from(new Set([...dashboardUtilityTileIds, ...customTileIds.filter((tileId) => !hiddenDashboardTileIds.has(tileId))]));
+  }
   return generalTileIds;
 }
 
