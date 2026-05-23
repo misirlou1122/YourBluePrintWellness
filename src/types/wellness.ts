@@ -4,6 +4,7 @@ export type TileId =
   | "appointments"
   | "medications"
   | "vitals"
+  | "weight"
   | "measurements"
   | "fitness"
   | "muscle-strength"

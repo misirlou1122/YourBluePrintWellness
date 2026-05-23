@@ -88,6 +88,7 @@ export function LoginPreview({
         <FormField label="Email" type="email" value={profile.email || user?.email || ""} onChange={(value) => updateProfile("email", value)} />
         <FormField label="Age" value={profile.age} onChange={(value) => updateProfile("age", value)} />
         <FormField label="Height" value={profile.height} onChange={(value) => updateProfile("height", value)} />
+        <FormField label="Weight" value={profile.weight} onChange={(value) => updateProfile("weight", value)} />
       </div>
 
       {showProfileSelector && selectedProfile && onProfileChange && onCustomTileIdsChange ? (

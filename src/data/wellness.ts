@@ -52,6 +52,7 @@ export const noteCategories = [
   "Doctor Appointments",
   "Medications & Supplements",
   "Vitals",
+  "Weight / BMI",
   "Body Measurements",
   "Shopping Reference",
   "Fitness",
@@ -116,6 +117,7 @@ export const noteSuggestionRules = [
   { category: "Doctor Appointments", keywords: ["doctor", "appointment", "follow up", "questions", "specialist"] },
   { category: "Medications & Supplements", keywords: ["medication", "dose", "supplement", "refill", "pharmacist"] },
   { category: "Food & Hydration", keywords: ["protein", "fiber", "water", "snack", "meal", "nausea"] },
+  { category: "Weight / BMI", keywords: ["weight", "bmi", "weighed", "scale"] },
   { category: "Period Tracker", keywords: ["period", "cramps", "cycle", "flow", "pms", "bloating", "ovulation"] },
   { category: "Libido / Energy / Mood", keywords: ["libido", "energy", "low energy"] },
   { category: "Sleep / Recovery", keywords: ["sleep", "recovery", "fatigue", "tired"] }
@@ -387,6 +389,25 @@ export const wellnessTiles: WellnessTile[] = [
         title: "Temperature and blood sugar",
         description: "Optional manual fields for future vitals entries.",
         fields: ["Temperature", "Blood sugar", "Context", "Notes"]
+      }
+    ]
+  },
+  {
+    id: "weight",
+    title: "Weight / BMI",
+    subtitle: "Weight log, BMI, visual trend",
+    icon: "activity",
+    subcategories: ["Latest weight", "Weight trend", "Add entry", "History", "BMI"],
+    groups: [
+      {
+        title: "Latest weight",
+        description: "Track weight and BMI as personal wellness data.",
+        fields: ["Date", "Weight", "Unit", "BMI", "Notes"]
+      },
+      {
+        title: "Weight trend",
+        description: "A graph helps you see saved weight entries over time.",
+        fields: ["Start date", "End date", "Trend note", "Notes"]
       }
     ]
   },

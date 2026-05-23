@@ -4,6 +4,7 @@ export interface UserProfileInfo {
   email: string;
   age: string;
   height: string;
+  weight: string;
 }
 
 export const emptyUserProfile: UserProfileInfo = {
@@ -11,5 +12,6 @@ export const emptyUserProfile: UserProfileInfo = {
   preferredName: "",
   email: "",
   age: "",
-  height: ""
+  height: "",
+  weight: ""
 };

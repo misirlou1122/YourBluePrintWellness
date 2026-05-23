@@ -14,6 +14,7 @@ import { ProfileSettingsScreen } from "./ProfileSettingsScreen";
 import { QuickNotes } from "./QuickNotes";
 import { RemindersScreen } from "./RemindersScreen";
 import { SectionCard } from "./SectionCard";
+import { WeightScreen } from "./WeightScreen";
 import { MedicationsScreen, MoodScreen, PeriodScreen, VitalsScreen } from "./trackers/BodyMindScreens";
 import { DocumentsScreen, HairScreen, ProgressPhotosScreen, RecipesScreen, SkinScreen } from "./trackers/BeautyLibraryScreens";
 import { AlcoholScreen, FitnessScreen, FoodHydrationScreen } from "./trackers/FoodAlcoholFitnessScreens";
@@ -190,6 +191,10 @@ function TileSpecificContent({
     return <VitalsScreen />;
   }
 
+  if (tile.id === "weight") {
+    return <WeightScreen />;
+  }
+
   if (tile.id === "measurements") {
     return <BodyMeasurementsScreen />;
   }
@@ -230,6 +235,7 @@ const fullScreenTiles: TileId[] = [
   "appointments",
   "medications",
   "vitals",
+  "weight",
   "measurements",
   "fitness",
   "food",

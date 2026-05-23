@@ -4,6 +4,7 @@ import { profileSummary } from "../data/wellness";
 import { getProfileLabel, type WellnessProfileId } from "../data/wellnessProfiles";
 import type { TileId, WellnessTile } from "../types/wellness";
 import { emptyUserProfile } from "../types/userProfile";
+import { formatBmi } from "../lib/bodyMetrics";
 import { useLocalStorage } from "../lib/useLocalStorage";
 import { getDailyTracker, mergeDailyTracker, resetDailyTracker, todayKey, type DailyTrackerEntry, type DailyTrackerMap } from "../lib/dailyTracking";
 import { FormField } from "./FormField";
@@ -35,6 +36,13 @@ interface BodyMeasurementSummary {
   braSize?: string;
 }
 
+interface WeightSummary {
+  id: string;
+  date: string;
+  weight: string;
+  unit: "lb" | "kg";
+}
+
 export function HomeDashboard({
   tiles,
   selectedProfile,
@@ -45,12 +53,14 @@ export function HomeDashboard({
   onCustomTileIdsChange
 }: HomeDashboardProps) {
   const [measurements] = useLocalStorage<BodyMeasurementSummary[]>("ybw.bodyMeasurements", []);
+  const [weightLogs] = useLocalStorage<WeightSummary[]>("ybw.weightLogs", []);
   const [dailyTrackers, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const [lastDailyDate, setLastDailyDate] = useLocalStorage("ybw.lastDailyTrackingDate", todayKey());
   const [userProfile] = useLocalStorage("ybw.userProfile", emptyUserProfile);
   const [profileSetupComplete, setProfileSetupComplete] = useLocalStorage("ybw.profileSetupComplete", false);
   const visibleTileIds = new Set(tiles.map((tile) => tile.id));
   const latestMeasurement = [...measurements].sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
+  const latestWeight = [...weightLogs].sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
   const today = todayKey();
   const todayTracker = getDailyTracker(dailyTrackers, today);
   const dailyHistory = Object.values(dailyTrackers)
@@ -59,6 +69,8 @@ export function HomeDashboard({
     .slice(0, 7);
   const showCycle = selectedProfile === "female" || (selectedProfile === "custom" && customTileIds.includes("period"));
   const displayName = userProfile.preferredName || userProfile.displayName || profileSummary.name;
+  const displayWeight = userProfile.weight || (latestWeight ? `${latestWeight.weight} ${latestWeight.unit}` : "");
+  const displayBmi = formatBmi(displayWeight, userProfile.height);
 
   useEffect(() => {
     setDailyTrackers((current) => (current[today] ? current : mergeDailyTracker(current, today, {})));
@@ -115,6 +127,8 @@ export function HomeDashboard({
             <span className="rounded-full border border-ice/20 bg-ice/10 px-3 py-1 text-ice">Name: {displayName}</span>
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Age: {userProfile.age || profileSummary.age}</span>
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Height: {userProfile.height || profileSummary.height}</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Weight: {displayWeight || "Add weight"}</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">BMI: {displayBmi}</span>
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Profile: {getProfileLabel(selectedProfile)}</span>
           </div>
           <div className="mt-4">
