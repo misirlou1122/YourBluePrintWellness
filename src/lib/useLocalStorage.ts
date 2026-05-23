@@ -12,6 +12,15 @@ export function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function resolveStorageKey(key: string) {
+  if (typeof window === "undefined" || !key.startsWith("ybw.") || key === "ybw.currentUserId") {
+    return key;
+  }
+
+  const userId = window.localStorage.getItem("ybw.currentUserId");
+  return userId ? `ybw.users.${userId}.${key}` : key;
+}
+
 export function addItem<T extends LocalItem>(items: T[], item: Omit<T, "id"> & Partial<Pick<T, "id">>, prefix = "item") {
   return [{ ...item, id: item.id ?? createId(prefix) } as T, ...items];
 }
@@ -29,13 +38,14 @@ export function toggleComplete<T extends CompletableItem>(items: T[], id: string
 }
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
+  const storageKey = resolveStorageKey(key);
   const [value, setValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
     }
 
     try {
-      const stored = window.localStorage.getItem(key);
+      const stored = window.localStorage.getItem(storageKey);
       return stored ? (JSON.parse(stored) as T) : initialValue;
     } catch {
       return initialValue;
@@ -43,8 +53,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   });
 
   useEffect(() => {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  }, [key, value]);
+    window.localStorage.setItem(storageKey, JSON.stringify(value));
+  }, [storageKey, value]);
 
   return [value, setValue] as const;
 }

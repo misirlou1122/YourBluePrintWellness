@@ -1,20 +1,5 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html"
-  },
-  "routes": [
-    {
-      "route": "/app*",
-      "allowedRoles": ["authenticated"],
-      "headers": {
-        "Cache-Control": "no-store"
-      }
-    }
-  ],
-  "responseOverrides": {
-    "401": {
-      "redirect": "/.auth/login/aad?post_login_redirect_uri=/app",
-      "statusCode": 302
-    }
   }
 }

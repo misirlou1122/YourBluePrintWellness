@@ -39,11 +39,17 @@ export function PublicLanding() {
 
         <div className="grid gap-3 sm:flex sm:flex-wrap">
           <a
-            href="/.auth/login/aad?post_login_redirect_uri=/app"
+            href="/login"
             className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-5 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
           >
-            Log in or create account
+            Log in
             <ArrowRight size={18} aria-hidden="true" />
+          </a>
+          <a
+            href="/signup"
+            className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-lavender/25 bg-lavender/10 px-5 text-sm font-semibold text-lavender shadow-lavender"
+          >
+            Create account
           </a>
           <a
             href="/app"
@@ -54,7 +60,7 @@ export function PublicLanding() {
         </div>
 
         <p className="text-xs leading-5 text-periwinkle/68">
-          Your private dashboard is available after secure sign-in. Local development opens directly for testing.
+          Your private dashboard is available after secure sign-in.
         </p>
       </section>
       <MedicalDisclaimer />

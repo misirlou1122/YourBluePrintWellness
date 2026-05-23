@@ -9,7 +9,7 @@ interface BaseFieldProps {
 }
 
 interface FormFieldProps extends BaseFieldProps {
-  type?: "text" | "number" | "date" | "time" | "datetime-local";
+  type?: "text" | "email" | "password" | "number" | "date" | "time" | "datetime-local";
 }
 
 interface TextAreaFieldProps extends BaseFieldProps {

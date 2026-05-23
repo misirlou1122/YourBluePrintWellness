@@ -1,49 +1,42 @@
-import { useEffect, useState } from "react";
-import { LockKeyhole, LogIn, LogOut, ShieldCheck } from "lucide-react";
+import { LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { useLocalStorage } from "../lib/useLocalStorage";
+import { useSupabaseAuth } from "../lib/useSupabaseAuth";
+import { FormField } from "./FormField";
 
-interface ClientPrincipal {
-  userDetails?: string;
-  identityProvider?: string;
+interface UserProfileInfo {
+  displayName: string;
+  preferredName: string;
+  email: string;
 }
 
 export function LoginPreview() {
-  const [principal, setPrincipal] = useState<ClientPrincipal | null>(null);
-  const [checkedAuth, setCheckedAuth] = useState(false);
+  const { user, signOut } = useSupabaseAuth();
+  const [profile, setProfile] = useLocalStorage<UserProfileInfo>("ybw.userProfile", {
+    displayName: "",
+    preferredName: "",
+    email: user?.email ?? ""
+  });
 
-  useEffect(() => {
-    let isMounted = true;
+  const updateProfile = (field: keyof UserProfileInfo, value: string) => {
+    setProfile((current) => ({ ...current, [field]: value }));
+  };
 
-    fetch("/.auth/me")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: { clientPrincipal?: ClientPrincipal | null } | null) => {
-        if (isMounted) {
-          setPrincipal(data?.clientPrincipal ?? null);
-          setCheckedAuth(true);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setPrincipal(null);
-          setCheckedAuth(true);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const logout = async () => {
+    await signOut();
+    window.location.assign("/");
+  };
 
   return (
     <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.06] p-5 shadow-lavender">
       <div className="flex items-start gap-4">
         <div className="grid size-12 shrink-0 place-items-center rounded-2xl border border-ice/20 bg-ice/10 text-ice">
-          <LockKeyhole size={22} aria-hidden="true" />
+          <UserRound size={22} aria-hidden="true" />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Account access</p>
-          <h2 className="mt-1 text-xl font-semibold text-white">Secure sign-in</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Account</p>
+          <h2 className="mt-1 text-xl font-semibold text-white">Profile and sign-in</h2>
           <p className="mt-2 text-sm leading-6 text-periwinkle/85">
-            Sign in to keep your wellness dashboard private. Your password is handled securely and is never stored in this app.
+            Your profile details save under your account on this device. Passwords are never stored in this app.
           </p>
         </div>
       </div>
@@ -53,31 +46,26 @@ export function LoginPreview() {
           <div>
             <p className="text-sm font-semibold text-white">Signed-in status</p>
             <p className="mt-1 text-sm leading-6 text-periwinkle/85">
-              {principal
-                ? `Signed in as ${principal.userDetails ?? "Microsoft account"}${principal.identityProvider ? ` with ${principal.identityProvider}` : ""}.`
-                : checkedAuth
-                  ? "Not signed in on this device."
-                  : "Checking sign-in status..."}
+              {user?.email ? `Signed in as ${user.email}.` : "Not signed in on this device."}
             </p>
           </div>
         </div>
       </div>
+
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <a
-          href="/.auth/login/aad?post_login_redirect_uri=/app"
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
-        >
-          <LogIn size={18} aria-hidden="true" />
-          Log in or create account
-        </a>
-        <a
-          href="/.auth/logout?post_logout_redirect_uri=/"
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85"
-        >
+        <FormField label="Name" value={profile.displayName} onChange={(value) => updateProfile("displayName", value)} />
+        <FormField label="Preferred name" value={profile.preferredName} onChange={(value) => updateProfile("preferredName", value)} />
+        <FormField label="Email" type="email" value={profile.email || user?.email || ""} onChange={(value) => updateProfile("email", value)} />
+      </div>
+
+      <button
+        type="button"
+        onClick={logout}
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85"
+      >
           <LogOut size={18} aria-hidden="true" />
           Logout
-        </a>
-      </div>
+      </button>
     </section>
   );
 }
