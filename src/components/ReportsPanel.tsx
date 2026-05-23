@@ -1,9 +1,14 @@
 import { FileText, Printer } from "lucide-react";
 import { reportExports } from "../data/wellness";
+import { printFocusedReport, type PrintReportType } from "../lib/printReports";
 
 export function ReportsPanel() {
-  const printReport = () => {
-    window.print();
+  const reportTypeForTitle = (title: string): PrintReportType => {
+    if (title.includes("Lab")) return "labs";
+    if (title.includes("Doctor Appointment")) return "appointments";
+    if (title.includes("Medication")) return "medications";
+    if (title.includes("Body Measurements")) return "measurements";
+    return "wellness";
   };
 
   return (
@@ -34,7 +39,7 @@ export function ReportsPanel() {
           <button
             type="button"
             key={report.title}
-            onClick={printReport}
+            onClick={() => printFocusedReport(reportTypeForTitle(report.title))}
             className="flex min-h-16 items-center gap-3 rounded-2xl border border-white/10 bg-midnight/45 p-4 text-left transition hover:border-ice/45 hover:bg-white/[0.08]"
           >
             <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-ice/20 bg-ice/10 text-ice">

@@ -5,6 +5,7 @@ import { EmptyState } from "./EmptyState";
 import { FormField, TextAreaField } from "./FormField";
 import { CollapsibleSectionCard } from "./CollapsibleSectionCard";
 import { SectionCard } from "./SectionCard";
+import { printFocusedReport } from "../lib/printReports";
 import { useLocalCollection, useLocalStorage, createId } from "../lib/useLocalStorage";
 
 interface AppointmentItem {
@@ -332,7 +333,7 @@ export function AppointmentsScreen() {
 
       <button
         type="button"
-        onClick={() => window.print()}
+        onClick={() => printFocusedReport("appointments")}
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
       >
         <Printer size={18} aria-hidden="true" />

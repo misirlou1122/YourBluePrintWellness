@@ -8,6 +8,7 @@ import { SectionCard } from "../SectionCard";
 import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
 import { mergeDailyTracker, todayKey, type DailyTrackerMap } from "../../lib/dailyTracking";
 import { getBloodPressureReferenceLabel, vitalsReferenceRanges } from "../../lib/referenceRanges";
+import { printFocusedReport } from "../../lib/printReports";
 
 interface MedicationEntry {
   id: string;
@@ -205,7 +206,7 @@ export function MedicationsScreen() {
       ) : <EmptyState title="No medications yet" message="Add your first medication or supplement." />}
       <button
         type="button"
-        onClick={() => window.print()}
+        onClick={() => printFocusedReport("medications")}
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
       >
         <Printer size={18} aria-hidden="true" />

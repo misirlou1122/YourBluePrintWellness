@@ -6,6 +6,7 @@ import { FormField, SelectField, TextAreaField } from "./FormField";
 import { SectionCard } from "./SectionCard";
 import { extractLabSuggestions, extractTextFromPdf, type ExtractedLabSuggestion } from "../lib/labExtraction";
 import { uploadMedicalDocument } from "../lib/medicalDocuments";
+import { printFocusedReport } from "../lib/printReports";
 import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
 import type { TrendDirection } from "../types/wellness";
 
@@ -392,7 +393,7 @@ export function LabsScreen() {
 
       <button
         type="button"
-        onClick={() => window.print()}
+        onClick={() => printFocusedReport("labs")}
         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
       >
         <Printer size={18} aria-hidden="true" />
