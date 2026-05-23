@@ -1,4 +1,4 @@
-import { CheckCircle2, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { CheckCircle2, Cloud, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import type { WellnessProfileId } from "../data/wellnessProfiles";
 import { useLocalStorage } from "../lib/useLocalStorage";
 import { useSupabaseAuth } from "../lib/useSupabaseAuth";
@@ -65,6 +65,18 @@ export function LoginPreview({
             <p className="text-sm font-semibold text-white">Signed-in status</p>
             <p className="mt-1 text-sm leading-6 text-periwinkle/85">
               {user?.email ? `Signed in as ${user.email}.` : "Not signed in on this device."}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-white/10 bg-midnight/45 p-4">
+        <div className="flex items-start gap-3">
+          <Cloud size={18} className="mt-0.5 shrink-0 text-lavender" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-semibold text-white">Saved history</p>
+            <p className="mt-1 text-sm leading-6 text-periwinkle/85">
+              Your profile, wellness profile, trackers, notes, and daily history save under your signed-in account when cloud sync is enabled.
             </p>
           </div>
         </div>
