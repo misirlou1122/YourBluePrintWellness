@@ -5,6 +5,7 @@ import { defaultCustomTileIds, getTileIdsForProfile, type WellnessProfileId } fr
 import type { TileId } from "./types/wellness";
 import { useLocalStorage } from "./lib/useLocalStorage";
 import { useSupabaseAuth } from "./lib/useSupabaseAuth";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { AuthScreen } from "./components/AuthScreen";
 import { HomeDashboard } from "./components/HomeDashboard";
 import { MedicalDisclaimer } from "./components/MedicalDisclaimer";
@@ -17,8 +18,10 @@ function PrivateDashboard({ user }: { user: User }) {
   }
 
   const [activeTileId, setActiveTileId] = useState<TileId | "home">("home");
-  const [selectedProfile, setSelectedProfile] = useLocalStorage<WellnessProfileId>("ybw.wellnessProfile", "female");
-  const [customTileIds, setCustomTileIds] = useLocalStorage<TileId[]>("ybw.customTileIds", defaultCustomTileIds);
+  const [storedProfile, setSelectedProfile] = useLocalStorage<WellnessProfileId>("ybw.wellnessProfile", "female");
+  const [storedCustomTileIds, setCustomTileIds] = useLocalStorage<TileId[]>("ybw.customTileIds", defaultCustomTileIds);
+  const selectedProfile: WellnessProfileId = ["female", "male", "general", "custom"].includes(storedProfile) ? storedProfile : "female";
+  const customTileIds = Array.isArray(storedCustomTileIds) ? storedCustomTileIds : defaultCustomTileIds;
 
   const visibleTiles = useMemo(() => {
     const selectedTileIds = getTileIdsForProfile(selectedProfile, customTileIds);
@@ -108,12 +111,12 @@ function App() {
       content = <AuthScreen initialMode="login" onNavigate={navigate} />;
     }
   } else {
-    content = <PublicLanding />;
+    content = <PublicLanding onNavigate={navigate} />;
   }
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[linear-gradient(145deg,#05081d_0%,#09153b_42%,#171046_74%,#05081d_100%)] text-white">
-      {content}
+      <AppErrorBoundary>{content}</AppErrorBoundary>
     </div>
   );
 }

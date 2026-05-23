@@ -1,7 +1,11 @@
 import { ArrowRight, LockKeyhole, ShieldCheck, Sparkles, UploadCloud } from "lucide-react";
 import { MedicalDisclaimer } from "./MedicalDisclaimer";
 
-export function PublicLanding() {
+interface PublicLandingProps {
+  onNavigate: (path: string) => void;
+}
+
+export function PublicLanding({ onNavigate }: PublicLandingProps) {
   return (
     <main className="mx-auto grid min-h-screen w-full max-w-6xl gap-5 px-4 pb-[env(safe-area-inset-bottom)] pt-4 sm:px-6 lg:px-8">
       <section className="grid min-h-[78vh] content-center gap-6 rounded-[2rem] border border-white/10 bg-white/[0.07] p-5 shadow-lavender backdrop-blur-xl sm:p-8">
@@ -38,25 +42,28 @@ export function PublicLanding() {
         </div>
 
         <div className="grid gap-3 sm:flex sm:flex-wrap">
-          <a
-            href="/login"
+          <button
+            type="button"
+            onClick={() => onNavigate("/login")}
             className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-5 text-sm font-semibold text-white shadow-glow transition hover:brightness-110"
           >
             Log in
             <ArrowRight size={18} aria-hidden="true" />
-          </a>
-          <a
-            href="/signup"
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate("/signup")}
             className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-lavender/25 bg-lavender/10 px-5 text-sm font-semibold text-lavender shadow-lavender"
           >
             Create account
-          </a>
-          <a
-            href="/app"
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate("/app")}
             className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-ice/25 bg-ice/10 px-5 text-sm font-semibold text-ice shadow-ice"
           >
             Open dashboard
-          </a>
+          </button>
         </div>
 
         <p className="text-xs leading-5 text-periwinkle/68">
