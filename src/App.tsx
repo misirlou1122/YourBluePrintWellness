@@ -9,6 +9,7 @@ import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { AuthScreen } from "./components/AuthScreen";
 import { HomeDashboard } from "./components/HomeDashboard";
 import { MedicalDisclaimer } from "./components/MedicalDisclaimer";
+import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import { PublicLanding } from "./components/PublicLanding";
 import { SectionPage } from "./components/SectionPage";
 
@@ -96,6 +97,8 @@ function App() {
     content = session && user ? <PrivateDashboard key={user.id} user={user} /> : <AuthScreen initialMode="signup" onNavigate={navigate} />;
   } else if (path === "/reset-password") {
     content = <AuthScreen initialMode="reset" onNavigate={navigate} />;
+  } else if (path === "/privacy") {
+    content = <PrivacyPolicy onNavigate={navigate} />;
   } else if (path.startsWith("/app")) {
     if (loading) {
       content = (
