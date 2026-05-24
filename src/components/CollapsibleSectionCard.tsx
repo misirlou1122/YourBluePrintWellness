@@ -34,11 +34,11 @@ export function CollapsibleSectionCard({
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
+        className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-ice/25 bg-ice/10 px-4 text-ice shadow-ice"
         aria-expanded={open}
+        aria-label={open ? "Collapse section" : "Expand section"}
       >
         {open ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}
-        {open ? "Hide entry form" : "Show entry form"}
       </button>
       {open ? <div className="mt-4">{children}</div> : null}
     </SectionCard>
