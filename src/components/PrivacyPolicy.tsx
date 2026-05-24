@@ -74,8 +74,8 @@ export function PrivacyPolicy({ onNavigate }: PrivacyPolicyProps) {
           <section>
             <h2 className="text-lg font-semibold text-white">Your control</h2>
             <p className="mt-2">
-              You can edit or delete entries inside the app. Until self-service account deletion is added, contact the
-              app owner if you need help removing an account or stored records.
+              You can edit or delete entries inside the app. You can also request account and data deletion from the
+              Account / Profile area.
             </p>
           </section>
 

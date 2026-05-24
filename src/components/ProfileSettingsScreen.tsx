@@ -2,6 +2,7 @@ import { ShieldCheck } from "lucide-react";
 import type { WellnessProfileId } from "../data/wellnessProfiles";
 import type { TileId } from "../types/wellness";
 import { LoginPreview } from "./LoginPreview";
+import { DeleteAccountPanel } from "./DeleteAccountPanel";
 import { ProblemReportPanel } from "./ProblemReportPanel";
 import { SectionCard } from "./SectionCard";
 
@@ -35,6 +36,8 @@ export function ProfileSettingsScreen({
       </SectionCard>
 
       <ProblemReportPanel />
+
+      <DeleteAccountPanel />
 
       <SectionCard className="border-ice/20 bg-ice/10">
         <div className="flex items-start gap-3">
