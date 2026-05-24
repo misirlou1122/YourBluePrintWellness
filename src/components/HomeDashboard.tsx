@@ -124,9 +124,6 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile, onProfileCha
   const displayBmi = formatBmi(displayWeight, userProfile.height);
   const avatarEmoji = userProfile.avatarEmoji || "*";
   const showAvatarImage = userProfile.avatarType === "image" && Boolean(userProfile.avatarImage);
-  const requiredProfileFields = [profileName, userProfile.age, userProfile.height, displayWeight];
-  const completedProfileFields = requiredProfileFields.filter((value) => String(value || "").trim()).length;
-  const profileComplete = completedProfileFields === requiredProfileFields.length;
   const saveProfileField = (field: "preferredName" | "age" | "height" | "weight", value: string) => {
     const trimmed = value.trim();
     setUserProfile((current) => ({
@@ -216,23 +213,6 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile, onProfileCha
               onProfileChange(value);
               setEditingField(null);
             }} />
-          </div>
-          <div className="mt-4 rounded-2xl border border-lavender/20 bg-lavender/10 p-3">
-            <p className="text-sm font-semibold text-white">
-              {profileComplete ? "Your wellness profile is saved." : "Build your wellness profile."}
-            </p>
-            <p className="mt-1 text-xs leading-5 text-periwinkle/85">
-              {profileComplete
-                ? "Tap any detail above to update it, or open profile for avatar and custom tile options."
-                : `Tap Name, Age, Height, or Weight above to fill in your basics. ${completedProfileFields}/${requiredProfileFields.length} basics complete.`}
-            </p>
-            <button
-              type="button"
-              onClick={() => onOpenTile("settings")}
-              className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow sm:w-auto"
-            >
-              More profile options
-            </button>
           </div>
         </div>
       </section>
