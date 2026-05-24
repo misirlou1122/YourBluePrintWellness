@@ -71,7 +71,7 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile }: HomeDashbo
             <h2 className="mt-1 text-xl font-semibold text-white">Choose an area</h2>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-4">
           {tiles.map((tile) => (
             <TileCard key={tile.id} tile={tile} onOpen={onOpenTile} />
           ))}
