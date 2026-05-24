@@ -50,6 +50,12 @@ button {
   color: #fff;
 }
 
+.detail-page .shadow-glow,
+.detail-page .shadow-lavender,
+.detail-page .shadow-ice {
+  box-shadow: none;
+}
+
 @layer base {
   input,
   select,
