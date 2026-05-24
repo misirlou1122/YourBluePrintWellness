@@ -31,10 +31,11 @@ if ("serviceWorker" in navigator && import.meta.env.DEV) {
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/service-worker.js")
-      .then((registration) => registration.update())
+      .getRegistrations()
+      .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+      .then(clearOldAppCaches)
       .catch(() => {
-        // PWA registration is best effort.
+        // Cache cleanup is best effort.
       });
   });
 }
