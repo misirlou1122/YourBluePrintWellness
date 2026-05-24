@@ -1,16 +1,18 @@
+import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { profileSummary } from "../data/wellness";
 import { getProfileLabel, type WellnessProfileId } from "../data/wellnessProfiles";
 import type { TileId, WellnessTile } from "../types/wellness";
 import { emptyUserProfile } from "../types/userProfile";
 import { formatBmi } from "../lib/bodyMetrics";
-import { useLocalStorage } from "../lib/useLocalStorage";
+import { createId, useLocalStorage } from "../lib/useLocalStorage";
 import { TileCard } from "./TileCard";
 
 interface HomeDashboardProps {
   tiles: WellnessTile[];
   selectedProfile: WellnessProfileId;
   onOpenTile: (id: TileId) => void;
+  onProfileChange: (profile: WellnessProfileId) => void;
 }
 
 interface WeightSummary {
@@ -20,18 +22,134 @@ interface WeightSummary {
   unit: "lb" | "kg";
 }
 
-export function HomeDashboard({ tiles, selectedProfile, onOpenTile }: HomeDashboardProps) {
-  const [weightLogs] = useLocalStorage<WeightSummary[]>("ybw.weightLogs", []);
-  const [userProfile] = useLocalStorage("ybw.userProfile", emptyUserProfile);
+const editablePillClass =
+  "min-h-9 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-left text-xs font-medium text-periwinkle/85 outline-none transition hover:border-lavender/45 hover:text-white focus-visible:ring-2 focus-visible:ring-ice/50";
+
+function EditableProfilePill({
+  label,
+  value,
+  displayValue,
+  placeholder,
+  active,
+  onStart,
+  onSave
+}: {
+  label: string;
+  value: string;
+  displayValue: string;
+  placeholder?: string;
+  active: boolean;
+  onStart: () => void;
+  onSave: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    if (active) setDraft(value);
+  }, [active, value]);
+
+  if (active) {
+    return (
+      <label className="inline-grid gap-1 rounded-2xl border border-ice/25 bg-midnight/70 px-3 py-2 text-xs text-ice shadow-ice">
+        <span>{label}</span>
+        <input
+          autoFocus
+          value={draft}
+          placeholder={placeholder}
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={() => onSave(draft)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.currentTarget.blur();
+            if (event.key === "Escape") onSave(value);
+          }}
+          className="min-h-9 w-36 rounded-xl border border-white/10 bg-midnight px-3 text-sm text-white outline-none placeholder:text-periwinkle/45"
+        />
+      </label>
+    );
+  }
+
+  return (
+    <button type="button" onClick={onStart} className={label === "Name" ? editablePillClass.replace("text-periwinkle/85", "text-ice") : editablePillClass}>
+      {label}: {displayValue || placeholder || "Add"}
+    </button>
+  );
+}
+
+function EditableProfileSelect({
+  value,
+  active,
+  onStart,
+  onSave
+}: {
+  value: WellnessProfileId;
+  active: boolean;
+  onStart: () => void;
+  onSave: (value: WellnessProfileId) => void;
+}) {
+  if (active) {
+    return (
+      <label className="inline-grid gap-1 rounded-2xl border border-ice/25 bg-midnight/70 px-3 py-2 text-xs text-ice shadow-ice">
+        <span>Profile</span>
+        <select
+          autoFocus
+          value={value}
+          onChange={(event) => onSave(event.target.value as WellnessProfileId)}
+          onBlur={() => onSave(value)}
+          className="min-h-9 rounded-xl border border-white/10 bg-midnight px-3 text-sm text-white outline-none"
+        >
+          <option value="female">Female Wellness</option>
+          <option value="male">Male Wellness</option>
+          <option value="general">General Wellness</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+    );
+  }
+
+  return (
+    <button type="button" onClick={onStart} className={editablePillClass}>
+      Profile: {getProfileLabel(value)}
+    </button>
+  );
+}
+
+export function HomeDashboard({ tiles, selectedProfile, onOpenTile, onProfileChange }: HomeDashboardProps) {
+  const [weightLogs, setWeightLogs] = useLocalStorage<WeightSummary[]>("ybw.weightLogs", []);
+  const [userProfile, setUserProfile] = useLocalStorage("ybw.userProfile", emptyUserProfile);
+  const [editingField, setEditingField] = useState<"name" | "age" | "height" | "weight" | "profile" | null>(null);
   const latestWeight = [...weightLogs].sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
-  const displayName = userProfile.preferredName || userProfile.displayName || profileSummary.name;
+  const profileName = userProfile.preferredName || userProfile.displayName;
+  const displayName = profileName || profileSummary.name;
   const displayWeight = userProfile.weight || (latestWeight ? `${latestWeight.weight} ${latestWeight.unit}` : "");
   const displayBmi = formatBmi(displayWeight, userProfile.height);
   const avatarEmoji = userProfile.avatarEmoji || "*";
   const showAvatarImage = userProfile.avatarType === "image" && Boolean(userProfile.avatarImage);
-  const requiredProfileFields = [displayName, userProfile.age, userProfile.height, displayWeight];
+  const requiredProfileFields = [profileName, userProfile.age, userProfile.height, displayWeight];
   const completedProfileFields = requiredProfileFields.filter((value) => String(value || "").trim()).length;
-  const profileComplete = completedProfileFields === requiredProfileFields.length && displayName !== profileSummary.name;
+  const profileComplete = completedProfileFields === requiredProfileFields.length;
+  const saveProfileField = (field: "preferredName" | "age" | "height" | "weight", value: string) => {
+    const trimmed = value.trim();
+    setUserProfile((current) => ({
+      ...current,
+      [field]: trimmed,
+      displayName: field === "preferredName" && !current.displayName ? trimmed : current.displayName
+    }));
+
+    if (field === "weight" && trimmed) {
+      const today = new Date().toISOString().slice(0, 10);
+      const numericWeight = trimmed.match(/\d+(?:\.\d+)?/)?.[0] || trimmed;
+      const unit: "lb" | "kg" = /\bkg\b/i.test(trimmed) ? "kg" : "lb";
+      setWeightLogs((current) => {
+        const existing = current.find((entry) => entry.date === today);
+        if (existing) {
+          return current.map((entry) => (entry.date === today ? { ...entry, weight: numericWeight, unit } : entry));
+        }
+        return [{ id: createId("weight"), date: today, weight: numericWeight, unit }, ...current];
+      });
+    }
+
+    setEditingField(null);
+  };
 
   return (
     <main className="grid min-w-0 gap-5">
@@ -57,12 +175,47 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile }: HomeDashbo
 
         <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-midnight/50 p-4">
           <div className="flex flex-wrap items-center gap-2 text-xs text-periwinkle/85">
-            <span className="rounded-full border border-ice/20 bg-ice/10 px-3 py-1 text-ice">Name: {displayName}</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Age: {userProfile.age || profileSummary.age}</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Height: {userProfile.height || profileSummary.height}</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Weight: {displayWeight || "Add weight"}</span>
+            <EditableProfilePill
+              label="Name"
+              value={profileName}
+              displayValue={displayName}
+              placeholder={profileSummary.name}
+              active={editingField === "name"}
+              onStart={() => setEditingField("name")}
+              onSave={(value) => saveProfileField("preferredName", value)}
+            />
+            <EditableProfilePill
+              label="Age"
+              value={userProfile.age}
+              displayValue={userProfile.age || profileSummary.age}
+              placeholder={profileSummary.age}
+              active={editingField === "age"}
+              onStart={() => setEditingField("age")}
+              onSave={(value) => saveProfileField("age", value)}
+            />
+            <EditableProfilePill
+              label="Height"
+              value={userProfile.height}
+              displayValue={userProfile.height || profileSummary.height}
+              placeholder={profileSummary.height}
+              active={editingField === "height"}
+              onStart={() => setEditingField("height")}
+              onSave={(value) => saveProfileField("height", value)}
+            />
+            <EditableProfilePill
+              label="Weight"
+              value={userProfile.weight}
+              displayValue={displayWeight || "Add weight"}
+              placeholder="Add weight"
+              active={editingField === "weight"}
+              onStart={() => setEditingField("weight")}
+              onSave={(value) => saveProfileField("weight", value)}
+            />
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">BMI: {displayBmi}</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Profile: {getProfileLabel(selectedProfile)}</span>
+            <EditableProfileSelect value={selectedProfile} active={editingField === "profile"} onStart={() => setEditingField("profile")} onSave={(value) => {
+              onProfileChange(value);
+              setEditingField(null);
+            }} />
           </div>
           <div className="mt-4 rounded-2xl border border-lavender/20 bg-lavender/10 p-3">
             <p className="text-sm font-semibold text-white">
@@ -70,15 +223,15 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile }: HomeDashbo
             </p>
             <p className="mt-1 text-xs leading-5 text-periwinkle/85">
               {profileComplete
-                ? "Open profile anytime to update your basics, avatar, and wellness profile."
-                : `Add your name, age, height, and weight so the dashboard feels personal. ${completedProfileFields}/${requiredProfileFields.length} basics complete.`}
+                ? "Tap any detail above to update it, or open profile for avatar and custom tile options."
+                : `Tap Name, Age, Height, or Weight above to fill in your basics. ${completedProfileFields}/${requiredProfileFields.length} basics complete.`}
             </p>
             <button
               type="button"
               onClick={() => onOpenTile("settings")}
               className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow sm:w-auto"
             >
-              {profileComplete ? "Edit profile" : "Build profile"}
+              More profile options
             </button>
           </div>
         </div>

@@ -85,6 +85,7 @@ function PrivateDashboard({ user }: { user: User }) {
         <HomeDashboard
           tiles={visibleTiles}
           selectedProfile={selectedProfile}
+          onProfileChange={setSelectedProfile}
           onOpenTile={openTile}
         />
       )}
