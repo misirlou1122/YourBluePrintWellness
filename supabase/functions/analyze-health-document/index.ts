@@ -19,23 +19,67 @@ const labMarkers = [
   { category: "Cholesterol", labName: "Total cholesterol", patterns: [/total\s+cholesterol/i, /\bcholesterol,\s*total\b/i, /\bcholesterol\b/i] },
   { category: "LDL", labName: "LDL", patterns: [/\bldl\b/i, /ldl\s+cholesterol/i] },
   { category: "HDL", labName: "HDL", patterns: [/\bhdl\b/i, /hdl\s+cholesterol/i] },
+  { category: "Cholesterol", labName: "Non-HDL cholesterol", patterns: [/non[-\s]?hdl/i] },
+  { category: "Cholesterol", labName: "VLDL", patterns: [/\bvldl\b/i] },
+  { category: "Cholesterol", labName: "Cholesterol / HDL ratio", patterns: [/chol(?:esterol)?\s*\/\s*hdl\s*ratio/i, /cholesterol\s+ratio/i] },
   { category: "Triglycerides", labName: "Triglycerides", patterns: [/\btriglycerides\b/i] },
   { category: "Iron / Ferritin", labName: "Ferritin", patterns: [/\bferritin\b/i] },
   { category: "Iron / Ferritin", labName: "Iron", patterns: [/\biron\b/i] },
+  { category: "Iron / Ferritin", labName: "TIBC", patterns: [/\btibc\b/i, /total\s+iron\s+binding/i] },
+  { category: "Iron / Ferritin", labName: "Iron saturation", patterns: [/iron\s+saturation/i, /transferrin\s+saturation/i] },
   { category: "Vitamin D", labName: "Vitamin D", patterns: [/vitamin\s*d/i, /25[-\s]?hydroxy/i] },
   { category: "Liver", labName: "ALT", patterns: [/\balt\b/i] },
   { category: "Liver", labName: "AST", patterns: [/\bast\b/i] },
+  { category: "Liver", labName: "Alkaline phosphatase", patterns: [/alkaline\s+phosphatase/i, /\balk\s*phos\b/i] },
+  { category: "Liver", labName: "Bilirubin", patterns: [/\bbilirubin\b/i] },
+  { category: "Liver", labName: "GGT", patterns: [/\bggt\b/i, /gamma[-\s]?glutamyl/i] },
   { category: "Kidney", labName: "Creatinine", patterns: [/\bcreatinine\b/i] },
   { category: "Kidney", labName: "eGFR", patterns: [/\begfr\b/i] },
   { category: "Kidney", labName: "BUN", patterns: [/\bbun\b/i, /urea\s+nitrogen/i] },
+  { category: "Kidney", labName: "BUN / Creatinine ratio", patterns: [/bun\s*\/\s*creatinine/i] },
   { category: "Thyroid", labName: "TSH", patterns: [/\btsh\b/i] },
+  { category: "Thyroid", labName: "Free T4", patterns: [/free\s*t4/i, /\bt4,\s*free\b/i] },
+  { category: "Thyroid", labName: "Free T3", patterns: [/free\s*t3/i, /\bt3,\s*free\b/i] },
   { category: "Testosterone", labName: "Testosterone", patterns: [/\btestosterone\b/i] },
+  { category: "Testosterone", labName: "Free testosterone", patterns: [/free\s+testosterone/i] },
   { category: "PSA", labName: "PSA", patterns: [/\bpsa\b/i] },
-  { category: "Other", labName: "Protein", patterns: [/\bprotein\b/i] },
-  { category: "Other", labName: "Albumin", patterns: [/\balbumin\b/i] }
+  { category: "Other", labName: "White blood cells", patterns: [/white\s+blood\s+cell/i, /\bwbc\b/i, /leukocytes/i] },
+  { category: "Other", labName: "Red blood cells", patterns: [/red\s+blood\s+cell/i, /\brbc\b/i, /erythrocytes/i] },
+  { category: "Other", labName: "Hemoglobin", patterns: [/\bhemoglobin\b/i, /\bhgb\b/i] },
+  { category: "Other", labName: "Hematocrit", patterns: [/\bhematocrit\b/i, /\bhct\b/i] },
+  { category: "Other", labName: "Platelets", patterns: [/\bplatelets?\b/i, /\bplt\b/i] },
+  { category: "Other", labName: "MCV", patterns: [/\bmcv\b/i] },
+  { category: "Other", labName: "MCH", patterns: [/\bmch\b/i] },
+  { category: "Other", labName: "MCHC", patterns: [/\bmchc\b/i] },
+  { category: "Other", labName: "RDW", patterns: [/\brdw\b/i] },
+  { category: "Other", labName: "Neutrophils", patterns: [/\bneutrophils?\b/i, /\bneut\b/i] },
+  { category: "Other", labName: "Lymphocytes", patterns: [/\blymphocytes?\b/i, /\blymphs?\b/i] },
+  { category: "Other", labName: "Monocytes", patterns: [/\bmonocytes?\b/i, /\bmonos?\b/i] },
+  { category: "Other", labName: "Eosinophils", patterns: [/\beosinophils?\b/i, /\beos\b/i] },
+  { category: "Other", labName: "Basophils", patterns: [/\bbasophils?\b/i, /\bbasos?\b/i] },
+  { category: "Other", labName: "Sodium", patterns: [/\bsodium\b/i, /\bna\b/i] },
+  { category: "Other", labName: "Potassium", patterns: [/\bpotassium\b/i, /\bk\b/i] },
+  { category: "Other", labName: "Chloride", patterns: [/\bchloride\b/i, /\bcl\b/i] },
+  { category: "Other", labName: "Carbon dioxide", patterns: [/carbon\s+dioxide/i, /\bco2\b/i, /bicarbonate/i] },
+  { category: "Other", labName: "Calcium", patterns: [/\bcalcium\b/i] },
+  { category: "Other", labName: "Protein", patterns: [/total\s+protein/i, /\bprotein\b/i] },
+  { category: "Other", labName: "Albumin", patterns: [/\balbumin\b/i] },
+  { category: "Other", labName: "Globulin", patterns: [/\bglobulin\b/i] },
+  { category: "Other", labName: "A/G ratio", patterns: [/a\/g\s+ratio/i, /albumin\s*\/\s*globulin/i] },
+  { category: "Other", labName: "Magnesium", patterns: [/\bmagnesium\b/i] },
+  { category: "Other", labName: "Phosphorus", patterns: [/\bphosphorus\b/i, /\bphosphate\b/i] },
+  { category: "Other", labName: "Vitamin B12", patterns: [/vitamin\s*b12/i, /\bb12\b/i] },
+  { category: "Other", labName: "Folate", patterns: [/\bfolate\b/i] },
+  { category: "Other", labName: "Insulin", patterns: [/\binsulin\b/i] },
+  { category: "Other", labName: "Urine specific gravity", patterns: [/specific\s+gravity/i] },
+  { category: "Other", labName: "Urine pH", patterns: [/\burine\s+ph\b/i, /\bph\b/i] },
+  { category: "Other", labName: "Urine ketones", patterns: [/\bketones?\b/i] },
+  { category: "Other", labName: "Urine blood", patterns: [/\bblood\b/i] },
+  { category: "Other", labName: "Urine nitrite", patterns: [/\bnitrite\b/i] }
 ];
 
-const unitPattern = /(%|mg\/dL|mg\/dl|mmol\/L|mmol\/l|ng\/mL|ng\/ml|pg\/mL|pg\/ml|mcg\/dL|mcg\/dl|ug\/dL|ug\/dl|mIU\/L|miu\/l|uIU\/mL|uiu\/ml|IU\/L|iu\/l|U\/L|u\/l|g\/dL|g\/dl|mL\/min\/1\.73m2|ml\/min\/1\.73m2)/i;
+const labMarkerSplitPattern = /(?=\b(?:hemoglobin\s*a1c|a1c|hba1c|glucose|cholesterol|non[-\s]?hdl|ldl|hdl|vldl|triglycerides|ferritin|iron|tibc|vitamin\s*d|alt|ast|alkaline\s+phosphatase|alk\s*phos|bilirubin|ggt|creatinine|egfr|bun|tsh|free\s*t4|free\s*t3|testosterone|psa|white\s+blood\s+cell|red\s+blood\s+cell|wbc|rbc|hemoglobin|hgb|hematocrit|hct|platelet|plt|mcv|mch|mchc|rdw|neutrophils?|lymphocytes?|monocytes?|eosinophils?|basophils?|sodium|potassium|chloride|carbon\s+dioxide|co2|calcium|total\s+protein|albumin|globulin|magnesium|phosphorus|vitamin\s*b12|folate|insulin|specific\s+gravity|ketones?|nitrite)\b)/i;
+const unitPattern = /(%|mg\/dL|mg\/dl|mmol\/L|mmol\/l|ng\/mL|ng\/ml|pg\/mL|pg\/ml|mcg\/dL|mcg\/dl|ug\/dL|ug\/dl|mIU\/L|miu\/l|uIU\/mL|uiu\/ml|IU\/L|iu\/l|U\/L|u\/l|g\/dL|g\/dl|g\/L|g\/l|mEq\/L|meq\/l|fL|fl|pg|x10E3\/uL|x10e3\/ul|x10\^3\/uL|10\*3\/uL|K\/uL|k\/ul|M\/uL|m\/ul|cells\/uL|cells\/ul|mL\/min\/1\.73m2|ml\/min\/1\.73m2)/i;
 const medicationDosePattern = /\b\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|mL|units?|iu|IU|tablet|tablets|capsule|capsules|cap|caps|spray|sprays|drop|drops|patch|puff|puffs)\b/i;
 const supplementKeywords = /\b(vitamin|supplement|magnesium|zinc|omega|fish oil|probiotic|fiber|collagen|biotin|iron|calcium|folate|b12|d3|turmeric|melatonin)\b/i;
 
@@ -266,7 +310,7 @@ function splitIntoCandidateLines(text: string) {
 
   return text
     .replace(/\s+/g, " ")
-    .split(/(?=\b(?:hemoglobin\s*a1c|a1c|glucose|cholesterol|ldl|hdl|triglycerides|ferritin|vitamin\s*d|alt|ast|creatinine|egfr|bun|tsh|testosterone|psa|protein|albumin)\b)/i)
+    .split(labMarkerSplitPattern)
     .map((line) => line.trim())
     .filter(Boolean);
 }
@@ -310,7 +354,7 @@ function parseLabLine(line: string, marker: { category: string; labName: string;
   const markerMatch = marker.patterns.map((pattern) => line.match(pattern)).find(Boolean);
   const markerIndex = markerMatch?.index || 0;
   const afterMarker = line.slice(markerIndex + (markerMatch?.[0]?.length || 0));
-  const valueMatch = afterMarker.match(/(?:result|value)?\s*[:\-]?\s*([<>]?\d+(?:\.\d+)?)/i);
+  const valueMatch = afterMarker.match(/(?:result|value|current)?\s*[:=]?\s*(?:high|low|h|l|abnormal|normal|flag)?\s*[:\-]?\s*([<>]?\d+(?:\.\d+)?)/i);
   if (!valueMatch) return null;
   const value = valueMatch[1];
   const afterValue = afterMarker.slice((valueMatch.index || 0) + valueMatch[0].length);
