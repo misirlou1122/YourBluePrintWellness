@@ -29,13 +29,15 @@ export async function analyzeUploadedDocument(filePath: string, mode: AnalyzeMod
   });
 
   if (invokeError) {
+    const functionMessage = await readFunctionErrorMessage(invokeError);
     console.error("Document analysis function failed", {
       name: invokeError.name,
       message: invokeError.message,
+      functionMessage,
       filePath,
       mode
     });
-    throw new Error("The PDF could not be analyzed securely. Please try again.");
+    throw new Error(functionMessage || "The PDF could not be analyzed securely. Please try again.");
   }
 
   const parsedItems = body?.suggestions ?? body?.items;
@@ -44,6 +46,20 @@ export async function analyzeUploadedDocument(filePath: string, mode: AnalyzeMod
   }
 
   return parsedItems;
+}
+
+async function readFunctionErrorMessage(error: unknown) {
+  const context = (error as { context?: unknown }).context;
+  if (typeof Response !== "undefined" && context instanceof Response) {
+    try {
+      const body = (await context.clone().json()) as { message?: unknown };
+      return typeof body.message === "string" ? body.message : "";
+    } catch {
+      return "";
+    }
+  }
+
+  return "";
 }
 
 export function asLabSuggestions(value: unknown): ExtractedLabSuggestion[] {
