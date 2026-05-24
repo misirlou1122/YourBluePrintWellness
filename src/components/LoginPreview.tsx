@@ -64,6 +64,9 @@ export function LoginPreview({
   const { user, signOut } = useSupabaseAuth();
   const [profile, setProfile] = useLocalStorage("ybw.userProfile", { ...emptyUserProfile, email: user?.email ?? "" });
   const [savedMessage, setSavedMessage] = useLocalStorage("ybw.profileSavedMessage", "");
+  const profileBasics = [profile.displayName || profile.preferredName, profile.age, profile.height, profile.weight];
+  const completedBasics = profileBasics.filter((value) => String(value || "").trim()).length;
+  const profileComplete = completedBasics === profileBasics.length;
 
   const updateProfile = (field: keyof UserProfileInfo, value: string) => {
     setSavedMessage("");
@@ -108,12 +111,24 @@ export function LoginPreview({
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Account</p>
-          <h2 className="mt-1 text-xl font-semibold text-white">Profile and sign-in</h2>
+          <h2 className="mt-1 text-xl font-semibold text-white">Build your wellness profile</h2>
           <p className="mt-2 text-sm leading-6 text-periwinkle/85">
-            Your profile details and wellness profile save under your account on this device. Passwords are never stored in this app.
+            Add your basics, avatar, and wellness profile here. This information powers the blueprint card on your dashboard.
           </p>
         </div>
       </div>
+
+      <div className="mt-5 rounded-2xl border border-lavender/25 bg-lavender/10 p-4">
+        <p className="text-sm font-semibold text-white">
+          {profileComplete ? "Profile basics complete" : `Profile basics ${completedBasics}/${profileBasics.length} complete`}
+        </p>
+        <p className="mt-1 text-sm leading-6 text-periwinkle/85">
+          {profileComplete
+            ? "Use Save profile after any changes so your dashboard stays up to date."
+            : "Start with name, age, height, and weight. You can update anything later."}
+        </p>
+      </div>
+
       <div className="mt-5 rounded-2xl border border-ice/20 bg-ice/10 p-4">
         <div className="flex items-start gap-3">
           <ShieldCheck size={18} aria-hidden="true" />

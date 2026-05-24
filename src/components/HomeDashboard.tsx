@@ -29,6 +29,9 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile }: HomeDashbo
   const displayBmi = formatBmi(displayWeight, userProfile.height);
   const avatarEmoji = userProfile.avatarEmoji || "*";
   const showAvatarImage = userProfile.avatarType === "image" && Boolean(userProfile.avatarImage);
+  const requiredProfileFields = [displayName, userProfile.age, userProfile.height, displayWeight];
+  const completedProfileFields = requiredProfileFields.filter((value) => String(value || "").trim()).length;
+  const profileComplete = completedProfileFields === requiredProfileFields.length && displayName !== profileSummary.name;
 
   return (
     <main className="grid min-w-0 gap-5">
@@ -60,6 +63,23 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile }: HomeDashbo
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Weight: {displayWeight || "Add weight"}</span>
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">BMI: {displayBmi}</span>
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">Profile: {getProfileLabel(selectedProfile)}</span>
+          </div>
+          <div className="mt-4 rounded-2xl border border-lavender/20 bg-lavender/10 p-3">
+            <p className="text-sm font-semibold text-white">
+              {profileComplete ? "Your wellness profile is saved." : "Build your wellness profile."}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-periwinkle/85">
+              {profileComplete
+                ? "Open profile anytime to update your basics, avatar, and wellness profile."
+                : `Add your name, age, height, and weight so the dashboard feels personal. ${completedProfileFields}/${requiredProfileFields.length} basics complete.`}
+            </p>
+            <button
+              type="button"
+              onClick={() => onOpenTile("settings")}
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow sm:w-auto"
+            >
+              {profileComplete ? "Edit profile" : "Build profile"}
+            </button>
           </div>
         </div>
       </section>

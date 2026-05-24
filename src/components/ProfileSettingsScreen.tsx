@@ -20,12 +20,6 @@ export function ProfileSettingsScreen({
 }: ProfileSettingsScreenProps) {
   return (
     <div className="grid gap-4">
-      <SectionCard title="Body Measurements / Shopping Reference" description="Body Measurements can stay visible in any profile and can be turned on or off in Custom.">
-        <div className="rounded-2xl border border-ice/20 bg-ice/10 p-4 text-sm leading-6 text-periwinkle/90">
-          Use it for online clothes shopping, fit notes, and body progress tracking. Entries stay local in this browser.
-        </div>
-      </SectionCard>
-
       <LoginPreview
         selectedProfile={selectedProfile}
         customTileIds={customTileIds}
@@ -33,6 +27,12 @@ export function ProfileSettingsScreen({
         onCustomTileIdsChange={onCustomTileIdsChange}
         showProfileSelector
       />
+
+      <SectionCard title="Body Measurements / Shopping Reference" description="Body Measurements can stay visible in any profile and can be turned on or off in Custom.">
+        <div className="rounded-2xl border border-ice/20 bg-ice/10 p-4 text-sm leading-6 text-periwinkle/90">
+          Use it for online clothes shopping, fit notes, and body progress tracking. Entries stay local in this browser.
+        </div>
+      </SectionCard>
 
       <ProblemReportPanel />
 
