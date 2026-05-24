@@ -31,11 +31,14 @@ const labCategories = [
   "LDL",
   "HDL",
   "Triglycerides",
+  "CBC",
+  "Metabolic",
   "Iron / Ferritin",
   "Vitamin D",
   "Liver",
   "Kidney",
   "Thyroid",
+  "Urinalysis",
   "Other"
 ];
 

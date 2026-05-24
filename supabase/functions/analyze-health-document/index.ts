@@ -5,7 +5,7 @@ type AnalyzeMode = "labs" | "medications";
 const bucketName = "medical-documents";
 const maxPollAttempts = 18;
 const apiVersion = "2024-11-30";
-const defaultModelId = "prebuilt-read";
+const defaultModelId = "prebuilt-layout";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,43 +43,44 @@ const labMarkers = [
   { category: "Testosterone", labName: "Testosterone", patterns: [/\btestosterone\b/i] },
   { category: "Testosterone", labName: "Free testosterone", patterns: [/free\s+testosterone/i] },
   { category: "PSA", labName: "PSA", patterns: [/\bpsa\b/i] },
-  { category: "Other", labName: "White blood cells", patterns: [/white\s+blood\s+cell/i, /\bwbc\b/i, /leukocytes/i] },
-  { category: "Other", labName: "Red blood cells", patterns: [/red\s+blood\s+cell/i, /\brbc\b/i, /erythrocytes/i] },
-  { category: "Other", labName: "Hemoglobin", patterns: [/\bhemoglobin\b/i, /\bhgb\b/i] },
-  { category: "Other", labName: "Hematocrit", patterns: [/\bhematocrit\b/i, /\bhct\b/i] },
-  { category: "Other", labName: "Platelets", patterns: [/\bplatelets?\b/i, /\bplt\b/i] },
-  { category: "Other", labName: "MCV", patterns: [/\bmcv\b/i] },
-  { category: "Other", labName: "MCH", patterns: [/\bmch\b/i] },
-  { category: "Other", labName: "MCHC", patterns: [/\bmchc\b/i] },
-  { category: "Other", labName: "RDW", patterns: [/\brdw\b/i] },
-  { category: "Other", labName: "Neutrophils", patterns: [/\bneutrophils?\b/i, /\bneut\b/i] },
-  { category: "Other", labName: "Lymphocytes", patterns: [/\blymphocytes?\b/i, /\blymphs?\b/i] },
-  { category: "Other", labName: "Monocytes", patterns: [/\bmonocytes?\b/i, /\bmonos?\b/i] },
-  { category: "Other", labName: "Eosinophils", patterns: [/\beosinophils?\b/i, /\beos\b/i] },
-  { category: "Other", labName: "Basophils", patterns: [/\bbasophils?\b/i, /\bbasos?\b/i] },
-  { category: "Other", labName: "Sodium", patterns: [/\bsodium\b/i, /\bna\b/i] },
-  { category: "Other", labName: "Potassium", patterns: [/\bpotassium\b/i, /\bk\b/i] },
-  { category: "Other", labName: "Chloride", patterns: [/\bchloride\b/i, /\bcl\b/i] },
-  { category: "Other", labName: "Carbon dioxide", patterns: [/carbon\s+dioxide/i, /\bco2\b/i, /bicarbonate/i] },
-  { category: "Other", labName: "Calcium", patterns: [/\bcalcium\b/i] },
-  { category: "Other", labName: "Protein", patterns: [/total\s+protein/i, /\bprotein\b/i] },
-  { category: "Other", labName: "Albumin", patterns: [/\balbumin\b/i] },
-  { category: "Other", labName: "Globulin", patterns: [/\bglobulin\b/i] },
-  { category: "Other", labName: "A/G ratio", patterns: [/a\/g\s+ratio/i, /albumin\s*\/\s*globulin/i] },
+  { category: "CBC", labName: "White blood cells", patterns: [/white\s+blood\s+cell/i, /\bwbc\b/i, /leukocytes/i] },
+  { category: "CBC", labName: "Red blood cells", patterns: [/red\s+blood\s+cell/i, /\brbc\b/i, /erythrocytes/i] },
+  { category: "CBC", labName: "Hemoglobin", patterns: [/\bhemoglobin\b(?!\s*a1c)/i, /\bhgb\b/i] },
+  { category: "CBC", labName: "Hematocrit", patterns: [/\bhematocrit\b/i, /\bhct\b/i] },
+  { category: "CBC", labName: "Platelets", patterns: [/\bplatelets?\b/i, /\bplt\b/i] },
+  { category: "CBC", labName: "MCV", patterns: [/\bmcv\b/i] },
+  { category: "CBC", labName: "MCH", patterns: [/\bmch\b/i] },
+  { category: "CBC", labName: "MCHC", patterns: [/\bmchc\b/i] },
+  { category: "CBC", labName: "RDW", patterns: [/\brdw\b/i] },
+  { category: "CBC", labName: "Neutrophils", patterns: [/\bneutrophils?\b/i, /\bneut\b/i] },
+  { category: "CBC", labName: "Lymphocytes", patterns: [/\blymphocytes?\b/i, /\blymphs?\b/i] },
+  { category: "CBC", labName: "Monocytes", patterns: [/\bmonocytes?\b/i, /\bmonos?\b/i] },
+  { category: "CBC", labName: "Eosinophils", patterns: [/\beosinophils?\b/i, /\beos\b/i] },
+  { category: "CBC", labName: "Basophils", patterns: [/\bbasophils?\b/i, /\bbasos?\b/i] },
+  { category: "Metabolic", labName: "Sodium", patterns: [/\bsodium\b/i, /\bna\b/i] },
+  { category: "Metabolic", labName: "Potassium", patterns: [/\bpotassium\b/i, /\bk\b/i] },
+  { category: "Metabolic", labName: "Chloride", patterns: [/\bchloride\b/i, /\bcl\b/i] },
+  { category: "Metabolic", labName: "Carbon dioxide", patterns: [/carbon\s+dioxide/i, /\bco2\b/i, /bicarbonate/i] },
+  { category: "Metabolic", labName: "Calcium", patterns: [/\bcalcium\b/i] },
+  { category: "Metabolic", labName: "Protein", patterns: [/total\s+protein/i, /\bprotein\b/i] },
+  { category: "Metabolic", labName: "Albumin", patterns: [/\balbumin\b/i] },
+  { category: "Metabolic", labName: "Globulin", patterns: [/\bglobulin\b/i] },
+  { category: "Metabolic", labName: "A/G ratio", patterns: [/a\/g\s+ratio/i, /albumin\s*\/\s*globulin/i] },
   { category: "Other", labName: "Magnesium", patterns: [/\bmagnesium\b/i] },
   { category: "Other", labName: "Phosphorus", patterns: [/\bphosphorus\b/i, /\bphosphate\b/i] },
   { category: "Other", labName: "Vitamin B12", patterns: [/vitamin\s*b12/i, /\bb12\b/i] },
   { category: "Other", labName: "Folate", patterns: [/\bfolate\b/i] },
   { category: "Other", labName: "Insulin", patterns: [/\binsulin\b/i] },
-  { category: "Other", labName: "Urine specific gravity", patterns: [/specific\s+gravity/i] },
-  { category: "Other", labName: "Urine pH", patterns: [/\burine\s+ph\b/i, /\bph\b/i] },
-  { category: "Other", labName: "Urine ketones", patterns: [/\bketones?\b/i] },
-  { category: "Other", labName: "Urine blood", patterns: [/\bblood\b/i] },
-  { category: "Other", labName: "Urine nitrite", patterns: [/\bnitrite\b/i] }
+  { category: "Urinalysis", labName: "Urine specific gravity", patterns: [/specific\s+gravity/i] },
+  { category: "Urinalysis", labName: "Urine pH", patterns: [/\burine\s+ph\b/i, /\bph\b/i] },
+  { category: "Urinalysis", labName: "Urine ketones", patterns: [/\bketones?\b/i] },
+  { category: "Urinalysis", labName: "Urine blood", patterns: [/\bblood\b/i] },
+  { category: "Urinalysis", labName: "Urine nitrite", patterns: [/\bnitrite\b/i] }
 ];
 
 const labMarkerSplitPattern = /(?=\b(?:hemoglobin\s*a1c|a1c|hba1c|glucose|cholesterol|non[-\s]?hdl|ldl|hdl|vldl|triglycerides|ferritin|iron|tibc|vitamin\s*d|alt|ast|alkaline\s+phosphatase|alk\s*phos|bilirubin|ggt|creatinine|egfr|bun|tsh|free\s*t4|free\s*t3|testosterone|psa|white\s+blood\s+cell|red\s+blood\s+cell|wbc|rbc|hemoglobin|hgb|hematocrit|hct|platelet|plt|mcv|mch|mchc|rdw|neutrophils?|lymphocytes?|monocytes?|eosinophils?|basophils?|sodium|potassium|chloride|carbon\s+dioxide|co2|calcium|total\s+protein|albumin|globulin|magnesium|phosphorus|vitamin\s*b12|folate|insulin|specific\s+gravity|ketones?|nitrite)\b)/i;
 const unitPattern = /(%|mg\/dL|mg\/dl|mmol\/L|mmol\/l|ng\/mL|ng\/ml|pg\/mL|pg\/ml|mcg\/dL|mcg\/dl|ug\/dL|ug\/dl|mIU\/L|miu\/l|uIU\/mL|uiu\/ml|IU\/L|iu\/l|U\/L|u\/l|g\/dL|g\/dl|g\/L|g\/l|mEq\/L|meq\/l|fL|fl|pg|x10E3\/uL|x10e3\/ul|x10\^3\/uL|10\*3\/uL|K\/uL|k\/ul|M\/uL|m\/ul|cells\/uL|cells\/ul|mL\/min\/1\.73m2|ml\/min\/1\.73m2)/i;
+const labValuePattern = /(?:result|value|current)?\s*[:=]?\s*(?:high|low|h|l|abnormal|normal|flag)?\s*[:\-]?\s*([<>]?\d+(?:\.\d+)?(?:\s*(?:-|to|\u2013)\s*[<>]?\d+(?:\.\d+)?)?|\d+\+|negative|trace|none\s+seen|not\s+detected|detected|normal|abnormal|clear|cloudy|yellow|straw|amber|see\s+note|culture\s+indicated)/i;
 const medicationDosePattern = /\b\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|mL|units?|iu|IU|tablet|tablets|capsule|capsules|cap|caps|spray|sprays|drop|drops|patch|puff|puffs)\b/i;
 const supplementKeywords = /\b(vitamin|supplement|magnesium|zinc|omega|fish oil|probiotic|fiber|collagen|biotin|iron|calcium|folate|b12|d3|turmeric|melatonin)\b/i;
 
@@ -114,7 +115,8 @@ Deno.serve(async (req) => {
     const serviceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
     const azureEndpoint = requiredEnv("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT").replace(/\/+$/, "");
     const azureKey = requiredEnv("AZURE_DOCUMENT_INTELLIGENCE_KEY");
-    const azureModelId = Deno.env.get("AZURE_DOCUMENT_INTELLIGENCE_MODEL_ID") || defaultModelId;
+    const configuredModelId = Deno.env.get("AZURE_DOCUMENT_INTELLIGENCE_MODEL_ID") || defaultModelId;
+    const azureModelId = mode === "labs" && configuredModelId === "prebuilt-read" ? "prebuilt-layout" : configuredModelId;
 
     console.log(JSON.stringify({ event: "analysis_config_loaded", hasSupabaseUrl: Boolean(supabaseUrl), hasServiceRoleKey: Boolean(serviceRoleKey), hasAzureEndpoint: Boolean(azureEndpoint), hasAzureKey: Boolean(azureKey), azureModelId }));
 
@@ -247,15 +249,44 @@ async function analyzeWithAzure(pdfBytes: ArrayBuffer, endpoint: string, key: st
 }
 
 function extractText(result: Record<string, any>) {
+  const tableText = extractTableText(result?.analyzeResult?.tables);
+
   if (typeof result?.analyzeResult?.content === "string") {
-    return result.analyzeResult.content;
+    return [result.analyzeResult.content, tableText].filter(Boolean).join("\n").trim();
   }
 
   const pages = Array.isArray(result?.analyzeResult?.pages) ? result.analyzeResult.pages : [];
-  return pages
+  const pageText = pages
     .map((page) => (Array.isArray(page?.lines) ? page.lines.map((line: { content?: string }) => line?.content || "").join("\n") : ""))
     .join("\n")
     .trim();
+
+  return [pageText, tableText].filter(Boolean).join("\n").trim();
+}
+
+function extractTableText(tables: unknown) {
+  if (!Array.isArray(tables)) return "";
+
+  return tables
+    .map((table) => {
+      const cells = Array.isArray(table?.cells) ? table.cells : [];
+      const rows = new Map<number, { columnIndex: number; content: string }[]>();
+
+      for (const cell of cells) {
+        const rowIndex = typeof cell?.rowIndex === "number" ? cell.rowIndex : 0;
+        const columnIndex = typeof cell?.columnIndex === "number" ? cell.columnIndex : 0;
+        const content = typeof cell?.content === "string" ? cell.content.replace(/\s+/g, " ").trim() : "";
+        if (!content) continue;
+        rows.set(rowIndex, [...(rows.get(rowIndex) || []), { columnIndex, content }]);
+      }
+
+      return [...rows.entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([, row]) => row.sort((a, b) => a.columnIndex - b.columnIndex).map((cell) => cell.content).join(" "))
+        .join("\n");
+    })
+    .filter(Boolean)
+    .join("\n");
 }
 
 function splitReadableLines(text: string) {
@@ -305,14 +336,27 @@ function splitIntoCandidateLines(text: string) {
     .split(/\n| {3,}/)
     .map((line) => line.replace(/\s+/g, " ").trim())
     .filter(Boolean);
+  const windowedLines = buildLabCandidateWindows(naturalLines);
 
-  if (naturalLines.length > 8) return naturalLines;
+  if (naturalLines.length > 8) return [...naturalLines, ...windowedLines];
 
-  return text
+  const fallbackLines = text
     .replace(/\s+/g, " ")
     .split(labMarkerSplitPattern)
     .map((line) => line.trim())
     .filter(Boolean);
+
+  return [...fallbackLines, ...windowedLines];
+}
+
+function buildLabCandidateWindows(lines: string[]) {
+  return lines
+    .map((line, index) => (isLabMarkerLine(line) ? lines.slice(index, index + 10).join(" ") : ""))
+    .filter(Boolean);
+}
+
+function isLabMarkerLine(line: string) {
+  return labMarkers.some((marker) => marker.patterns.some((pattern) => pattern.test(line)));
 }
 
 function splitMedicationCandidateLines(text: string) {
@@ -354,28 +398,30 @@ function parseLabLine(line: string, marker: { category: string; labName: string;
   const markerMatch = marker.patterns.map((pattern) => line.match(pattern)).find(Boolean);
   const markerIndex = markerMatch?.index || 0;
   const afterMarker = line.slice(markerIndex + (markerMatch?.[0]?.length || 0));
-  const valueMatch = afterMarker.match(/(?:result|value|current)?\s*[:=]?\s*(?:high|low|h|l|abnormal|normal|flag)?\s*[:\-]?\s*([<>]?\d+(?:\.\d+)?)/i);
+  const valueMatch = afterMarker.match(labValuePattern);
   if (!valueMatch) return null;
   const value = valueMatch[1];
   const afterValue = afterMarker.slice((valueMatch.index || 0) + valueMatch[0].length);
   const unitMatch = afterValue.match(unitPattern);
   const unit = unitMatch?.[0] || "";
-  const afterUnit = unitMatch ? afterValue.slice((unitMatch.index || 0) + unitMatch[0].length) : afterValue;
 
   return {
     category: marker.category,
     labName: marker.labName,
     value,
     unit,
-    referenceRange: cleanReferenceRange(afterUnit),
+    referenceRange: cleanReferenceRange(afterValue),
     date: "",
     notes: "Extracted from PDF. Please verify against the original report."
   };
 }
 
 function cleanReferenceRange(value: string) {
-  const referenceMatch = value.match(/(?:reference|ref\.?\s*range|range|normal)?\s*[:\-]?\s*([<>]?\d+(?:\.\d+)?\s*(?:-|to|\u2013)\s*[<>]?\d+(?:\.\d+)?|[<>]=?\s*\d+(?:\.\d+)?)/i);
-  return referenceMatch?.[1]?.replace(/\s+/g, " ").trim() || "";
+  const rangeValue = "([<>]=?\\s*(?:or\\s*=\\s*)?\\d+(?:\\.\\d+)?|\\d+(?:\\.\\d+)?\\s*(?:-|to|\\u2013)\\s*\\d+(?:\\.\\d+)?|negative|none\\s+seen|not\\s+detected|clear|yellow|straw)";
+  const labeledMatch = value.match(new RegExp(`(?:reference|ref\\.?\\s*range|range|normal)\\s*:?\\s*${rangeValue}`, "i"));
+  const genericMatch = value.match(new RegExp(rangeValue, "i"));
+  const range = labeledMatch?.[1] ?? genericMatch?.[1] ?? "";
+  return range.replace(/\s+/g, " ").replace(/or\s*=\s*/i, "OR = ").trim();
 }
 
 function findResultDate(text: string) {
