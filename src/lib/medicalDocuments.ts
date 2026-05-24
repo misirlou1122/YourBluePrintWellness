@@ -13,6 +13,24 @@ export interface MedicalDocumentRecord {
   extraction_status: "not_started" | "text_extracted" | "needs_ocr" | "reviewed";
 }
 
+export const MAX_MEDICAL_DOCUMENT_BYTES = 20 * 1024 * 1024;
+
+export function isPdfFile(file: File) {
+  return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+}
+
+export function validatePdfUpload(file: File) {
+  if (!isPdfFile(file)) {
+    return "Please choose a PDF file for automatic reading.";
+  }
+
+  if (file.size > MAX_MEDICAL_DOCUMENT_BYTES) {
+    return "This PDF is too large. Please choose a file under 20 MB.";
+  }
+
+  return "";
+}
+
 function safeFileName(fileName: string) {
   const safeName = fileName
     .trim()

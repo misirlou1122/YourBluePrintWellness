@@ -50,30 +50,6 @@ const unitPattern = /(%|mg\/dL|mg\/dl|mmol\/L|mmol\/l|ng\/mL|ng\/ml|pg\/mL|pg\/m
 const medicationDosePattern = /\b\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|mL|units?|iu|IU|tablet|tablets|capsule|capsules|cap|caps|spray|sprays|drop|drops|patch|puff|puffs)\b/i;
 const supplementKeywords = /\b(vitamin|supplement|magnesium|zinc|omega|fish oil|probiotic|fiber|collagen|biotin|iron|ferritin|calcium|folate|b12|d3|coq10|turmeric|melatonin)\b/i;
 
-export async function extractTextFromPdf(file: File) {
-  const pdfjs = await import("pdfjs-dist");
-  const worker = await import("pdfjs-dist/build/pdf.worker.mjs?url");
-
-  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-
-  const document = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
-  const pages: string[] = [];
-
-  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-    const page = await document.getPage(pageNumber);
-    const textContent = await page.getTextContent();
-    const text = textContent.items
-      .map((item) => ("str" in item ? item.str : ""))
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    pages.push(text);
-  }
-
-  return pages.join("\n");
-}
-
 export function extractLabSuggestions(text: string): ExtractedLabSuggestion[] {
   const resultDate = findResultDate(text);
   const candidates = splitIntoCandidateLines(text);

@@ -10,8 +10,9 @@ import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
 import { mergeDailyTracker, todayKey, type DailyTrackerMap } from "../../lib/dailyTracking";
 import { getBloodPressureReferenceLabel, vitalsReferenceRanges } from "../../lib/referenceRanges";
 import { printFocusedReport } from "../../lib/printReports";
-import { extractMedicationSuggestions, extractTextFromPdf, type ExtractedMedicationSuggestion } from "../../lib/labExtraction";
-import { uploadMedicalDocument } from "../../lib/medicalDocuments";
+import type { ExtractedMedicationSuggestion } from "../../lib/labExtraction";
+import { analyzeUploadedDocument, asMedicationSuggestions } from "../../lib/documentAnalysis";
+import { uploadMedicalDocument, validatePdfUpload, type MedicalDocumentRecord } from "../../lib/medicalDocuments";
 
 interface MedicationEntry {
   id: string;
@@ -133,6 +134,7 @@ export function MedicationsScreen() {
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadStatus, setUploadStatus] = useState("");
   const [isWorking, setIsWorking] = useState(false);
+  const [uploadedDocument, setUploadedDocument] = useState<MedicalDocumentRecord | null>(null);
   const [suggestions, setSuggestions] = useLocalStorage<ExtractedMedicationSuggestion[]>("ybw.medicationImportSuggestions", []);
   const today = todayKey();
   const setField = (field: keyof typeof emptyMedication, value: string | boolean) => store.setDraft((current) => ({ ...current, [field]: value }));
@@ -173,28 +175,24 @@ export function MedicationsScreen() {
       takenToday: false,
       takenDates: {}
     });
-    setSuggestions((current) => current.filter((item) => item !== suggestion));
+    setSuggestions((current) => (Array.isArray(current) ? current.filter((item) => item !== suggestion) : []));
   };
   const addAllImportedItems = () => {
-    suggestions.forEach(addImportedItem);
+    if (Array.isArray(suggestions)) {
+      suggestions.forEach(addImportedItem);
+    }
   };
   const readMedicationPdf = async () => {
-    if (!selectedFile) {
-      setUploadStatus("Choose a PDF first.");
-      return;
-    }
-
-    if (selectedFile.type !== "application/pdf") {
-      setUploadStatus("Choose a PDF for automatic medication reading.");
+    if (!uploadedDocument?.file_path) {
+      setUploadStatus("Upload the PDF first, then analyze it.");
       return;
     }
 
     setIsWorking(true);
-    setUploadStatus("Reading the PDF...");
+    setUploadStatus("Analyzing with secure document reading...");
 
     try {
-      const text = await extractTextFromPdf(selectedFile);
-      const extracted = extractMedicationSuggestions(text);
+      const extracted = asMedicationSuggestions(await analyzeUploadedDocument(uploadedDocument.file_path, "medications"));
       setSuggestions(extracted);
       setUploadStatus(
         extracted.length
@@ -202,7 +200,7 @@ export function MedicationsScreen() {
           : "No medication or supplement items were found automatically. You can still enter them manually."
       );
     } catch (error) {
-      setUploadStatus(error instanceof Error ? error.message : "The PDF could not be read automatically.");
+      setUploadStatus(error instanceof Error ? error.message : "The PDF could not be analyzed. Please try again.");
     } finally {
       setIsWorking(false);
     }
@@ -213,14 +211,21 @@ export function MedicationsScreen() {
       return;
     }
 
+    const validationMessage = validatePdfUpload(selectedFile);
+    if (validationMessage) {
+      setUploadStatus(validationMessage);
+      return;
+    }
+
     setIsWorking(true);
-    setUploadStatus("Saving file...");
+    setUploadStatus("Uploading PDF...");
 
     try {
-      await uploadMedicalDocument(selectedFile, "Medication documents", uploadTitle || selectedFile.name);
-      setUploadStatus("File saved privately to your account.");
+      const uploaded = await uploadMedicalDocument(selectedFile, "Medication documents", uploadTitle || selectedFile.name);
+      setUploadedDocument(uploaded);
+      setUploadStatus("Upload complete. You can analyze the PDF now.");
     } catch (error) {
-      setUploadStatus(error instanceof Error ? `${error.message} If this is from your phone, try saving it as a PDF and upload again.` : "File storage is not ready yet.");
+      setUploadStatus(error instanceof Error ? `${error.message} Please try again, or choose the PDF from Files.` : "File storage is not ready yet.");
     } finally {
       setIsWorking(false);
     }
@@ -241,7 +246,9 @@ export function MedicationsScreen() {
               type="file"
               accept=".pdf,application/pdf"
               onChange={(event) => {
-                setSelectedFile(event.target.files?.[0] ?? null);
+                const file = event.target.files?.[0] ?? null;
+                setSelectedFile(file);
+                setUploadedDocument(null);
                 setSuggestions([]);
                 setUploadStatus("");
               }}
@@ -263,11 +270,11 @@ export function MedicationsScreen() {
           <button
             type="button"
             onClick={readMedicationPdf}
-            disabled={isWorking}
+            disabled={isWorking || !uploadedDocument?.file_path}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow disabled:opacity-60"
           >
             <Plus size={18} aria-hidden="true" />
-            Read medications
+            Analyze medications
           </button>
         </div>
         {uploadStatus ? <p className="mt-4 rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm leading-6 text-white">{uploadStatus}</p> : null}
@@ -276,7 +283,7 @@ export function MedicationsScreen() {
         </p>
       </SectionCard>
 
-      {suggestions.length ? (
+      {Array.isArray(suggestions) && suggestions.length ? (
         <SectionCard title="Review imported medications" description="Add only the medications or supplements that look correct.">
           <div className="grid gap-3">
             {suggestions.map((suggestion, index) => (

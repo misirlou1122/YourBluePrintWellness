@@ -4,8 +4,9 @@ import { EntryActions } from "./EntryActions";
 import { EmptyState } from "./EmptyState";
 import { FormField, SelectField, TextAreaField } from "./FormField";
 import { SectionCard } from "./SectionCard";
-import { extractLabSuggestions, extractTextFromPdf, type ExtractedLabSuggestion } from "../lib/labExtraction";
-import { uploadMedicalDocument } from "../lib/medicalDocuments";
+import type { ExtractedLabSuggestion } from "../lib/labExtraction";
+import { analyzeUploadedDocument, asLabSuggestions } from "../lib/documentAnalysis";
+import { uploadMedicalDocument, validatePdfUpload, type MedicalDocumentRecord } from "../lib/medicalDocuments";
 import { printFocusedReport } from "../lib/printReports";
 import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
 import type { TrendDirection } from "../types/wellness";
@@ -79,6 +80,7 @@ export function LabsScreen() {
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadStatus, setUploadStatus] = useState("");
   const [isWorking, setIsWorking] = useState(false);
+  const [uploadedDocument, setUploadedDocument] = useState<MedicalDocumentRecord | null>(null);
   const [suggestions, setSuggestions] = useState<ExtractedLabSuggestion[]>([]);
   const [manualEntryOpen, setManualEntryOpen] = useLocalStorage("ybw.labsManualEntryOpen", false);
 
@@ -136,23 +138,17 @@ export function LabsScreen() {
     suggestions.forEach(saveSuggestion);
   };
 
-  const extractSelectedPdf = async () => {
-    if (!selectedFile) {
-      setUploadStatus("Choose a PDF first.");
-      return;
-    }
-
-    if (selectedFile.type !== "application/pdf") {
-      setUploadStatus("Choose a PDF for automatic lab reading. Photos can still be saved as documents.");
+  const analyzeUploadedPdf = async () => {
+    if (!uploadedDocument?.file_path) {
+      setUploadStatus("Upload the PDF first, then analyze it.");
       return;
     }
 
     setIsWorking(true);
-    setUploadStatus("Reading the PDF...");
+    setUploadStatus("Analyzing with secure document reading...");
 
     try {
-      const text = await extractTextFromPdf(selectedFile);
-      const extracted = extractLabSuggestions(text);
+      const extracted = asLabSuggestions(await analyzeUploadedDocument(uploadedDocument.file_path, "labs"));
       setSuggestions(extracted);
       setUploadStatus(
         extracted.length
@@ -160,7 +156,7 @@ export function LabsScreen() {
           : "No lab values were found automatically. You can still enter them manually."
       );
     } catch (error) {
-      setUploadStatus(error instanceof Error ? error.message : "The PDF could not be read automatically.");
+      setUploadStatus(error instanceof Error ? error.message : "The PDF could not be analyzed. Please try again.");
     } finally {
       setIsWorking(false);
     }
@@ -172,14 +168,21 @@ export function LabsScreen() {
       return;
     }
 
+    const validationMessage = validatePdfUpload(selectedFile);
+    if (validationMessage) {
+      setUploadStatus(validationMessage);
+      return;
+    }
+
     setIsWorking(true);
-    setUploadStatus("Saving file...");
+    setUploadStatus("Uploading PDF...");
 
     try {
-      await uploadMedicalDocument(selectedFile, "Lab documents", uploadTitle);
-      setUploadStatus("File saved privately to your account.");
+      const uploaded = await uploadMedicalDocument(selectedFile, "Lab documents", uploadTitle || selectedFile.name);
+      setUploadedDocument(uploaded);
+      setUploadStatus("Upload complete. You can analyze the PDF now.");
     } catch (error) {
-      setUploadStatus(error instanceof Error ? `${error.message} If this is from your phone, try saving it as a PDF or JPG and upload again.` : "File storage is not ready yet.");
+      setUploadStatus(error instanceof Error ? `${error.message} Please try again, or choose the PDF from Files.` : "File storage is not ready yet.");
     } finally {
       setIsWorking(false);
     }
@@ -203,12 +206,14 @@ export function LabsScreen() {
         <div className="grid gap-3">
           <FormField label="Document title" value={uploadTitle} onChange={setUploadTitle} placeholder="April blood test" />
           <label className="grid gap-1 text-sm text-periwinkle/85">
-            <span>PDF or photo</span>
+            <span>Lab PDF</span>
             <input
               type="file"
-              accept=".pdf,application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
+              accept=".pdf,application/pdf"
               onChange={(event) => {
-                setSelectedFile(event.target.files?.[0] ?? null);
+                const file = event.target.files?.[0] ?? null;
+                setSelectedFile(file);
+                setUploadedDocument(null);
                 setSuggestions([]);
                 setUploadStatus("");
               }}
@@ -229,12 +234,12 @@ export function LabsScreen() {
           </button>
           <button
             type="button"
-            onClick={extractSelectedPdf}
-            disabled={isWorking}
+            onClick={analyzeUploadedPdf}
+            disabled={isWorking || !uploadedDocument?.file_path}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow disabled:opacity-60"
           >
             <Plus size={18} aria-hidden="true" />
-            Read lab values
+            Analyze lab values
           </button>
         </div>
         {uploadStatus ? <p className="mt-4 rounded-2xl border border-white/10 bg-midnight/45 p-3 text-sm leading-6 text-white">{uploadStatus}</p> : null}
