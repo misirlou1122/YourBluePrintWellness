@@ -3,6 +3,7 @@ const { createClient } = require("@supabase/supabase-js");
 const bucketName = "medical-documents";
 const maxPollAttempts = 18;
 const apiVersion = "2024-11-30";
+const defaultModelId = "prebuilt-read";
 
 const labMarkers = [
   { category: "A1C", labName: "A1C", patterns: [/hemoglobin\s*a1c/i, /\ba1c\b/i, /\bhba1c\b/i] },
@@ -47,13 +48,15 @@ module.exports = async function (context, req) {
     }
 
     const supabaseUrl = requiredEnv("SUPABASE_URL");
-    const supabaseAnonKey = requiredEnv("SUPABASE_ANON_KEY");
     const supabaseServiceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
     const azureEndpoint = requiredEnv("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT").replace(/\/+$/, "");
     const azureKey = requiredEnv("AZURE_DOCUMENT_INTELLIGENCE_KEY");
+    const azureModelId = process.env.AZURE_DOCUMENT_INTELLIGENCE_MODEL_ID || defaultModelId;
 
-    const authClient = createClient(supabaseUrl, supabaseAnonKey);
-    const { data: userData, error: userError } = await authClient.auth.getUser(accessToken);
+    const serviceClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
+    const { data: userData, error: userError } = await serviceClient.auth.getUser(accessToken);
     if (userError || !userData.user) {
       return send(context, 401, { message: "Please sign in again before analyzing this PDF." });
     }
@@ -62,9 +65,6 @@ module.exports = async function (context, req) {
       return send(context, 403, { message: "This document does not belong to the signed-in account." });
     }
 
-    const serviceClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: { persistSession: false, autoRefreshToken: false }
-    });
     const { data: signedData, error: signedError } = await serviceClient.storage
       .from(bucketName)
       .createSignedUrl(filePath, 300);
@@ -75,7 +75,7 @@ module.exports = async function (context, req) {
 
     await serviceClient.from("medical_documents").update({ extraction_status: "needs_ocr" }).eq("file_path", filePath);
 
-    const text = await analyzeWithAzure(signedData.signedUrl, azureEndpoint, azureKey);
+    const text = await analyzeWithAzure(signedData.signedUrl, azureEndpoint, azureKey, azureModelId);
     const suggestions = mode === "medications" ? extractMedicationSuggestions(text) : extractLabSuggestions(text);
 
     await serviceClient
@@ -116,9 +116,10 @@ function requiredEnv(name) {
   return value;
 }
 
-async function analyzeWithAzure(urlSource, endpoint, key) {
+async function analyzeWithAzure(urlSource, endpoint, key, modelId) {
+  const encodedModelId = encodeURIComponent(modelId || defaultModelId);
   const response = await fetch(
-    `${endpoint}/documentintelligence/documentModels/prebuilt-read:analyze?api-version=${apiVersion}`,
+    `${endpoint}/documentintelligence/documentModels/${encodedModelId}:analyze?api-version=${apiVersion}`,
     {
       method: "POST",
       headers: {
