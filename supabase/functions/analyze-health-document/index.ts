@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.106.1";
 
 type AnalyzeMode = "labs" | "medications";
 
-const bucketName = "health-documents";
+const bucketName = "medical-documents";
 const maxPollAttempts = 18;
 const apiVersion = "2024-11-30";
 const defaultModelId = "prebuilt-read";

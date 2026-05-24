@@ -13,12 +13,18 @@ import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import { PublicLanding } from "./components/PublicLanding";
 import { SectionPage } from "./components/SectionPage";
 
+function tileFromUrl(): TileId | "home" {
+  if (typeof window === "undefined") return "home";
+  const tile = new URLSearchParams(window.location.search).get("tile");
+  return tile ? (tile as TileId) : "home";
+}
+
 function PrivateDashboard({ user }: { user: User }) {
   if (typeof window !== "undefined") {
     window.localStorage.setItem("ybw.currentUserId", user.id);
   }
 
-  const [activeTileId, setActiveTileId] = useState<TileId | "home">("home");
+  const [activeTileId, setActiveTileId] = useState<TileId | "home">(tileFromUrl);
   const [storedProfile, setSelectedProfile] = useLocalStorage<WellnessProfileId>("ybw.wellnessProfile", "female");
   const [storedCustomTileIds, setCustomTileIds] = useLocalStorage<TileId[]>("ybw.customTileIds", defaultCustomTileIds);
   const selectedProfile: WellnessProfileId = ["female", "male", "general", "custom"].includes(storedProfile) ? storedProfile : "female";
@@ -41,6 +47,21 @@ function PrivateDashboard({ user }: { user: User }) {
   const previousTile = activeIndex > 0 ? visibleTiles[activeIndex - 1] : undefined;
   const nextTile = activeIndex >= 0 && activeIndex < visibleTiles.length - 1 ? visibleTiles[activeIndex + 1] : undefined;
   const printedDate = new Date().toLocaleDateString();
+  const openTile = (tileId: TileId | "home") => {
+    setActiveTileId(tileId);
+    if (typeof window !== "undefined") {
+      const nextUrl = tileId === "home" ? "/app" : `/app?tile=${encodeURIComponent(tileId)}`;
+      if (`${window.location.pathname}${window.location.search}` !== nextUrl) {
+        window.history.pushState({}, "", nextUrl);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const syncTileFromHistory = () => setActiveTileId(tileFromUrl());
+    window.addEventListener("popstate", syncTileFromHistory);
+    return () => window.removeEventListener("popstate", syncTileFromHistory);
+  }, []);
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-6xl overflow-x-hidden px-3 pb-[env(safe-area-inset-bottom)] pt-3 sm:px-6 sm:pt-4 lg:px-8">
@@ -53,8 +74,8 @@ function PrivateDashboard({ user }: { user: User }) {
           tile={activeTile}
           previousTile={previousTile}
           nextTile={nextTile}
-          onHome={() => setActiveTileId("home")}
-          onOpenTile={setActiveTileId}
+          onHome={() => openTile("home")}
+          onOpenTile={openTile}
           selectedProfile={selectedProfile}
           customTileIds={customTileIds}
           onProfileChange={setSelectedProfile}
@@ -64,7 +85,7 @@ function PrivateDashboard({ user }: { user: User }) {
         <HomeDashboard
           tiles={visibleTiles}
           selectedProfile={selectedProfile}
-          onOpenTile={setActiveTileId}
+          onOpenTile={openTile}
         />
       )}
       <MedicalDisclaimer />

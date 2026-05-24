@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-export const MEDICAL_DOCUMENTS_BUCKET = "health-documents";
+export const MEDICAL_DOCUMENTS_BUCKET = "medical-documents";
 
 export interface MedicalDocumentRecord {
   id?: string;
@@ -85,10 +85,9 @@ export async function uploadMedicalDocument(file: File, category: string, title:
   const extension = safeName.includes(".") ? "" : extensionForContentType(contentType);
   const fileName = `${safeName}${extension}`;
   const filePath = `${userData.user.id}/${categoryFolder(category)}/${Date.now()}-${fileName}`;
-  const fileBody = new Blob([await file.arrayBuffer()], { type: contentType });
   const { error: uploadError } = await supabase.storage
     .from(MEDICAL_DOCUMENTS_BUCKET)
-    .upload(filePath, fileBody, {
+    .upload(filePath, file, {
       contentType,
       upsert: false
     });
