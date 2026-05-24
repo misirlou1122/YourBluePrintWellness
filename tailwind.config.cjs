@@ -15,9 +15,9 @@ module.exports = {
         champagne: "#ffe8b6"
       },
       boxShadow: {
-        glow: "0 0 18px rgba(141, 162, 255, 0.22)",
-        lavender: "0 0 22px rgba(211, 156, 255, 0.2)",
-        ice: "0 0 16px rgba(216, 247, 255, 0.16)"
+        glow: "0 0 10px rgba(141, 162, 255, 0.14)",
+        lavender: "0 0 14px rgba(211, 156, 255, 0.14)",
+        ice: "0 0 10px rgba(216, 247, 255, 0.1)"
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "Segoe UI", "sans-serif"]
