@@ -29,6 +29,12 @@ export async function analyzeUploadedDocument(filePath: string, mode: AnalyzeMod
   });
 
   if (invokeError) {
+    console.error("Document analysis function failed", {
+      name: invokeError.name,
+      message: invokeError.message,
+      filePath,
+      mode
+    });
     throw new Error("The PDF could not be analyzed securely. Please try again.");
   }
 

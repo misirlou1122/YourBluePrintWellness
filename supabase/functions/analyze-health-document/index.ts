@@ -53,12 +53,16 @@ Deno.serve(async (req) => {
     const filePath = typeof body.filePath === "string" ? body.filePath : "";
     const mode: AnalyzeMode = body.mode === "medications" ? "medications" : "labs";
 
+    console.log(JSON.stringify({ event: "analysis_start", mode, bucketName, hasFilePath: Boolean(filePath), fileExtension: filePath.split(".").pop() || "" }));
+
     if (!filePath || !filePath.toLowerCase().endsWith(".pdf")) {
+      console.warn(JSON.stringify({ event: "analysis_rejected", reason: "invalid_pdf_path", hasFilePath: Boolean(filePath) }));
       return send(400, { message: "Please upload a PDF before analyzing." });
     }
 
     const accessToken = authToken(req);
     if (!accessToken) {
+      console.warn(JSON.stringify({ event: "analysis_rejected", reason: "missing_auth" }));
       return send(401, { message: "Please sign in again before analyzing this PDF." });
     }
 
@@ -68,16 +72,20 @@ Deno.serve(async (req) => {
     const azureKey = requiredEnv("AZURE_DOCUMENT_INTELLIGENCE_KEY");
     const azureModelId = Deno.env.get("AZURE_DOCUMENT_INTELLIGENCE_MODEL_ID") || defaultModelId;
 
+    console.log(JSON.stringify({ event: "analysis_config_loaded", hasSupabaseUrl: Boolean(supabaseUrl), hasServiceRoleKey: Boolean(serviceRoleKey), hasAzureEndpoint: Boolean(azureEndpoint), hasAzureKey: Boolean(azureKey), azureModelId }));
+
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false }
     });
 
     const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
     if (userError || !userData.user) {
+      console.warn(JSON.stringify({ event: "analysis_rejected", reason: "invalid_auth", authError: userError?.message || "no_user" }));
       return send(401, { message: "Please sign in again before analyzing this PDF." });
     }
 
     if (!filePath.startsWith(`${userData.user.id}/`)) {
+      console.warn(JSON.stringify({ event: "analysis_rejected", reason: "file_owner_mismatch", userId: userData.user.id }));
       return send(403, { message: "This document does not belong to the signed-in account." });
     }
 
@@ -85,8 +93,11 @@ Deno.serve(async (req) => {
 
     const { data: fileBlob, error: downloadError } = await supabase.storage.from(bucketName).download(filePath);
     if (downloadError || !fileBlob) {
+      console.error(JSON.stringify({ event: "analysis_failed", stage: "supabase_download", bucketName, filePath, error: downloadError?.message || "no_blob" }));
       return send(404, { message: "The uploaded PDF could not be opened securely." });
     }
+
+    console.log(JSON.stringify({ event: "analysis_file_loaded", contentType: fileBlob.type, size: fileBlob.size }));
 
     const pdfBytes = await fileBlob.arrayBuffer();
     const text = await analyzeWithAzure(pdfBytes, azureEndpoint, azureKey, azureModelId);
@@ -101,6 +112,8 @@ Deno.serve(async (req) => {
       })
       .eq("file_path", filePath);
 
+    console.log(JSON.stringify({ event: "analysis_complete", mode, itemCount: items.length, lineCount: lines.length }));
+
     return send(200, {
       text,
       lines,
@@ -109,9 +122,10 @@ Deno.serve(async (req) => {
       message: items.length ? "Analysis complete." : "Analysis complete, but no structured items were found."
     });
   } catch (error) {
-    console.error(error);
+    const message = error instanceof Error ? error.message : "The PDF could not be analyzed. Please try again.";
+    console.error(JSON.stringify({ event: "analysis_failed", stage: "unexpected", error: message }));
     return send(500, {
-      message: cleanError(error instanceof Error ? error.message : "The PDF could not be analyzed. Please try again.")
+      message: cleanError(message)
     });
   }
 });
@@ -150,11 +164,14 @@ async function analyzeWithAzure(pdfBytes: ArrayBuffer, endpoint: string, key: st
   );
 
   if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    console.error(JSON.stringify({ event: "analysis_failed", stage: "azure_start", status: response.status, detail: detail.slice(0, 500) }));
     throw new Error("Document analysis could not start.");
   }
 
   const operationLocation = response.headers.get("operation-location");
   if (!operationLocation) {
+    console.error(JSON.stringify({ event: "analysis_failed", stage: "azure_start", reason: "missing_operation_location" }));
     throw new Error("Document analysis did not return a status URL.");
   }
 
@@ -165,6 +182,8 @@ async function analyzeWithAzure(pdfBytes: ArrayBuffer, endpoint: string, key: st
     });
 
     if (!poll.ok) {
+      const detail = await poll.text().catch(() => "");
+      console.error(JSON.stringify({ event: "analysis_failed", stage: "azure_poll", status: poll.status, detail: detail.slice(0, 500) }));
       throw new Error("Document analysis status could not be checked.");
     }
 
@@ -174,10 +193,12 @@ async function analyzeWithAzure(pdfBytes: ArrayBuffer, endpoint: string, key: st
     }
 
     if (result?.status === "failed") {
+      console.error(JSON.stringify({ event: "analysis_failed", stage: "azure_poll", status: "failed", error: result?.error || null }));
       throw new Error("Document analysis could not read this PDF.");
     }
   }
 
+  console.warn(JSON.stringify({ event: "analysis_timeout", maxPollAttempts }));
   throw new Error("The PDF is still analyzing. Please try again in a moment.");
 }
 

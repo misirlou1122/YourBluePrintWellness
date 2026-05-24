@@ -46,12 +46,13 @@ function categoryFolder(category: string) {
 }
 
 function contentTypeForFile(file: File) {
+  const lowerName = file.name.toLowerCase();
+  if (lowerName.endsWith(".pdf")) return "application/pdf";
+
   if (file.type) {
     return file.type;
   }
 
-  const lowerName = file.name.toLowerCase();
-  if (lowerName.endsWith(".pdf")) return "application/pdf";
   if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) return "image/jpeg";
   if (lowerName.endsWith(".png")) return "image/png";
   if (lowerName.endsWith(".webp")) return "image/webp";
