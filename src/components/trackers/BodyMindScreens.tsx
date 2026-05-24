@@ -136,6 +136,8 @@ export function MedicationsScreen() {
   const [isWorking, setIsWorking] = useState(false);
   const [uploadedDocument, setUploadedDocument] = useState<MedicalDocumentRecord | null>(null);
   const [suggestions, setSuggestions] = useLocalStorage<ExtractedMedicationSuggestion[]>("ybw.medicationImportSuggestions", []);
+  const [selectedSuggestionKeys, setSelectedSuggestionKeys] = useLocalStorage<string[]>("ybw.medicationImportSelected", []);
+  const safeSelectedSuggestionKeys = Array.isArray(selectedSuggestionKeys) ? selectedSuggestionKeys : [];
   const today = todayKey();
   const setField = (field: keyof typeof emptyMedication, value: string | boolean) => store.setDraft((current) => ({ ...current, [field]: value }));
   const markMedicationStatus = (items: MedicationEntry[], changedId?: string, changedValue?: boolean) => {
@@ -164,6 +166,9 @@ export function MedicationsScreen() {
     });
     markMedicationStatus(store.items, entry.id, nextTaken);
   };
+  const suggestionKey = (suggestion: ExtractedMedicationSuggestion, index: number) =>
+    `${index}-${suggestion.type}-${suggestion.name}-${suggestion.dose}-${suggestion.timeOfDay}`;
+
   const addImportedItem = (suggestion: ExtractedMedicationSuggestion) => {
     store.add({
       ...emptyMedication,
@@ -175,12 +180,31 @@ export function MedicationsScreen() {
       takenToday: false,
       takenDates: {}
     });
-    setSuggestions((current) => (Array.isArray(current) ? current.filter((item) => item !== suggestion) : []));
   };
-  const addAllImportedItems = () => {
+
+  const toggleSuggestion = (key: string) => {
+    setSelectedSuggestionKeys((current) => {
+      const selected = Array.isArray(current) ? current : [];
+      return selected.includes(key) ? selected.filter((item) => item !== key) : [...selected, key];
+    });
+  };
+
+  const selectAllSuggestions = () => {
     if (Array.isArray(suggestions)) {
-      suggestions.forEach(addImportedItem);
+      setSelectedSuggestionKeys(suggestions.map((suggestion, index) => suggestionKey(suggestion, index)));
     }
+  };
+
+  const clearSelectedSuggestions = () => {
+    setSelectedSuggestionKeys([]);
+  };
+
+  const addSelectedImportedItems = () => {
+    if (!Array.isArray(suggestions)) return;
+    const selected = suggestions.filter((suggestion, index) => safeSelectedSuggestionKeys.includes(suggestionKey(suggestion, index)));
+    selected.forEach(addImportedItem);
+    setSuggestions([]);
+    setSelectedSuggestionKeys([]);
   };
   const readMedicationPdf = async () => {
     if (!uploadedDocument?.file_path) {
@@ -194,6 +218,7 @@ export function MedicationsScreen() {
     try {
       const extracted = asMedicationSuggestions(await analyzeUploadedDocument(uploadedDocument.file_path, "medications"));
       setSuggestions(extracted);
+      setSelectedSuggestionKeys(extracted.map((suggestion, index) => suggestionKey(suggestion, index)));
       setUploadStatus(
         extracted.length
           ? `Found ${extracted.length} possible medication or supplement item${extracted.length === 1 ? "" : "s"}. Please review before adding.`
@@ -250,6 +275,7 @@ export function MedicationsScreen() {
                 setSelectedFile(file);
                 setUploadedDocument(null);
                 setSuggestions([]);
+                setSelectedSuggestionKeys([]);
                 setUploadStatus("");
               }}
               className="min-h-12 rounded-2xl border border-white/10 bg-midnight/55 px-4 py-3 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-lavender/20 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-lavender"
@@ -284,36 +310,50 @@ export function MedicationsScreen() {
       </SectionCard>
 
       {Array.isArray(suggestions) && suggestions.length ? (
-        <SectionCard title="Review imported medications" description="Add only the medications or supplements that look correct.">
+        <SectionCard title="Review imported medications" description="Keep checked items only. Uncheck anything that does not match the original document.">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={selectAllSuggestions}
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice"
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              onClick={clearSelectedSuggestions}
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85"
+            >
+              Clear all
+            </button>
+          </div>
           <div className="grid gap-3">
             {suggestions.map((suggestion, index) => (
-              <article key={`${suggestion.name}-${suggestion.dose}-${index}`} className="rounded-2xl border border-lavender/20 bg-lavender/10 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
+              <label key={`${suggestion.name}-${suggestion.dose}-${index}`} className="flex gap-3 rounded-2xl border border-lavender/20 bg-lavender/10 p-4">
+                  <input
+                    type="checkbox"
+                    checked={safeSelectedSuggestionKeys.includes(suggestionKey(suggestion, index))}
+                    onChange={() => toggleSuggestion(suggestionKey(suggestion, index))}
+                    className="mt-1 size-5 shrink-0 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40"
+                  />
+                <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lavender/75">{suggestion.type}</p>
                     <h3 className="mt-1 text-lg font-semibold text-white">{suggestion.name}</h3>
                     <p className="mt-1 text-sm text-ice">
                       {[suggestion.dose, suggestion.timeOfDay].filter(Boolean).join(" | ")}
                     </p>
                     <p className="mt-2 text-xs leading-5 text-periwinkle/75">{suggestion.notes}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => addImportedItem(suggestion)}
-                    className="min-h-10 rounded-2xl border border-ice/25 bg-ice/10 px-3 text-xs font-semibold text-ice"
-                  >
-                    Add
-                  </button>
                 </div>
-              </article>
+              </label>
             ))}
           </div>
           <button
             type="button"
-            onClick={addAllImportedItems}
-            className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
+            onClick={addSelectedImportedItems}
+            disabled={!safeSelectedSuggestionKeys.length}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow disabled:opacity-50"
           >
-            Add all reviewed items
+            Save {safeSelectedSuggestionKeys.length} checked item{safeSelectedSuggestionKeys.length === 1 ? "" : "s"}
           </button>
         </SectionCard>
       ) : null}

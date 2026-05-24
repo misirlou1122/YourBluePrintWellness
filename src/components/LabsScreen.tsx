@@ -85,6 +85,7 @@ export function LabsScreen() {
   const [isWorking, setIsWorking] = useState(false);
   const [uploadedDocument, setUploadedDocument] = useState<MedicalDocumentRecord | null>(null);
   const [suggestions, setSuggestions] = useState<ExtractedLabSuggestion[]>([]);
+  const [selectedSuggestionKeys, setSelectedSuggestionKeys] = useState<string[]>([]);
   const [manualEntryOpen, setManualEntryOpen] = useLocalStorage("ybw.labsManualEntryOpen", false);
 
   const setField = (field: keyof Omit<LabEntry, "id">, value: string) => {
@@ -124,6 +125,9 @@ export function LabsScreen() {
     setManualEntryOpen(true);
   };
 
+  const suggestionKey = (suggestion: ExtractedLabSuggestion, index: number) =>
+    `${index}-${suggestion.category}-${suggestion.labName}-${suggestion.value}-${suggestion.unit}`;
+
   const saveSuggestion = (suggestion: ExtractedLabSuggestion) => {
     add({
       category: suggestion.category,
@@ -134,11 +138,25 @@ export function LabsScreen() {
       date: suggestion.date || new Date().toISOString().slice(0, 10),
       notes: suggestion.notes
     });
-    setSuggestions((current) => current.filter((item) => item !== suggestion));
   };
 
-  const saveAllSuggestions = () => {
-    suggestions.forEach(saveSuggestion);
+  const toggleSuggestion = (key: string) => {
+    setSelectedSuggestionKeys((current) => (current.includes(key) ? current.filter((item) => item !== key) : [...current, key]));
+  };
+
+  const selectAllSuggestions = () => {
+    setSelectedSuggestionKeys(suggestions.map((suggestion, index) => suggestionKey(suggestion, index)));
+  };
+
+  const clearSelectedSuggestions = () => {
+    setSelectedSuggestionKeys([]);
+  };
+
+  const saveSelectedSuggestions = () => {
+    const selected = suggestions.filter((suggestion, index) => selectedSuggestionKeys.includes(suggestionKey(suggestion, index)));
+    selected.forEach(saveSuggestion);
+    setSuggestions([]);
+    setSelectedSuggestionKeys([]);
   };
 
   const analyzeUploadedPdf = async () => {
@@ -153,6 +171,7 @@ export function LabsScreen() {
     try {
       const extracted = asLabSuggestions(await analyzeUploadedDocument(uploadedDocument.file_path, "labs"));
       setSuggestions(extracted);
+      setSelectedSuggestionKeys(extracted.map((suggestion, index) => suggestionKey(suggestion, index)));
       setUploadStatus(
         extracted.length
           ? `Found ${extracted.length} possible lab result${extracted.length === 1 ? "" : "s"}. Please review before saving.`
@@ -218,6 +237,7 @@ export function LabsScreen() {
                 setSelectedFile(file);
                 setUploadedDocument(null);
                 setSuggestions([]);
+                setSelectedSuggestionKeys([]);
                 setUploadStatus("");
               }}
               className="min-h-12 rounded-2xl border border-white/10 bg-midnight/55 px-4 py-3 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-lavender/20 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-lavender"
@@ -252,36 +272,53 @@ export function LabsScreen() {
       </SectionCard>
 
       {suggestions.length ? (
-        <SectionCard title="Review extracted lab values" description="Check each value against your report before saving it.">
+        <SectionCard title="Review imported labs" description="Keep checked values only. Uncheck anything that does not match the original report.">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={selectAllSuggestions}
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice"
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              onClick={clearSelectedSuggestions}
+              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-periwinkle/85"
+            >
+              Clear all
+            </button>
+          </div>
           <div className="grid gap-3">
             {suggestions.map((suggestion, index) => (
-              <article key={`${suggestion.labName}-${suggestion.value}-${index}`} className="rounded-2xl border border-lavender/20 bg-lavender/10 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
+              <label
+                key={`${suggestion.labName}-${suggestion.value}-${index}`}
+                className="flex gap-3 rounded-2xl border border-lavender/20 bg-lavender/10 p-4"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedSuggestionKeys.includes(suggestionKey(suggestion, index))}
+                  onChange={() => toggleSuggestion(suggestionKey(suggestion, index))}
+                  className="mt-1 size-5 shrink-0 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40"
+                />
+                <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lavender/75">{suggestion.category}</p>
                     <h3 className="mt-1 text-lg font-semibold text-white">{suggestion.labName}</h3>
                     <p className="mt-1 text-sm text-ice">
                       {suggestion.value} {suggestion.unit}
                       {suggestion.referenceRange ? ` | Range: ${suggestion.referenceRange}` : ""}
                     </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => saveSuggestion(suggestion)}
-                    className="min-h-10 rounded-2xl border border-ice/25 bg-ice/10 px-3 text-xs font-semibold text-ice"
-                  >
-                    Add
-                  </button>
                 </div>
-              </article>
+              </label>
             ))}
           </div>
           <button
             type="button"
-            onClick={saveAllSuggestions}
-            className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow"
+            onClick={saveSelectedSuggestions}
+            disabled={!selectedSuggestionKeys.length}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow disabled:opacity-50"
           >
-            Add all reviewed values
+            Save {selectedSuggestionKeys.length} checked lab value{selectedSuggestionKeys.length === 1 ? "" : "s"}
           </button>
         </SectionCard>
       ) : null}
