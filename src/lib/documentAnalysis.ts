@@ -4,6 +4,9 @@ import type { ExtractedLabSuggestion, ExtractedMedicationSuggestion } from "./la
 type AnalyzeMode = "labs" | "medications";
 
 interface AnalyzeResponse {
+  text?: unknown;
+  lines?: unknown;
+  items?: unknown;
   suggestions?: unknown;
   message?: string;
 }
@@ -18,31 +21,23 @@ export async function analyzeUploadedDocument(filePath: string, mode: AnalyzeMod
     throw new Error("Please sign in again before analyzing this PDF.");
   }
 
-  const response = await fetch("/api/analyzeDocument", {
-    method: "POST",
+  const { data: body, error: invokeError } = await supabase.functions.invoke<AnalyzeResponse>("analyze-health-document", {
+    body: { filePath, mode },
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${data.session.access_token}`
-    },
-    body: JSON.stringify({ filePath, mode })
+    }
   });
 
-  let body: AnalyzeResponse = {};
-  try {
-    body = (await response.json()) as AnalyzeResponse;
-  } catch {
-    body = {};
+  if (invokeError) {
+    throw new Error("The PDF could not be analyzed securely. Please try again.");
   }
 
-  if (!response.ok) {
-    throw new Error(body.message || "The PDF could not be analyzed. Please try again.");
-  }
-
-  if (!Array.isArray(body.suggestions)) {
+  const parsedItems = body?.suggestions ?? body?.items;
+  if (!Array.isArray(parsedItems)) {
     return [];
   }
 
-  return body.suggestions;
+  return parsedItems;
 }
 
 export function asLabSuggestions(value: unknown): ExtractedLabSuggestion[] {

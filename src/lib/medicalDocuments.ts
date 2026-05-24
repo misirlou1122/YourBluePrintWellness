@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-export const MEDICAL_DOCUMENTS_BUCKET = "medical-documents";
+export const MEDICAL_DOCUMENTS_BUCKET = "health-documents";
 
 export interface MedicalDocumentRecord {
   id?: string;

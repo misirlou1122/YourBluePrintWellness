@@ -84,8 +84,8 @@ using ((select auth.uid()) = user_id);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
-  'medical-documents',
-  'medical-documents',
+  'health-documents',
+  'health-documents',
   false,
   52428800,
   array['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/octet-stream']::text[]
@@ -101,7 +101,7 @@ on storage.objects
 for select
 to authenticated
 using (
-  bucket_id = 'medical-documents'
+  bucket_id = 'health-documents'
   and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
@@ -111,7 +111,7 @@ on storage.objects
 for insert
 to authenticated
 with check (
-  bucket_id = 'medical-documents'
+  bucket_id = 'health-documents'
   and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
@@ -121,11 +121,11 @@ on storage.objects
 for update
 to authenticated
 using (
-  bucket_id = 'medical-documents'
+  bucket_id = 'health-documents'
   and (storage.foldername(name))[1] = (select auth.uid())::text
 )
 with check (
-  bucket_id = 'medical-documents'
+  bucket_id = 'health-documents'
   and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
@@ -135,6 +135,6 @@ on storage.objects
 for delete
 to authenticated
 using (
-  bucket_id = 'medical-documents'
+  bucket_id = 'health-documents'
   and (storage.foldername(name))[1] = (select auth.uid())::text
 );

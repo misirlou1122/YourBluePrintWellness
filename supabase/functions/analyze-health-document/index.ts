@@ -1,9 +1,17 @@
-const { createClient } = require("@supabase/supabase-js");
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.106.1";
 
-const bucketName = "medical-documents";
+type AnalyzeMode = "labs" | "medications";
+
+const bucketName = "health-documents";
 const maxPollAttempts = 18;
 const apiVersion = "2024-11-30";
 const defaultModelId = "prebuilt-read";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS"
+};
 
 const labMarkers = [
   { category: "A1C", labName: "A1C", patterns: [/hemoglobin\s*a1c/i, /\ba1c\b/i, /\bhba1c\b/i] },
@@ -31,112 +39,123 @@ const unitPattern = /(%|mg\/dL|mg\/dl|mmol\/L|mmol\/l|ng\/mL|ng\/ml|pg\/mL|pg\/m
 const medicationDosePattern = /\b\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|mL|units?|iu|IU|tablet|tablets|capsule|capsules|cap|caps|spray|sprays|drop|drops|patch|puff|puffs)\b/i;
 const supplementKeywords = /\b(vitamin|supplement|magnesium|zinc|omega|fish oil|probiotic|fiber|collagen|biotin|iron|calcium|folate|b12|d3|turmeric|melatonin)\b/i;
 
-module.exports = async function (context, req) {
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return send(405, { message: "This document action is not available." });
+  }
+
   try {
-    const body = parseBody(req.body);
+    const body = await parseBody(req);
     const filePath = typeof body.filePath === "string" ? body.filePath : "";
-    const mode = body.mode === "medications" ? "medications" : "labs";
+    const mode: AnalyzeMode = body.mode === "medications" ? "medications" : "labs";
 
     if (!filePath || !filePath.toLowerCase().endsWith(".pdf")) {
-      return send(context, 400, { message: "Please upload a PDF before analyzing." });
+      return send(400, { message: "Please upload a PDF before analyzing." });
     }
 
-    const authHeader = req.headers.authorization || req.headers.Authorization || "";
-    const accessToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    const accessToken = authToken(req);
     if (!accessToken) {
-      return send(context, 401, { message: "Please sign in again before analyzing this PDF." });
+      return send(401, { message: "Please sign in again before analyzing this PDF." });
     }
 
     const supabaseUrl = requiredEnv("SUPABASE_URL");
-    const supabaseServiceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
+    const serviceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
     const azureEndpoint = requiredEnv("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT").replace(/\/+$/, "");
     const azureKey = requiredEnv("AZURE_DOCUMENT_INTELLIGENCE_KEY");
-    const azureModelId = process.env.AZURE_DOCUMENT_INTELLIGENCE_MODEL_ID || defaultModelId;
+    const azureModelId = Deno.env.get("AZURE_DOCUMENT_INTELLIGENCE_MODEL_ID") || defaultModelId;
 
-    const serviceClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false }
     });
-    const { data: userData, error: userError } = await serviceClient.auth.getUser(accessToken);
+
+    const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
     if (userError || !userData.user) {
-      return send(context, 401, { message: "Please sign in again before analyzing this PDF." });
+      return send(401, { message: "Please sign in again before analyzing this PDF." });
     }
 
     if (!filePath.startsWith(`${userData.user.id}/`)) {
-      return send(context, 403, { message: "This document does not belong to the signed-in account." });
+      return send(403, { message: "This document does not belong to the signed-in account." });
     }
 
-    const { data: signedData, error: signedError } = await serviceClient.storage
-      .from(bucketName)
-      .createSignedUrl(filePath, 300);
+    await supabase.from("medical_documents").update({ extraction_status: "needs_ocr" }).eq("file_path", filePath);
 
-    if (signedError || !signedData.signedUrl) {
-      return send(context, 404, { message: "The uploaded PDF could not be opened securely." });
+    const { data: fileBlob, error: downloadError } = await supabase.storage.from(bucketName).download(filePath);
+    if (downloadError || !fileBlob) {
+      return send(404, { message: "The uploaded PDF could not be opened securely." });
     }
 
-    await serviceClient.from("medical_documents").update({ extraction_status: "needs_ocr" }).eq("file_path", filePath);
+    const pdfBytes = await fileBlob.arrayBuffer();
+    const text = await analyzeWithAzure(pdfBytes, azureEndpoint, azureKey, azureModelId);
+    const lines = splitReadableLines(text);
+    const items = mode === "medications" ? extractMedicationSuggestions(text) : extractLabSuggestions(text);
 
-    const text = await analyzeWithAzure(signedData.signedUrl, azureEndpoint, azureKey, azureModelId);
-    const suggestions = mode === "medications" ? extractMedicationSuggestions(text) : extractLabSuggestions(text);
-
-    await serviceClient
+    await supabase
       .from("medical_documents")
       .update({
         extraction_status: "text_extracted",
-        extracted_summary: { mode, suggestion_count: suggestions.length }
+        extracted_summary: { mode, item_count: items.length, line_count: lines.length }
       })
       .eq("file_path", filePath);
 
-    return send(context, 200, {
-      suggestions,
-      message: suggestions.length ? "Analysis complete." : "Analysis complete, but no structured values were found."
+    return send(200, {
+      text,
+      lines,
+      items,
+      suggestions: items,
+      message: items.length ? "Analysis complete." : "Analysis complete, but no structured items were found."
     });
   } catch (error) {
-    context.log.error(error);
-    return send(context, 500, {
-      message: error instanceof Error ? cleanError(error.message) : "The PDF could not be analyzed. Please try again."
+    console.error(error);
+    return send(500, {
+      message: cleanError(error instanceof Error ? error.message : "The PDF could not be analyzed. Please try again.")
     });
   }
-};
+});
 
-function parseBody(body) {
-  if (!body) return {};
-  if (typeof body === "string") {
-    try {
-      return JSON.parse(body);
-    } catch {
-      return {};
-    }
+async function parseBody(req: Request) {
+  try {
+    return await req.json();
+  } catch {
+    return {};
   }
-  return typeof body === "object" ? body : {};
 }
 
-function requiredEnv(name) {
-  const value = process.env[name];
+function authToken(req: Request) {
+  const header = req.headers.get("authorization") || "";
+  return header.startsWith("Bearer ") ? header.slice(7) : "";
+}
+
+function requiredEnv(name: string) {
+  const value = Deno.env.get(name);
   if (!value) throw new Error(`${name} is not configured.`);
   return value;
 }
 
-async function analyzeWithAzure(urlSource, endpoint, key, modelId) {
+async function analyzeWithAzure(pdfBytes: ArrayBuffer, endpoint: string, key: string, modelId: string) {
   const encodedModelId = encodeURIComponent(modelId || defaultModelId);
   const response = await fetch(
     `${endpoint}/documentintelligence/documentModels/${encodedModelId}:analyze?api-version=${apiVersion}`,
     {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/pdf",
         "Ocp-Apim-Subscription-Key": key
       },
-      body: JSON.stringify({ urlSource })
+      body: pdfBytes
     }
   );
 
   if (!response.ok) {
-    throw new Error("Azure Document Intelligence could not start analysis.");
+    throw new Error("Document analysis could not start.");
   }
 
   const operationLocation = response.headers.get("operation-location");
   if (!operationLocation) {
-    throw new Error("Azure Document Intelligence did not return an analysis status URL.");
+    throw new Error("Document analysis did not return a status URL.");
   }
 
   for (let attempt = 0; attempt < maxPollAttempts; attempt += 1) {
@@ -146,39 +165,47 @@ async function analyzeWithAzure(urlSource, endpoint, key, modelId) {
     });
 
     if (!poll.ok) {
-      throw new Error("Azure Document Intelligence analysis status could not be checked.");
+      throw new Error("Document analysis status could not be checked.");
     }
 
     const result = await poll.json();
-    if (result.status === "succeeded") {
+    if (result?.status === "succeeded") {
       return extractText(result);
     }
 
-    if (result.status === "failed") {
-      throw new Error("Azure Document Intelligence could not read this PDF.");
+    if (result?.status === "failed") {
+      throw new Error("Document analysis could not read this PDF.");
     }
   }
 
   throw new Error("The PDF is still analyzing. Please try again in a moment.");
 }
 
-function extractText(result) {
+function extractText(result: Record<string, any>) {
   if (typeof result?.analyzeResult?.content === "string") {
     return result.analyzeResult.content;
   }
 
   const pages = Array.isArray(result?.analyzeResult?.pages) ? result.analyzeResult.pages : [];
   return pages
-    .map((page) => (Array.isArray(page.lines) ? page.lines.map((line) => line?.content || "").join("\n") : ""))
+    .map((page) => (Array.isArray(page?.lines) ? page.lines.map((line: { content?: string }) => line?.content || "").join("\n") : ""))
     .join("\n")
     .trim();
 }
 
-function extractLabSuggestions(text) {
+function splitReadableLines(text: string) {
+  return (typeof text === "string" ? text : "")
+    .split(/\r?\n| {3,}/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, 500);
+}
+
+function extractLabSuggestions(text: string) {
   const safeText = typeof text === "string" ? text : "";
   const resultDate = findResultDate(safeText);
   const candidates = splitIntoCandidateLines(safeText);
-  const suggestions = new Map();
+  const suggestions = new Map<string, Record<string, string>>();
 
   for (const line of candidates) {
     for (const marker of labMarkers) {
@@ -193,9 +220,9 @@ function extractLabSuggestions(text) {
   return Array.from(suggestions.values());
 }
 
-function extractMedicationSuggestions(text) {
+function extractMedicationSuggestions(text: string) {
   const candidates = splitMedicationCandidateLines(typeof text === "string" ? text : "");
-  const suggestions = new Map();
+  const suggestions = new Map<string, Record<string, string>>();
 
   for (const line of candidates) {
     const parsed = parseMedicationLine(line);
@@ -207,7 +234,7 @@ function extractMedicationSuggestions(text) {
   return Array.from(suggestions.values()).slice(0, 30);
 }
 
-function splitIntoCandidateLines(text) {
+function splitIntoCandidateLines(text: string) {
   if (!text) return [];
   const naturalLines = text
     .split(/\n| {3,}/)
@@ -223,7 +250,7 @@ function splitIntoCandidateLines(text) {
     .filter(Boolean);
 }
 
-function splitMedicationCandidateLines(text) {
+function splitMedicationCandidateLines(text: string) {
   if (!text) return [];
   const naturalLines = text
     .split(/\n| {3,}|\u2022/)
@@ -241,7 +268,7 @@ function splitMedicationCandidateLines(text) {
   return lines.filter((line) => medicationDosePattern.test(line));
 }
 
-function parseMedicationLine(line) {
+function parseMedicationLine(line: string) {
   const doseMatch = line.match(medicationDosePattern);
   if (!doseMatch || doseMatch.index === undefined) return null;
   const beforeDose = line.slice(0, doseMatch.index).replace(/^(medication|supplement|current medications?|active medications?)\s*[:\-]?\s*/i, "").trim();
@@ -258,7 +285,7 @@ function parseMedicationLine(line) {
   };
 }
 
-function parseLabLine(line, marker) {
+function parseLabLine(line: string, marker: { category: string; labName: string; patterns: RegExp[] }) {
   const markerMatch = marker.patterns.map((pattern) => line.match(pattern)).find(Boolean);
   const markerIndex = markerMatch?.index || 0;
   const afterMarker = line.slice(markerIndex + (markerMatch?.[0]?.length || 0));
@@ -281,12 +308,12 @@ function parseLabLine(line, marker) {
   };
 }
 
-function cleanReferenceRange(value) {
+function cleanReferenceRange(value: string) {
   const referenceMatch = value.match(/(?:reference|ref\.?\s*range|range|normal)?\s*[:\-]?\s*([<>]?\d+(?:\.\d+)?\s*(?:-|to|\u2013)\s*[<>]?\d+(?:\.\d+)?|[<>]=?\s*\d+(?:\.\d+)?)/i);
   return referenceMatch?.[1]?.replace(/\s+/g, " ").trim() || "";
 }
 
-function findResultDate(text) {
+function findResultDate(text: string) {
   const match = text.match(/(?:collection date|collected|result date|reported|date of service)\s*[:\-]?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/i);
   if (!match || typeof match[1] !== "string") return "";
   const parts = match[1].split(/[/-]/);
@@ -296,7 +323,7 @@ function findResultDate(text) {
   return `${fullYear.padStart(4, "20")}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
-function inferMedicationTime(value) {
+function inferMedicationTime(value: string) {
   if (/morning|breakfast|am\b/i.test(value)) return "Morning";
   if (/night|bedtime|evening|pm\b/i.test(value)) return "Evening";
   if (/twice daily|2 times|bid\b/i.test(value)) return "Twice daily";
@@ -305,25 +332,24 @@ function inferMedicationTime(value) {
   return "";
 }
 
-function titleCase(value) {
+function titleCase(value: string) {
   return value.toLowerCase().split(/\s+/).map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
 
-function delay(ms) {
+function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function cleanError(message) {
+function cleanError(message: string) {
   if (/AZURE_DOCUMENT_INTELLIGENCE|SUPABASE_SERVICE_ROLE|SUPABASE_/i.test(message)) {
     return "Document analysis is not configured on the server yet.";
   }
   return message || "The PDF could not be analyzed. Please try again.";
 }
 
-function send(context, status, body) {
-  context.res = {
+function send(status: number, body: Record<string, unknown>) {
+  return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
-    body
-  };
+    headers: { ...corsHeaders, "Content-Type": "application/json" }
+  });
 }
