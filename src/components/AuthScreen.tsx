@@ -19,7 +19,7 @@ function modeTitle(mode: AuthMode) {
 }
 
 export function AuthScreen({ initialMode = "login", onNavigate }: AuthScreenProps) {
-  const { configured, session } = useSupabaseAuth();
+  const { session } = useSupabaseAuth();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -41,8 +41,11 @@ export function AuthScreen({ initialMode = "login", onNavigate }: AuthScreenProp
   };
 
   const handleLogin = async () => {
-    if (!supabase) return;
     clearStatus();
+    if (!supabase) {
+      setError("Sign-in is temporarily unavailable. Please refresh and try again.");
+      return;
+    }
     setBusy(true);
     const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
@@ -59,8 +62,11 @@ export function AuthScreen({ initialMode = "login", onNavigate }: AuthScreenProp
   };
 
   const handleSignup = async () => {
-    if (!supabase) return;
     clearStatus();
+    if (!supabase) {
+      setError("Account creation is temporarily unavailable. Please refresh and try again.");
+      return;
+    }
     setBusy(true);
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -87,8 +93,11 @@ export function AuthScreen({ initialMode = "login", onNavigate }: AuthScreenProp
   };
 
   const handlePasswordReset = async () => {
-    if (!supabase) return;
     clearStatus();
+    if (!supabase) {
+      setError("Password reset is temporarily unavailable. Please refresh and try again.");
+      return;
+    }
     setBusy(true);
 
     if (session && newPassword) {
@@ -123,7 +132,7 @@ export function AuthScreen({ initialMode = "login", onNavigate }: AuthScreenProp
     else void handleLogin();
   };
 
-  const disabled = busy || !configured || (mode !== "reset" && (!email || !password)) || (mode === "reset" && !email && !newPassword);
+  const disabled = busy || (mode !== "reset" && (!email || !password)) || (mode === "reset" && !email && !newPassword);
 
   return (
     <main className="mx-auto grid min-h-screen w-full max-w-3xl content-center gap-5 px-4 pb-[env(safe-area-inset-bottom)] pt-4 sm:px-6">
@@ -149,12 +158,6 @@ export function AuthScreen({ initialMode = "login", onNavigate }: AuthScreenProp
             </p>
           </div>
         </div>
-
-        {!configured ? (
-          <div className="mt-5 rounded-2xl border border-champagne/25 bg-champagne/10 p-4 text-sm leading-6 text-white">
-            Account sign-in is not configured yet. Please try again after setup is complete.
-          </div>
-        ) : null}
 
         <div className="mt-6 grid gap-3">
           {mode === "signup" ? <FormField label="Name" value={displayName} onChange={setDisplayName} /> : null}
