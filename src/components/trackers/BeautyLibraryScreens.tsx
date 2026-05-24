@@ -267,10 +267,23 @@ export function DocumentsScreen() {
       <SectionCard title="Save document" description="Add lab reports, doctor documents, or notes to your private wellness account.">
         <div className="grid gap-3">
           <label className="grid gap-1 text-sm text-periwinkle/85">
-            <span>PDF or photo</span>
+            <span>PDF or photo from Files</span>
             <input
               type="file"
               accept=".pdf,application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
+              onChange={(event) => {
+                setSelectedFile(event.target.files?.[0] ?? null);
+                setUploadStatus("");
+              }}
+              className="min-h-12 rounded-2xl border border-white/10 bg-midnight/55 px-4 py-3 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-lavender/20 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-lavender"
+            />
+          </label>
+          <label className="grid gap-1 text-sm text-periwinkle/85">
+            <span>Take a document photo</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
+              capture="environment"
               onChange={(event) => {
                 setSelectedFile(event.target.files?.[0] ?? null);
                 setUploadStatus("");
@@ -366,10 +379,23 @@ export function ProgressPhotosScreen() {
       <SectionCard title="Save progress photo" description="Save a private body, face, skin, or hair progress photo with notes.">
         <div className="grid gap-3">
           <label className="grid gap-1 text-sm text-periwinkle/85">
-            <span>Photo</span>
+            <span>Photo from Files</span>
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
+              onChange={(event) => {
+                setSelectedFile(event.target.files?.[0] ?? null);
+                setUploadStatus("");
+              }}
+              className="min-h-12 rounded-2xl border border-white/10 bg-midnight/55 px-4 py-3 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-lavender/20 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-lavender"
+            />
+          </label>
+          <label className="grid gap-1 text-sm text-periwinkle/85">
+            <span>Take a progress photo</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
+              capture="environment"
               onChange={(event) => {
                 setSelectedFile(event.target.files?.[0] ?? null);
                 setUploadStatus("");

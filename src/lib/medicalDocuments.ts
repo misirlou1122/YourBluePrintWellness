@@ -14,11 +14,13 @@ export interface MedicalDocumentRecord {
 }
 
 function safeFileName(fileName: string) {
-  return fileName
+  const safeName = fileName
     .trim()
     .replace(/[^a-zA-Z0-9._-]+/g, "-")
     .replace(/-+/g, "-")
     .slice(0, 120);
+
+  return safeName || "upload";
 }
 
 function categoryFolder(category: string) {
@@ -40,6 +42,16 @@ function contentTypeForFile(file: File) {
   return "application/octet-stream";
 }
 
+function extensionForContentType(contentType: string) {
+  if (contentType === "application/pdf") return ".pdf";
+  if (contentType === "image/jpeg") return ".jpg";
+  if (contentType === "image/png") return ".png";
+  if (contentType === "image/webp") return ".webp";
+  if (contentType === "image/heic") return ".heic";
+  if (contentType === "image/heif") return ".heif";
+  return "";
+}
+
 export async function uploadMedicalDocument(file: File, category: string, title: string): Promise<MedicalDocumentRecord> {
   if (!supabase) {
     throw new Error("Secure file storage is not configured yet.");
@@ -50,11 +62,15 @@ export async function uploadMedicalDocument(file: File, category: string, title:
     throw new Error("Please sign in before uploading files.");
   }
 
-  const filePath = `${userData.user.id}/${categoryFolder(category)}/${Date.now()}-${safeFileName(file.name)}`;
   const contentType = contentTypeForFile(file);
+  const safeName = safeFileName(file.name);
+  const extension = safeName.includes(".") ? "" : extensionForContentType(contentType);
+  const fileName = `${safeName}${extension}`;
+  const filePath = `${userData.user.id}/${categoryFolder(category)}/${Date.now()}-${fileName}`;
+  const fileBody = new Blob([await file.arrayBuffer()], { type: contentType });
   const { error: uploadError } = await supabase.storage
     .from(MEDICAL_DOCUMENTS_BUCKET)
-    .upload(filePath, file, {
+    .upload(filePath, fileBody, {
       contentType,
       upsert: false
     });
@@ -66,7 +82,7 @@ export async function uploadMedicalDocument(file: File, category: string, title:
   const record: MedicalDocumentRecord = {
     title: title.trim() || file.name,
     category,
-    file_name: file.name,
+    file_name: file.name || fileName,
     file_path: filePath,
     content_type: contentType,
     file_size: file.size,

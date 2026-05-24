@@ -43,7 +43,7 @@ function PrivateDashboard({ user }: { user: User }) {
   const printedDate = new Date().toLocaleDateString();
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-6xl px-4 pb-[env(safe-area-inset-bottom)] pt-4 sm:px-6 lg:px-8">
+    <div className="mx-auto min-h-screen w-full max-w-6xl overflow-x-hidden px-3 pb-[env(safe-area-inset-bottom)] pt-3 sm:px-6 sm:pt-4 lg:px-8">
       <div className="print-only mb-4 border-b border-gray-300 pb-3 text-sm">
         <strong>Your Blueprint Wellness</strong>
         <span className="block">Date printed: {printedDate}</span>

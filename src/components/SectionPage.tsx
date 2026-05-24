@@ -330,10 +330,10 @@ export function SectionPage({
   const showQuickActions = tile.id !== "reminders" && tile.id !== "photos";
 
   return (
-    <main id="tile-detail-top" className="grid gap-5">
+    <main id="tile-detail-top" className="grid min-w-0 gap-5">
       <DetailHeader tile={tile} onHome={onHome} />
 
-      <nav aria-label={`${tile.title} subcategories`} className="-mx-4 overflow-x-auto px-4">
+      <nav aria-label={`${tile.title} subcategories`} className="-mx-3 overflow-x-auto px-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex min-w-max gap-2 pb-1">
           {tile.subcategories.map((subcategory) => (
             <button

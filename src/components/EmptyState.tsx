@@ -9,7 +9,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, message, icon: Icon = Sparkles }: EmptyStateProps) {
   return (
-    <div className="rounded-[1.75rem] border border-dashed border-ice/35 bg-ice/10 p-5 text-center shadow-ice">
+    <div className="max-w-full overflow-hidden rounded-[1.5rem] border border-dashed border-ice/30 bg-ice/10 p-5 text-center shadow-ice sm:rounded-[1.75rem]">
       <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-white/15 bg-midnight/50 text-ice">
         <Icon size={26} aria-hidden="true" />
       </div>

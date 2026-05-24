@@ -31,7 +31,7 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile }: HomeDashbo
   const showAvatarImage = userProfile.avatarType === "image" && Boolean(userProfile.avatarImage);
 
   return (
-    <main className="grid gap-5">
+    <main className="grid min-w-0 gap-5">
       <section className="rounded-[2rem] border border-white/10 bg-white/[0.07] p-5 shadow-lavender backdrop-blur-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -68,10 +68,10 @@ export function HomeDashboard({ tiles, selectedProfile, onOpenTile }: HomeDashbo
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-lavender/75">Dashboard</p>
-            <h2 className="mt-1 text-xl font-semibold text-slate-950">Choose an area</h2>
+            <h2 className="mt-1 text-xl font-semibold text-white">Choose an area</h2>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           {tiles.map((tile) => (
             <TileCard key={tile.id} tile={tile} onOpen={onOpenTile} />
           ))}

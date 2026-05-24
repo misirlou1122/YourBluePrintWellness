@@ -30,7 +30,7 @@ export function CollapsibleSectionCard({
   const open = forceOpen || isOpen;
 
   return (
-    <SectionCard eyebrow={eyebrow} title={title} description={description} className={className} sectionLabel={sectionLabel ?? title}>
+    <SectionCard eyebrow={eyebrow} title={title} description={description} className={className} sectionLabel={sectionLabel ?? title} collapsible={false}>
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
