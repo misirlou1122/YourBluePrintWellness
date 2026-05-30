@@ -8,6 +8,9 @@ create table if not exists public.wellness_records (
 
 alter table public.wellness_records enable row level security;
 
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.wellness_records to authenticated;
+
 drop policy if exists "Users can read their own wellness records" on public.wellness_records;
 create policy "Users can read their own wellness records"
 on public.wellness_records
@@ -52,6 +55,8 @@ create table if not exists public.medical_documents (
 );
 
 alter table public.medical_documents enable row level security;
+
+grant select, insert, update, delete on public.medical_documents to authenticated;
 
 drop policy if exists "Users can read their own medical documents" on public.medical_documents;
 create policy "Users can read their own medical documents"
