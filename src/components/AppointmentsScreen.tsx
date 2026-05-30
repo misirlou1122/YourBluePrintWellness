@@ -46,99 +46,6 @@ function sortAppointments(a: DoctorAppointment, b: DoctorAppointment) {
   return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`);
 }
 
-function ItemList({
-  title,
-  items,
-  emptyText,
-  onAdd,
-  onUpdate,
-  onDelete,
-  onToggle,
-  checklist = false
-}: {
-  title: string;
-  items: AppointmentItem[];
-  emptyText: string;
-  onAdd: (text: string) => void;
-  onUpdate: (id: string, text: string) => void;
-  onDelete: (id: string) => void;
-  onToggle?: (id: string) => void;
-  checklist?: boolean;
-}) {
-  const [text, setText] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingText, setEditingText] = useState("");
-
-  const submit = () => {
-    if (!text.trim()) {
-      return;
-    }
-
-    onAdd(text.trim());
-    setText("");
-  };
-
-  return (
-    <SectionCard title={title} description={items.length ? undefined : emptyText}>
-      <div className="grid gap-2">
-        {items.map((item) => (
-          <article key={item.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-3">
-            {editingId === item.id ? (
-              <div className="grid gap-3">
-                <FormField label="Edit item" value={editingText} onChange={setEditingText} />
-                <EntryActions
-                  isEditing
-                  onSave={() => {
-                    onUpdate(item.id, editingText);
-                    setEditingId(null);
-                    setEditingText("");
-                  }}
-                  onCancel={() => {
-                    setEditingId(null);
-                    setEditingText("");
-                  }}
-                />
-              </div>
-            ) : (
-              <div className="flex items-start justify-between gap-3">
-                <label className="flex min-h-10 flex-1 items-center gap-3 text-sm text-white">
-                  {checklist ? (
-                    <input
-                      type="checkbox"
-                      checked={Boolean(item.completed)}
-                      onChange={() => onToggle?.(item.id)}
-                      className="size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40"
-                    />
-                  ) : null}
-                  <span className={item.completed ? "text-periwinkle/60 line-through" : ""}>{item.text}</span>
-                </label>
-                <EntryActions
-                  onEdit={() => {
-                    setEditingId(item.id);
-                    setEditingText(item.text);
-                  }}
-                  onDelete={() => onDelete(item.id)}
-                />
-              </div>
-            )}
-          </article>
-        ))}
-      </div>
-      <div className="mt-3 grid gap-3">
-        <FormField label={`Add ${title.toLowerCase()}`} value={text} onChange={setText} />
-        <button
-          type="button"
-          onClick={submit}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
-        >
-          <Plus size={18} aria-hidden="true" />
-          Add item
-        </button>
-      </div>
-    </SectionCard>
-  );
-}
-
 export function AppointmentsScreen() {
   const { items, add, update, remove } = useLocalCollection<DoctorAppointment>("ybw.appointments", [], "appointment");
   const [draft, setDraft] = useLocalStorage("ybw.appointmentsDraft", emptyDraft);
@@ -190,30 +97,6 @@ export function AppointmentsScreen() {
     setSelectedId(appointment.id);
   };
 
-  const updateItems = (field: "thingsToDiscuss" | "questions" | "followUpTasks", updater: (items: AppointmentItem[]) => AppointmentItem[]) => {
-    if (!selected) {
-      return;
-    }
-
-    update(selected.id, { [field]: updater(selected[field]) } as Partial<DoctorAppointment>);
-  };
-
-  const addListItem = (field: "thingsToDiscuss" | "questions" | "followUpTasks", text: string) => {
-    updateItems(field, (current) => [{ id: createId("item"), text, completed: false }, ...current]);
-  };
-
-  const updateListItem = (field: "thingsToDiscuss" | "questions" | "followUpTasks", id: string, text: string) => {
-    updateItems(field, (current) => current.map((item) => (item.id === id ? { ...item, text } : item)));
-  };
-
-  const deleteListItem = (field: "thingsToDiscuss" | "questions" | "followUpTasks", id: string) => {
-    updateItems(field, (current) => current.filter((item) => item.id !== id));
-  };
-
-  const toggleListItem = (field: "thingsToDiscuss" | "followUpTasks", id: string) => {
-    updateItems(field, (current) => current.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item)));
-  };
-
   return (
     <div className="grid gap-4">
       <CollapsibleSectionCard
@@ -234,8 +117,8 @@ export function AppointmentsScreen() {
           <FormField label="Location" value={draft.location} onChange={(value) => setField("location", value)} />
           <FormField label="Phone" value={draft.phone} onChange={(value) => setField("phone", value)} />
           <TextAreaField label="Reason for visit" value={draft.reason} onChange={(value) => setField("reason", value)} />
-          <TextAreaField label="Notes" value={draft.notes} onChange={(value) => setField("notes", value)} />
-          <TextAreaField label="After appointment notes" value={draft.afterNotes} onChange={(value) => setField("afterNotes", value)} />
+          <TextAreaField label="Questions for doctor" value={draft.notes} onChange={(value) => setField("notes", value)} />
+          <TextAreaField label="Follow-up tasks" value={draft.afterNotes} onChange={(value) => setField("afterNotes", value)} />
         </div>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <button
@@ -259,7 +142,7 @@ export function AppointmentsScreen() {
       </CollapsibleSectionCard>
 
       {items.length ? (
-        <SectionCard title="Appointments" description="Select a visit to manage questions, discussion items, and follow-up tasks.">
+        <SectionCard title="Appointments" description="Select a visit to manage questions and follow-up tasks.">
           <div className="grid gap-3">
             {[...upcoming, ...past].map((appointment) => (
               <article key={appointment.id} className={`rounded-2xl border p-4 ${selected?.id === appointment.id ? "border-ice/45 bg-ice/10" : "border-white/10 bg-midnight/45"}`}>
@@ -293,30 +176,10 @@ export function AppointmentsScreen() {
               <p>Date/time: {selected.date || "Date to add"} {selected.time ? `at ${selected.time}` : ""}</p>
               <p>Phone: {selected.phone || "Phone to add"}</p>
               {selected.reason ? <p>Reason: {selected.reason}</p> : null}
-              <TextAreaField label="Appointment notes" value={selected.notes} onChange={(value) => update(selected.id, { notes: value })} />
-              <TextAreaField label="After appointment notes" value={selected.afterNotes} onChange={(value) => update(selected.id, { afterNotes: value })} />
+              <TextAreaField label="Questions for doctor" value={selected.notes} onChange={(value) => update(selected.id, { notes: value })} />
+              <TextAreaField label="Follow-up tasks" value={selected.afterNotes} onChange={(value) => update(selected.id, { afterNotes: value })} />
             </div>
           </SectionCard>
-
-          <ItemList
-            title="Questions for doctor"
-            items={selected.questions}
-            emptyText="No doctor questions yet. Add one before your appointment."
-            onAdd={(text) => addListItem("questions", text)}
-            onUpdate={(id, text) => updateListItem("questions", id, text)}
-            onDelete={(id) => deleteListItem("questions", id)}
-          />
-
-          <ItemList
-            title="Follow-up tasks"
-            items={selected.followUpTasks}
-            emptyText="No follow-up tasks yet."
-            checklist
-            onAdd={(text) => addListItem("followUpTasks", text)}
-            onUpdate={(id, text) => updateListItem("followUpTasks", id, text)}
-            onDelete={(id) => deleteListItem("followUpTasks", id)}
-            onToggle={(id) => toggleListItem("followUpTasks", id)}
-          />
         </>
       ) : null}
 

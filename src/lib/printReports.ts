@@ -267,12 +267,9 @@ function appointmentsReport() {
         row("Location", appointment.location),
         row("Phone", appointment.phone),
         row("Reason", appointment.reason),
-        row("Notes", appointment.notes),
-        row("After appointment notes", appointment.afterNotes)
+        row("Questions for doctor", appointment.notes),
+        row("Follow-up tasks", appointment.afterNotes)
       ].join(""))}
-      ${list("Things to discuss", appointment.thingsToDiscuss)}
-      ${list("Questions for doctor", appointment.questions)}
-      ${list("Follow-up tasks", appointment.followUpTasks)}
     `)
     .join("");
 }

@@ -19,7 +19,7 @@ export const reportExports: ReportExport[] = [
   },
   {
     title: "Print Doctor Appointment Summary",
-    description: "Printable visit prep with things to discuss, questions, notes, and follow-up tasks."
+    description: "Printable visit prep with questions, appointment details, and follow-up tasks."
   },
   {
     title: "Print Medication List",
@@ -282,24 +282,17 @@ export const wellnessTiles: WellnessTile[] = [
         description: "Future-ready space for iron, ferritin, vitamin D, liver, kidney, and thyroid markers.",
         fields: ["Marker", "Value", "Unit", "Reference range", "Notes"]
       }
-    ],
-    futureNotes: [
-      "Future: upload lab PDFs securely.",
-      "Future: read lab PDFs and organize common values after you review them.",
-      "Future: save reviewed lab values to your private account."
     ]
   },
   {
     id: "appointments",
     title: "Doctor Appointments",
-    subtitle: "Visits, questions, checklist, notes",
+    subtitle: "Visits, questions, follow-up tasks",
     icon: "calendar",
     subcategories: [
       "Upcoming appointments",
       "Past appointments",
       "Questions for doctor",
-      "After appointment notes",
-      "Follow-up tasks",
       "Print appointment summary"
     ],
     groups: [
@@ -317,18 +310,8 @@ export const wellnessTiles: WellnessTile[] = [
       },
       {
         title: "Questions for doctor",
-        description: "Prepare short questions before each appointment.",
-        fields: ["Question", "Priority", "Related labs or symptoms", "Answered?"]
-      },
-      {
-        title: "After appointment notes",
-        description: "Capture takeaways right after the visit.",
-        fields: ["Summary", "Medication changes", "Labs ordered", "Next appointment"]
-      },
-      {
-        title: "Follow-up tasks",
-        description: "Track the small things that are easy to forget.",
-        checklist: ["Schedule bloodwork", "Upload visit summary", "Call pharmacy", "Book follow-up"]
+        description: "Prepare short questions and follow-up tasks inside each appointment.",
+        fields: ["Questions for doctor", "Follow-up tasks"]
       }
     ]
   },

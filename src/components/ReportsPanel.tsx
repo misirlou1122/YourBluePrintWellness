@@ -21,7 +21,7 @@ export function ReportsPanel() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-lavender/75">Reports / export</p>
           <h2 className="mt-1 text-xl font-semibold text-white">Wellness summary exports</h2>
           <p className="mt-2 text-sm leading-6 text-periwinkle/85">
-            Print-friendly summaries for doctor visits, lab trends, medications, appointment notes, and wellness overviews.
+            Print-friendly summaries for doctor visits, lab trends, medications, doctor questions, and wellness overviews.
           </p>
         </div>
       </div>
@@ -29,8 +29,8 @@ export function ReportsPanel() {
       <div className="mt-5 rounded-2xl border border-ice/15 bg-ice/10 p-4">
         <h3 className="text-sm font-semibold text-white">Doctor summary preview</h3>
         <p className="mt-2 text-sm leading-6 text-periwinkle/85">
-          Latest labs, medications, supplements, symptoms, mood notes, alcohol notes when relevant, questions, things to
-          discuss, and upcoming appointments.
+          Latest labs, medications, supplements, symptoms, mood notes, alcohol notes when relevant, doctor questions,
+          follow-up tasks, and upcoming appointments.
         </p>
       </div>
 
