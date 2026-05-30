@@ -14,6 +14,7 @@ import { FormField } from "./FormField";
 import { LabsScreen } from "./LabsScreen";
 import { ProfileSettingsScreen } from "./ProfileSettingsScreen";
 import { QuickNotes } from "./QuickNotes";
+import { ReferenceRangeCard } from "./ReferenceRangeCard";
 import { RemindersScreen } from "./RemindersScreen";
 import { ReportsPanel } from "./ReportsPanel";
 import { SectionCard } from "./SectionCard";
@@ -21,6 +22,7 @@ import { WeightScreen } from "./WeightScreen";
 import { MedicationsScreen, MoodScreen, PeriodScreen, VitalsScreen } from "./trackers/BodyMindScreens";
 import { DocumentsScreen, HairScreen, ProgressPhotosScreen, RecipesScreen, SkinScreen } from "./trackers/BeautyLibraryScreens";
 import { AlcoholScreen, FitnessScreen, FoodHydrationScreen } from "./trackers/FoodAlcoholFitnessScreens";
+import { vitalsReferenceRanges } from "../lib/referenceRanges";
 
 interface SectionPageProps {
   tile: WellnessTile;
@@ -221,7 +223,13 @@ function TileSpecificContent({
   }
 
   if (tile.id === "health") {
-    return <VitalsScreen />;
+    return (
+      <ReferenceRangeCard
+        title="Vitals reference guide"
+        description="Quick common adult ranges for comparing saved entries without making medical decisions in the app."
+        items={vitalsReferenceRanges}
+      />
+    );
   }
 
   if (tile.id === "weight") {
