@@ -39,7 +39,12 @@ export const vitalsReferenceRanges: ReferenceRangeItem[] = [
   },
   {
     label: "Body temperature",
-    range: "Common adult reference is about 97°F-99°F"
+    range: "Common adult reference is about 97 F-99 F"
+  },
+  {
+    label: "Fasting blood sugar",
+    range: "Common fasting reference: under 100 mg/dL; 100-125 mg/dL is often listed as prediabetes range; 126 mg/dL or higher on two tests is often listed as diabetes range.",
+    note: "CDC also lists common diabetes management targets as 80-130 mg/dL before meals and under 180 mg/dL 1-2 hours after a meal. Ask your clinician what target fits you."
   }
 ];
 
@@ -107,4 +112,14 @@ export function getBmiReferenceLabel(bmi: number | string | null) {
   if (value < 25) return "Healthy weight";
   if (value < 30) return "Overweight";
   return "Obesity range";
+}
+
+export function getBloodSugarReferenceLabel(value: string) {
+  const reading = Number.parseFloat(String(value).replace(/[^\d.]/g, ""));
+  if (Number.isNaN(reading)) return "";
+
+  if (reading < 70) return "Below common fasting range";
+  if (reading < 100) return "Within common fasting reference";
+  if (reading < 126) return "Prediabetes fasting reference range";
+  return "Diabetes fasting reference range";
 }

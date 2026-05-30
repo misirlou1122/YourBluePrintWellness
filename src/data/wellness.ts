@@ -154,14 +154,15 @@ export const wellnessTiles: WellnessTile[] = [
   },
   {
     id: "health",
-    title: "Health",
-    subtitle: "History, vitals, symptoms, questions",
+    title: "Vitals",
+    subtitle: "Blood pressure, glucose, symptoms, questions",
     icon: "heart",
     subcategories: [
       "Overview",
       "Vitals",
       "Blood pressure",
       "Heart rate",
+      "Blood sugar",
       "Weight",
       "Symptoms",
       "Health goals",
@@ -182,8 +183,8 @@ export const wellnessTiles: WellnessTile[] = [
       },
       {
         title: "Vitals",
-        description: "Track blood pressure, heart rate, oxygen, temperature, weight, BMI, and related context.",
-        fields: ["Blood pressure", "Heart rate", "Oxygen", "Temperature", "Weight", "BMI", "Notes"]
+        description: "Track blood pressure, blood sugar, heart rate, oxygen, temperature, weight, BMI, and related context.",
+        fields: ["Blood pressure", "Blood sugar", "Heart rate", "Oxygen", "Temperature", "Weight", "BMI", "Notes"]
       },
       {
         title: "Symptoms",
@@ -402,7 +403,7 @@ export const wellnessTiles: WellnessTile[] = [
   {
     id: "vitals",
     title: "Vitals",
-    subtitle: "Blood pressure, heart rate, weight",
+    subtitle: "Blood pressure, blood sugar, heart rate",
     icon: "activity",
     subcategories: ["Blood pressure", "Oxygen", "Heart rate", "BMI", "Weight", "Temperature", "Blood sugar"],
     groups: [

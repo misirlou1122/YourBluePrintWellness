@@ -8,7 +8,7 @@ import { ReferenceRangeCard } from "../ReferenceRangeCard";
 import { SectionCard } from "../SectionCard";
 import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
 import { mergeDailyTracker, todayKey, type DailyTrackerMap } from "../../lib/dailyTracking";
-import { getBloodPressureReferenceLabel, vitalsReferenceRanges } from "../../lib/referenceRanges";
+import { getBloodPressureReferenceLabel, getBloodSugarReferenceLabel, vitalsReferenceRanges } from "../../lib/referenceRanges";
 import { printFocusedReport } from "../../lib/printReports";
 import type { ExtractedMedicationSuggestion } from "../../lib/labExtraction";
 import { analyzeUploadedDocument, asMedicationSuggestions } from "../../lib/documentAnalysis";
@@ -34,6 +34,7 @@ interface VitalEntry {
   weight: string;
   bmi: string;
   temperature: string;
+  bloodSugar: string;
   date: string;
 }
 
@@ -78,6 +79,7 @@ const emptyVitals: Omit<VitalEntry, "id"> = {
   weight: "",
   bmi: "",
   temperature: "",
+  bloodSugar: "",
   date: ""
 };
 
@@ -436,6 +438,7 @@ export function VitalsScreen() {
           <FormField label="Weight" value={store.draft.weight} onChange={(value) => setField("weight", value)} />
           <FormField label="BMI" value={store.draft.bmi} onChange={(value) => setField("bmi", value)} />
           <FormField label="Temperature" value={store.draft.temperature} onChange={(value) => setField("temperature", value)} />
+          <FormField label="Blood sugar" value={store.draft.bloodSugar} onChange={(value) => setField("bloodSugar", value)} placeholder="mg/dL" />
         </div>
         <button type="button" onClick={() => store.save((draft) => Object.values(draft).some(Boolean), (draft) => ({ ...draft, date: draft.date || new Date().toISOString().slice(0, 10) }))} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
           <Plus size={18} aria-hidden="true" />
@@ -450,10 +453,15 @@ export function VitalsScreen() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-semibold text-white">{entry.date}</h3>
-                    <p className="mt-2 text-sm leading-6 text-periwinkle/85">{[entry.bloodPressure && `BP ${entry.bloodPressure}`, entry.oxygen && `O2 ${entry.oxygen}`, entry.heartRate && `HR ${entry.heartRate}`, entry.weight && `Weight ${entry.weight}`, entry.bmi && `BMI ${entry.bmi}`, entry.temperature && `Temp ${entry.temperature}`].filter(Boolean).join(" | ")}</p>
+                    <p className="mt-2 text-sm leading-6 text-periwinkle/85">{[entry.bloodPressure && `BP ${entry.bloodPressure}`, entry.oxygen && `O2 ${entry.oxygen}`, entry.heartRate && `HR ${entry.heartRate}`, entry.weight && `Weight ${entry.weight}`, entry.bmi && `BMI ${entry.bmi}`, entry.temperature && `Temp ${entry.temperature}`, entry.bloodSugar && `Blood sugar ${entry.bloodSugar}`].filter(Boolean).join(" | ")}</p>
                     {entry.bloodPressure ? (
                       <p className="mt-2 inline-flex rounded-full border border-lavender/20 bg-lavender/10 px-3 py-1 text-xs font-semibold text-lavender">
                         BP reference: {getBloodPressureReferenceLabel(entry.bloodPressure)}
+                      </p>
+                    ) : null}
+                    {entry.bloodSugar ? (
+                      <p className="mt-2 inline-flex rounded-full border border-ice/20 bg-ice/10 px-3 py-1 text-xs font-semibold text-ice">
+                        Blood sugar reference: {getBloodSugarReferenceLabel(entry.bloodSugar)}
                       </p>
                     ) : null}
                   </div>

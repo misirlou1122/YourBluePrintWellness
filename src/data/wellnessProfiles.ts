@@ -120,7 +120,7 @@ export const defaultCustomTileIds: TileId[] = [...coreTileIds];
 
 export const customTileOptions: CustomTileOption[] = [
   { id: "daily", label: "Daily Snapshot", group: "Core tiles" },
-  { id: "health", label: "Health & Vitals", group: "Core tiles" },
+  { id: "health", label: "Vitals", group: "Core tiles" },
   { id: "labs", label: "Bloodwork / Labs", group: "Core tiles" },
   { id: "medications", label: "Medications & Supplements", group: "Core tiles" },
   { id: "appointments", label: "Doctor Appointments", group: "Core tiles" },
