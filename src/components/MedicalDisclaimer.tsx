@@ -8,6 +8,9 @@ export function MedicalDisclaimer() {
       <a href="/privacy" className="mt-2 inline-flex min-h-8 items-center justify-center text-ice underline decoration-ice/40 underline-offset-4">
         Privacy Policy
       </a>
+      <p className="mt-2">
+        © 2026 Bianca Russek. Authored by Bianca Russek. First created May 21, 2026. All rights reserved.
+      </p>
     </footer>
   );
 }
