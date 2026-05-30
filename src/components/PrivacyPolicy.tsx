@@ -25,7 +25,7 @@ export function PrivacyPolicy({ onNavigate }: PrivacyPolicyProps) {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ice/70">Your Blueprint Wellness</p>
             <h1 className="mt-2 text-3xl font-semibold leading-tight text-white">Privacy Policy</h1>
-            <p className="mt-2 text-sm leading-6 text-periwinkle/85">Last updated: May 22, 2026</p>
+            <p className="mt-2 text-sm leading-6 text-periwinkle/85">Last updated: May 30, 2026</p>
           </div>
         </div>
 
@@ -35,6 +35,8 @@ export function PrivacyPolicy({ onNavigate }: PrivacyPolicyProps) {
             <p className="mt-2">
               Your Blueprint Wellness is a personal wellness tracking app. It helps users organize profile details,
               labs, medications, appointments, notes, reminders, uploads, measurements, and other wellness information.
+              Your Blueprint Wellness is authored and operated by Bianca Russek. Users can use Report a Problem in the
+              Account / Profile area for app support, privacy questions, or data requests.
             </p>
           </section>
 
@@ -56,6 +58,15 @@ export function PrivacyPolicy({ onNavigate }: PrivacyPolicyProps) {
           </section>
 
           <section>
+            <h2 className="text-lg font-semibold text-white">Service providers</h2>
+            <p className="mt-2">
+              The app uses secure third-party service providers to operate account sign-in, data storage, file uploads,
+              and document reading. These providers are used only to run the app and support the features users choose to
+              use.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-lg font-semibold text-white">Uploads</h2>
             <p className="mt-2">
               If you upload labs, doctor documents, or progress photos, those files are intended to be stored privately
@@ -67,7 +78,8 @@ export function PrivacyPolicy({ onNavigate }: PrivacyPolicyProps) {
             <h2 className="text-lg font-semibold text-white">How information is used</h2>
             <p className="mt-2">
               Your information is used to show your dashboard, save your history, create printable summaries, and help
-              organize your personal wellness records. The app is not intended to sell personal wellness data.
+              organize your personal wellness records. The app does not sell personal information or use health
+              information for advertising.
             </p>
           </section>
 
@@ -75,7 +87,32 @@ export function PrivacyPolicy({ onNavigate }: PrivacyPolicyProps) {
             <h2 className="text-lg font-semibold text-white">Your control</h2>
             <p className="mt-2">
               You can edit or delete entries inside the app. You can also request account and data deletion from the
-              Account / Profile area.
+              Account / Profile area. Deleted data may take a reasonable period to be removed from backups, logs, or
+              provider systems.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-white">Security</h2>
+            <p className="mt-2">
+              The app uses account-based access controls and private storage for saved information and uploads. No online
+              service can be guaranteed to be completely secure, so users should avoid uploading anything they are not
+              comfortable storing in a private wellness account.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-white">Age</h2>
+            <p className="mt-2">
+              This app is intended for adults and is not intended for children under 18.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-white">Security incidents</h2>
+            <p className="mt-2">
+              If we learn of a security incident affecting user information, we will notify affected users as required
+              by law.
             </p>
           </section>
 
