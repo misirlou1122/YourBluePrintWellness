@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bell, Camera, CheckCircle2, ChevronLeft, ChevronRight, Home, Plus, ArrowUp } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Home, Plus, ArrowUp } from "lucide-react";
 import type { WellnessProfileId } from "../data/wellnessProfiles";
 import type { FeatureGroup, TileId, WellnessTile } from "../types/wellness";
 import { createId, useLocalStorage } from "../lib/useLocalStorage";
@@ -327,10 +327,6 @@ export function SectionPage({
     document.getElementById("tile-detail-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const showReminderAction = tile.id !== "reminders";
-  const showProgressPhotoAction = tile.id === "weight" || tile.id === "measurements";
-  const showQuickActions = showReminderAction || showProgressPhotoAction;
-
   return (
     <main id="tile-detail-top" className="detail-page grid min-w-0 gap-5">
       <DetailHeader tile={tile} onHome={onHome} />
@@ -401,40 +397,6 @@ export function SectionPage({
                 {note}
               </p>
             ))}
-          </div>
-        </SectionCard>
-      ) : null}
-
-      {showQuickActions ? (
-        <SectionCard
-          title="Quick actions"
-          description={
-            showProgressPhotoAction
-              ? "Add a reminder or progress photo for weight, BMI, and measurement tracking."
-              : "Add a reminder from this section without keeping an extra tile on the dashboard."
-          }
-        >
-          <div className={`grid gap-3 ${showReminderAction && showProgressPhotoAction ? "sm:grid-cols-2" : ""}`}>
-            {showReminderAction ? (
-              <button
-                type="button"
-                onClick={() => onOpenTile("reminders")}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice"
-              >
-                <Bell size={18} aria-hidden="true" />
-                Add reminder
-              </button>
-            ) : null}
-            {showProgressPhotoAction ? (
-              <button
-                type="button"
-                onClick={() => onOpenTile("photos")}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-lavender/25 bg-lavender/10 px-4 text-sm font-semibold text-lavender shadow-lavender"
-              >
-                <Camera size={18} aria-hidden="true" />
-                Add progress photo
-              </button>
-            ) : null}
           </div>
         </SectionCard>
       ) : null}

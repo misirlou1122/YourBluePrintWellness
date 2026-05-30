@@ -6,6 +6,7 @@ import { FormField, SelectField, TextAreaField } from "./FormField";
 import { CollapsibleSectionCard } from "./CollapsibleSectionCard";
 import { ReferenceRangeCard } from "./ReferenceRangeCard";
 import { SectionCard } from "./SectionCard";
+import { ProgressPhotosScreen } from "./trackers/BeautyLibraryScreens";
 import { calculateBmi, parseWeightPounds } from "../lib/bodyMetrics";
 import { bmiReferenceRanges, getBmiReferenceLabel } from "../lib/referenceRanges";
 import { useLocalCollection, useLocalStorage } from "../lib/useLocalStorage";
@@ -222,6 +223,8 @@ export function WeightScreen() {
           </div>
         </SectionCard>
       ) : null}
+
+      <ProgressPhotosScreen />
     </div>
   );
 }

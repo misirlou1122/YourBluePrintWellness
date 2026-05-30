@@ -158,7 +158,6 @@ export const wellnessTiles: WellnessTile[] = [
     subtitle: "Blood pressure, glucose, symptoms, questions",
     icon: "heart",
     subcategories: [
-      "Overview",
       "Vitals",
       "Blood pressure",
       "Heart rate",
@@ -172,15 +171,6 @@ export const wellnessTiles: WellnessTile[] = [
       "Health notes"
     ],
     groups: [
-      {
-        title: "Overview",
-        description: "A private snapshot for organizing health history and wellness priorities.",
-        fields: ["Primary focus", "Known conditions", "Current care team", "Last wellness visit"],
-        cards: [
-          { title: "Main goal", body: "Build a clearer picture of patterns over time.", meta: "Personal tracking" },
-          { title: "Care reminder", body: "Use this space to prepare for visits, not to diagnose symptoms.", meta: "Safety first" }
-        ]
-      },
       {
         title: "Vitals",
         description: "Track blood pressure, blood sugar, heart rate, oxygen, temperature, weight, BMI, and related context.",
@@ -307,7 +297,6 @@ export const wellnessTiles: WellnessTile[] = [
     subcategories: [
       "Upcoming appointments",
       "Past appointments",
-      "Things To Discuss",
       "Questions for doctor",
       "After appointment notes",
       "Follow-up tasks",
@@ -324,18 +313,6 @@ export const wellnessTiles: WellnessTile[] = [
             body: "Primary care check-in on June 12, 2026 at 10:30 AM.",
             meta: "Location and phone details"
           }
-        ]
-      },
-      {
-        title: "Things To Discuss",
-        description: "A visit-specific checklist that can be included in a printed summary.",
-        checklist: [
-          "Ask about cholesterol",
-          "Discuss A1C",
-          "Mention nausea",
-          "Ask about medication timing",
-          "Ask about supplements",
-          "Review recent labs"
         ]
       },
       {

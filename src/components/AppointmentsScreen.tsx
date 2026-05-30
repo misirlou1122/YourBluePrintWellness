@@ -299,17 +299,6 @@ export function AppointmentsScreen() {
           </SectionCard>
 
           <ItemList
-            title="Things to discuss"
-            items={selected.thingsToDiscuss}
-            emptyText="No discussion items yet. Add one before your appointment."
-            checklist
-            onAdd={(text) => addListItem("thingsToDiscuss", text)}
-            onUpdate={(id, text) => updateListItem("thingsToDiscuss", id, text)}
-            onDelete={(id) => deleteListItem("thingsToDiscuss", id)}
-            onToggle={(id) => toggleListItem("thingsToDiscuss", id)}
-          />
-
-          <ItemList
             title="Questions for doctor"
             items={selected.questions}
             emptyText="No doctor questions yet. Add one before your appointment."
