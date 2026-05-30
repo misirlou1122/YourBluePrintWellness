@@ -1,6 +1,7 @@
 export interface ReferenceRangeItem {
   label: string;
   range: string;
+  rangeLines?: string[];
   note?: string;
 }
 
@@ -43,8 +44,15 @@ export const vitalsReferenceRanges: ReferenceRangeItem[] = [
   },
   {
     label: "Fasting blood sugar",
-    range: "Common fasting reference: under 100 mg/dL; 100-125 mg/dL is often listed as prediabetes range; 126 mg/dL or higher on two tests is often listed as diabetes range.",
-    note: "CDC also lists common diabetes management targets as 80-130 mg/dL before meals and under 180 mg/dL 1-2 hours after a meal. Ask your clinician what target fits you."
+    range: "Common fasting glucose reference, mg/dL",
+    rangeLines: [
+      "Under 100: normal fasting range",
+      "100-125: prediabetes range",
+      "126+: diabetes range",
+      "80-130 before meals: common diabetes target",
+      "Under 180 after meals: common diabetes target"
+    ],
+    note: "Ask your clinician what target fits you."
   }
 ];
 

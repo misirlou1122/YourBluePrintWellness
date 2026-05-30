@@ -13,6 +13,7 @@ interface CollapsibleSectionCardProps {
   forceOpen?: boolean;
   className?: string;
   sectionLabel?: string;
+  hideHeader?: boolean;
 }
 
 export function CollapsibleSectionCard({
@@ -24,13 +25,21 @@ export function CollapsibleSectionCard({
   defaultOpen = false,
   forceOpen = false,
   className = "",
-  sectionLabel
+  sectionLabel,
+  hideHeader = false
 }: CollapsibleSectionCardProps) {
   const [isOpen, setIsOpen] = useLocalStorage(storageKey, defaultOpen);
   const open = forceOpen || isOpen;
 
   return (
-    <SectionCard eyebrow={eyebrow} title={title} description={description} className={className} sectionLabel={sectionLabel ?? title} collapsible={false}>
+    <SectionCard
+      eyebrow={hideHeader ? undefined : eyebrow}
+      title={hideHeader ? undefined : title}
+      description={hideHeader ? undefined : description}
+      className={className}
+      sectionLabel={sectionLabel ?? title}
+      collapsible={false}
+    >
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}

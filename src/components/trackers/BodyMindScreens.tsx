@@ -429,7 +429,7 @@ export function VitalsScreen() {
         description="Quick common adult ranges for comparing saved entries without making medical decisions in the app."
         items={vitalsReferenceRanges}
       />
-      <CollapsibleSectionCard storageKey="ybw.vitals.formOpen" forceOpen={Boolean(store.editingId)} title="Vitals entry" sectionLabel="Blood pressure">
+      <CollapsibleSectionCard storageKey="ybw.vitals.formOpen" forceOpen={Boolean(store.editingId)} title="Vitals entry" sectionLabel="Blood pressure" hideHeader>
         <div className="grid gap-3 sm:grid-cols-2">
           <FormField label="Date" type="date" value={store.draft.date} onChange={(value) => setField("date", value)} />
           <FormField label="Blood pressure" value={store.draft.bloodPressure} onChange={(value) => setField("bloodPressure", value)} />
