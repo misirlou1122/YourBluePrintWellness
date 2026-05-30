@@ -47,7 +47,7 @@ type GenericEntry = Record<string, string> & {
   savedAt: string;
 };
 
-function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: string }) {
+function FieldEntry({ group, storageKey, inline = false }: { group: FeatureGroup; storageKey: string; inline?: boolean }) {
   const fields = group.fields?.length ? group.fields : ["Title", "Date", "Notes"];
   const [values, setValues] = useLocalStorage<Record<string, string>>(`${storageKey}.draft`, {});
   const [entries, setEntries] = useLocalStorage<GenericEntry[]>(storageKey, []);
@@ -89,19 +89,8 @@ function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: st
     setEditingId(entry.id);
   };
 
-  return (
-    <CollapsibleSectionCard
-      storageKey={`${storageKey}.open`}
-      title="Manual entry"
-      defaultOpen={false}
-      forceOpen={forceOpen}
-      className="bg-white/[0.04]"
-      sectionLabel={group.title}
-    >
-      <div className="mb-4 flex items-center gap-2">
-        <Plus size={18} className="text-ice" aria-hidden="true" />
-        <h3 className="text-base font-semibold text-white">Manual entry</h3>
-      </div>
+  const entryFields = (
+    <>
       <div className="grid gap-3">
         {fields.map((field) => (
           <FormField key={field} label={field} value={values[field] ?? ""} onChange={(value) => updateValue(field, value)} />
@@ -144,6 +133,27 @@ function FieldEntry({ group, storageKey }: { group: FeatureGroup; storageKey: st
           ))}
         </div>
       ) : null}
+    </>
+  );
+
+  if (inline) {
+    return entryFields;
+  }
+
+  return (
+    <CollapsibleSectionCard
+      storageKey={`${storageKey}.open`}
+      title="Manual entry"
+      defaultOpen={false}
+      forceOpen={forceOpen}
+      className="bg-white/[0.04]"
+      sectionLabel={group.title}
+    >
+      <div className="mb-4 flex items-center gap-2">
+        <Plus size={18} className="text-ice" aria-hidden="true" />
+        <h3 className="text-base font-semibold text-white">Manual entry</h3>
+      </div>
+      {entryFields}
     </CollapsibleSectionCard>
   );
 }
@@ -383,6 +393,7 @@ export function SectionPage({
                 key={`${tile.id}-${activeGroup.title}`}
                 group={activeGroup}
                 storageKey={`ybw.genericEntries.${tile.id}.${activeGroup.title}`}
+                inline={tile.id === "health" && activeGroup.title.toLowerCase() === "vitals"}
               />
             </div>
           </SectionCard>
