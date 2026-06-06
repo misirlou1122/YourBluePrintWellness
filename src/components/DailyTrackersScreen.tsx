@@ -1,4 +1,4 @@
-import { Plus, RotateCcw, ShieldCheck, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, RotateCcw, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { WellnessProfileId } from "../data/wellnessProfiles";
 import type { TileId } from "../types/wellness";
@@ -111,12 +111,21 @@ function CheckToggle({ label, checked, onChange }: { label: string; checked: boo
 export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTrackersScreenProps) {
   const [dailyTrackers, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const [lastDailyDate, setLastDailyDate] = useLocalStorage("ybw.lastDailyTrackingDate", todayKey());
+  const [manualNutritionOpen, setManualNutritionOpen] = useLocalStorage("ybw.daily.manualNutritionOpen", false);
   const [waterInput, setWaterInput] = useState("");
   const [foodInput, setFoodInput] = useState("");
+  const [manualFoodName, setManualFoodName] = useState("");
+  const [manualCalories, setManualCalories] = useState("");
+  const [manualProtein, setManualProtein] = useState("");
+  const [manualFiber, setManualFiber] = useState("");
   const today = todayKey();
   const todayTracker = getDailyTracker(dailyTrackers, today);
   const waterAmount = parsePositiveAmount(waterInput);
   const foodEstimate = useMemo(() => estimateFoodNutrition(foodInput), [foodInput]);
+  const manualCaloriesAmount = parsePositiveAmount(manualCalories);
+  const manualProteinAmount = parsePositiveAmount(manualProtein);
+  const manualFiberAmount = parsePositiveAmount(manualFiber);
+  const manualEntryReady = Boolean(manualFoodName.trim()) && Boolean(manualCaloriesAmount || manualProteinAmount || manualFiberAmount);
   const showCycle = selectedProfile === "female" || (selectedProfile === "custom" && customTileIds.includes("period"));
   const medicationChecked = todayTracker.medicationStatus === "taken";
   const workoutChecked = isFilled(todayTracker.workoutStatus, dailyDefaults.workoutStatus);
@@ -195,6 +204,37 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
     setFoodInput("");
   };
 
+  const saveManualFoodEntry = () => {
+    if (!manualEntryReady) {
+      return;
+    }
+
+    const label = manualFoodName.trim();
+    const nextFoodEntry: DailyFoodEntry = {
+      id: createId("daily-food"),
+      input: label,
+      matchedFoodName: "Manual nutrition entry",
+      quantityLabel: "manual entry",
+      calories: Math.round(manualCaloriesAmount),
+      protein: manualProteinAmount,
+      fiber: manualFiberAmount,
+      createdAt: new Date().toISOString()
+    };
+
+    setDailyTrackers((current) => {
+      const currentEntry = getDailyTracker(current, today);
+      const foodEntries = [nextFoodEntry, ...currentEntry.foodEntries];
+      return mergeDailyTracker(current, today, {
+        foodEntries,
+        ...totalFoodNutrition(foodEntries)
+      });
+    });
+    setManualFoodName("");
+    setManualCalories("");
+    setManualProtein("");
+    setManualFiber("");
+  };
+
   const removeFoodEntry = (entryId: string) => {
     setDailyTrackers((current) => {
       const currentEntry = getDailyTracker(current, today);
@@ -228,6 +268,10 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
       setDailyTrackers((current) => resetDailyTracker(current, today));
       setWaterInput("");
       setFoodInput("");
+      setManualFoodName("");
+      setManualCalories("");
+      setManualProtein("");
+      setManualFiber("");
     }
   };
 
@@ -329,6 +373,36 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
                   : "No estimate found yet"}
               </p>
             ) : null}
+            <div className="rounded-2xl border border-white/10 bg-midnight/35 p-3">
+              <button
+                type="button"
+                onClick={() => setManualNutritionOpen((current) => !current)}
+                className="flex min-h-11 w-full items-center justify-between gap-3 text-left text-sm font-semibold text-ice"
+                aria-expanded={manualNutritionOpen}
+              >
+                Manual nutrition
+                {manualNutritionOpen ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}
+              </button>
+              {manualNutritionOpen ? (
+                <div className="mt-3 grid gap-3">
+                  <FormField label="Food name" value={manualFoodName} onChange={setManualFoodName} placeholder="Nutrition label item" />
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <FormField label="Calories" type="number" value={manualCalories} onChange={setManualCalories} placeholder="kcal" />
+                    <FormField label="Protein" type="number" value={manualProtein} onChange={setManualProtein} placeholder="grams" />
+                    <FormField label="Fiber" type="number" value={manualFiber} onChange={setManualFiber} placeholder="grams" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={saveManualFoodEntry}
+                    disabled={!manualEntryReady}
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice disabled:opacity-50"
+                  >
+                    <Plus size={18} aria-hidden="true" />
+                    Log manual nutrition
+                  </button>
+                </div>
+              ) : null}
+            </div>
             {todayTracker.foodEntries.length ? (
               <div className="grid gap-2">
                 {todayTracker.foodEntries.map((entry) => (
