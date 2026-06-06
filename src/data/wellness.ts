@@ -551,8 +551,8 @@ export const wellnessTiles: WellnessTile[] = [
       },
       {
         title: "Symptoms",
-        description: "Track flow, cramps, nausea, bloating, headache, cravings, mood, and energy.",
-        fields: ["Flow level", "Cramps", "Nausea", "Bloating", "Headache", "Cravings", "Mood", "Energy"]
+        description: "Track flow and check off symptoms for the day.",
+        fields: ["Flow level", "Cramps", "Nausea", "Bloating", "Headache", "Cravings", "Mood changes", "Low energy"]
       }
     ]
   },

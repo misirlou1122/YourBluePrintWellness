@@ -43,13 +43,13 @@ interface PeriodEntry {
   startDate: string;
   endDate: string;
   flow: string;
-  cramps: string;
-  nausea: string;
-  bloating: string;
-  headache: string;
-  cravings: string;
-  mood: string;
-  energy: string;
+  cramps: boolean;
+  nausea: boolean;
+  bloating: boolean;
+  headache: boolean;
+  cravings: boolean;
+  mood: boolean;
+  energy: boolean;
   notes: string;
 }
 
@@ -87,15 +87,25 @@ const emptyPeriod: Omit<PeriodEntry, "id"> = {
   startDate: "",
   endDate: "",
   flow: "Medium",
-  cramps: "",
-  nausea: "",
-  bloating: "",
-  headache: "",
-  cravings: "",
-  mood: "",
-  energy: "",
+  cramps: false,
+  nausea: false,
+  bloating: false,
+  headache: false,
+  cravings: false,
+  mood: false,
+  energy: false,
   notes: ""
 };
+
+const periodSymptomOptions = [
+  { field: "cramps", label: "Cramps" },
+  { field: "nausea", label: "Nausea" },
+  { field: "bloating", label: "Bloating" },
+  { field: "headache", label: "Headache" },
+  { field: "cravings", label: "Cravings" },
+  { field: "mood", label: "Mood changes" },
+  { field: "energy", label: "Low energy" }
+] as const;
 
 const moodOptions = ["Calm", "Anxious", "Overwhelmed", "Tired", "Sad", "Hopeful", "Irritable", "Foggy", "Energetic", "Nauseous"];
 
@@ -478,7 +488,16 @@ export function VitalsScreen() {
 
 export function PeriodScreen() {
   const store = useEditableCollection<PeriodEntry, Omit<PeriodEntry, "id">>("ybw.period", "ybw.periodDraft", emptyPeriod, "period");
-  const setField = (field: keyof typeof emptyPeriod, value: string) => store.setDraft((current) => ({ ...current, [field]: value }));
+  const setField = (field: keyof typeof emptyPeriod, value: string | boolean) => store.setDraft((current) => ({ ...current, [field]: value }));
+  const checkedSymptoms = (entry: Omit<PeriodEntry, "id"> | PeriodEntry) =>
+    periodSymptomOptions
+      .filter(({ field }) => Boolean(entry[field]))
+      .map(({ label }) => label);
+  const normalizePeriodDraft = (draft: Omit<PeriodEntry, "id">) => ({
+    ...draft,
+    ...Object.fromEntries(periodSymptomOptions.map(({ field }) => [field, Boolean(draft[field])]))
+  });
+
   return (
     <div className="grid gap-4">
       <CollapsibleSectionCard storageKey="ybw.period.formOpen" forceOpen={Boolean(store.editingId)} title="Period tracker entry" sectionLabel="Start date">
@@ -488,14 +507,22 @@ export function PeriodScreen() {
             <FormField label="End date" type="date" value={store.draft.endDate} onChange={(value) => setField("endDate", value)} />
           </div>
           <SelectField label="Flow" options={["Light", "Medium", "Heavy", "Spotting", "Not sure"]} value={store.draft.flow} onChange={(value) => setField("flow", value)} />
-          <div className="grid gap-3 sm:grid-cols-2">
-            {(["cramps", "nausea", "bloating", "headache", "cravings", "mood", "energy"] as const).map((field) => (
-              <FormField key={field} label={field[0].toUpperCase() + field.slice(1)} value={store.draft[field]} onChange={(value) => setField(field, value)} />
+          <div className="grid gap-2 sm:grid-cols-2">
+            {periodSymptomOptions.map(({ field, label }) => (
+              <label key={field} className="flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-midnight/45 px-3 text-sm text-white">
+                <input
+                  type="checkbox"
+                  checked={Boolean(store.draft[field])}
+                  onChange={(event) => setField(field, event.target.checked)}
+                  className="size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40"
+                />
+                {label}
+              </label>
             ))}
           </div>
           <TextAreaField label="Notes" value={store.draft.notes} onChange={(value) => setField("notes", value)} />
         </div>
-        <button type="button" onClick={() => store.save((draft) => Object.values(draft).some(Boolean))} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
+        <button type="button" onClick={() => store.save((draft) => Object.values(draft).some(Boolean), normalizePeriodDraft)} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
           <Plus size={18} aria-hidden="true" />
           {store.editingId ? "Save changes" : "Add period entry"}
         </button>
@@ -508,7 +535,7 @@ export function PeriodScreen() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-semibold text-white">{entry.startDate || "Cycle entry"} {entry.endDate ? `to ${entry.endDate}` : ""}</h3>
-              <p className="mt-2 text-sm leading-6 text-periwinkle/85">{[entry.flow, entry.cramps, entry.nausea, entry.bloating, entry.headache, entry.cravings, entry.mood, entry.energy].filter(Boolean).join(" | ")}</p>
+                    <p className="mt-2 text-sm leading-6 text-periwinkle/85">{[entry.flow, ...checkedSymptoms(entry)].filter(Boolean).join(" | ")}</p>
                     {entry.notes ? <p className="mt-2 text-sm leading-6 text-periwinkle/85">{entry.notes}</p> : null}
                   </div>
                   <EntryActions onEdit={() => store.startEdit(entry)} onDelete={() => store.remove(entry.id)} />
