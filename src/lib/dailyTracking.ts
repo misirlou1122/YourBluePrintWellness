@@ -1,15 +1,28 @@
+export interface DailyFoodEntry {
+  id: string;
+  input: string;
+  matchedFoodName: string;
+  quantityLabel: string;
+  calories: number;
+  protein: number;
+  fiber: number;
+  createdAt: string;
+}
+
 export interface DailyTrackerEntry {
   date: string;
   water: number;
   protein: number;
   fiber: number;
+  calories: number;
   dailyConsistency: number;
   medicationStatus: string;
   mood: string;
   workoutStatus: string;
   alcohol: string;
-  foodNotes: string;
-  reminderCompletion: string;
+  alcoholDrinkType: string;
+  alcoholAmount: number;
+  foodEntries: DailyFoodEntry[];
   updatedAt: string;
 }
 
@@ -26,15 +39,28 @@ export function emptyDailyTracker(date = todayKey()): DailyTrackerEntry {
     water: 0,
     protein: 0,
     fiber: 0,
+    calories: 0,
     dailyConsistency: 0,
     medicationStatus: "not taken",
     mood: "not checked in",
     workoutStatus: "not logged",
     alcohol: "none logged",
-    foodNotes: "none logged",
-    reminderCompletion: "not checked",
+    alcoholDrinkType: "",
+    alcoholAmount: 0,
+    foodEntries: [],
     updatedAt: new Date().toISOString()
   };
+}
+
+export function totalFoodNutrition(foodEntries: DailyFoodEntry[] = []) {
+  return foodEntries.reduce(
+    (totals, entry) => ({
+      calories: totals.calories + (Number(entry.calories) || 0),
+      protein: totals.protein + (Number(entry.protein) || 0),
+      fiber: totals.fiber + (Number(entry.fiber) || 0)
+    }),
+    { calories: 0, protein: 0, fiber: 0 }
+  );
 }
 
 export function calculateDailyConsistency(entry: DailyTrackerEntry) {
@@ -43,19 +69,27 @@ export function calculateDailyConsistency(entry: DailyTrackerEntry) {
     entry.water > 0,
     entry.protein > 0,
     entry.fiber > 0,
+    entry.calories > 0,
     isFilled(entry.medicationStatus, "not taken"),
     isFilled(entry.mood, "not checked in"),
-    isFilled(entry.workoutStatus, "not logged"),
-    isFilled(entry.alcohol, "none logged"),
-    isFilled(entry.foodNotes, "none logged"),
-    isFilled(entry.reminderCompletion, "not checked")
+    isFilled(entry.workoutStatus, "not logged")
   ].filter(Boolean).length;
 
-  return Math.round((completed / 9) * 100);
+  return Math.round((completed / 7) * 100);
 }
 
 export function getDailyTracker(trackers: DailyTrackerMap, date = todayKey()) {
-  return trackers[date] ?? emptyDailyTracker(date);
+  const existing = trackers[date];
+  if (!existing) {
+    return emptyDailyTracker(date);
+  }
+
+  return {
+    ...emptyDailyTracker(date),
+    ...existing,
+    date,
+    foodEntries: Array.isArray(existing.foodEntries) ? existing.foodEntries : []
+  };
 }
 
 export function mergeDailyTracker(trackers: DailyTrackerMap, date: string, updates: Partial<DailyTrackerEntry>) {

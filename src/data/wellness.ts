@@ -133,8 +133,8 @@ export const wellnessTiles: WellnessTile[] = [
     groups: [
       {
         title: "Today at a glance",
-        description: "View and update today's water, protein, fiber, mood, medication, workout, food, alcohol, and reminder status.",
-        fields: ["Water", "Protein", "Fiber", "Mood", "Medication status", "Workout status"]
+        description: "View and update today's water, food-derived protein, fiber, calories, mood, medication, workout, and alcohol status.",
+        fields: ["Water", "Food item", "Protein", "Fiber", "Calories", "Mood", "Medication", "Workout", "Alcohol"]
       }
     ]
   },
@@ -494,14 +494,14 @@ export const wellnessTiles: WellnessTile[] = [
   {
     id: "food",
     title: "Food & Hydration",
-    subtitle: "Water, protein, fiber, meals, cravings",
+    subtitle: "Water, protein, fiber, calories, meals",
     icon: "droplets",
-    subcategories: ["Water tracker", "Protein tracker", "Fiber tracker", "Meals", "Snacks", "Caffeine", "Cravings", "Nausea notes", "Food notes"],
+    subcategories: ["Water tracker", "Protein tracker", "Fiber tracker", "Calorie tracker", "Meals", "Snacks", "Caffeine", "Cravings", "Nausea notes"],
     groups: [
       {
         title: "Progress trackers",
         description: "Glowing progress for hydration and nutrition habits.",
-        fields: ["Water", "Protein", "Fiber", "Daily note"]
+        fields: ["Water", "Food item", "Protein", "Fiber", "Calories"]
       },
       {
         title: "Meals and snacks",

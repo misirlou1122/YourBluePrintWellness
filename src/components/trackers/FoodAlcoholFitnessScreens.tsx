@@ -124,8 +124,7 @@ export function FoodHydrationScreen() {
       mergeDailyTracker(current, entry.date, {
         water: Number.parseFloat(entry.waterAmount) || 0,
         protein: Number.parseFloat(entry.protein) || 0,
-        fiber: Number.parseFloat(entry.fiber) || 0,
-        foodNotes: [entry.meals, entry.snacks, entry.notes].filter(Boolean).join(" | ") || "none logged"
+        fiber: Number.parseFloat(entry.fiber) || 0
       })
     );
     reset();
@@ -207,7 +206,9 @@ export function AlcoholScreen() {
     else add(entry);
     setDailyTrackers((current) =>
       mergeDailyTracker(current, entry.date, {
-        alcohol: `${entry.drinks || "1"} ${Number(entry.drinks) === 1 ? "drink" : "drinks"} logged`
+        alcohol: `${entry.drinks || "1"} standard drink${Number(entry.drinks) === 1 ? "" : "s"} | ${entry.drinkType}`,
+        alcoholDrinkType: entry.drinkType,
+        alcoholAmount: Number.parseFloat(entry.drinks) || 0
       })
     );
     reset();

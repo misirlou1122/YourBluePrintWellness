@@ -208,12 +208,12 @@ function wellnessReport() {
     <h2>Today</h2>
     ${table([
       row("Water", todayEntry.water ? `${todayEntry.water} oz` : ""),
+      row("Calories", todayEntry.calories ? `${todayEntry.calories} kcal` : ""),
       row("Protein", todayEntry.protein ? `${todayEntry.protein} g` : ""),
       row("Fiber", todayEntry.fiber ? `${todayEntry.fiber} g` : ""),
       row("Mood", todayEntry.mood),
       row("Medication status", todayEntry.medicationStatus),
       row("Workout status", todayEntry.workoutStatus),
-      row("Food notes", todayEntry.foodNotes),
       row("Alcohol", todayEntry.alcohol)
     ].join("")) || empty("No daily tracker values saved for today.")}`;
 }
