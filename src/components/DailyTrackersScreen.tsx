@@ -10,7 +10,8 @@ import {
   totalFoodNutrition,
   type DailyFoodEntry,
   type DailyTrackerEntry,
-  type DailyTrackerMap
+  type DailyTrackerMap,
+  type DailyWaterEntry
 } from "../lib/dailyTracking";
 import { estimateFoodNutrition } from "../lib/nutritionEstimator";
 import { createId, useLocalStorage } from "../lib/useLocalStorage";
@@ -88,6 +89,11 @@ function buildAlcoholSummary(drinkType: string, amount: number) {
   return `${amountLabel} | ${safeDrinkType}`;
 }
 
+function parsePositiveAmount(value: string) {
+  const amount = Number.parseFloat(value.match(/\d+(?:\.\d+)?/)?.[0] ?? "");
+  return Number.isFinite(amount) && amount > 0 ? Math.round(amount * 10) / 10 : 0;
+}
+
 function CheckToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
   return (
     <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-midnight/45 px-3 text-sm font-semibold text-white">
@@ -105,9 +111,11 @@ function CheckToggle({ label, checked, onChange }: { label: string; checked: boo
 export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTrackersScreenProps) {
   const [dailyTrackers, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const [lastDailyDate, setLastDailyDate] = useLocalStorage("ybw.lastDailyTrackingDate", todayKey());
+  const [waterInput, setWaterInput] = useState("");
   const [foodInput, setFoodInput] = useState("");
   const today = todayKey();
   const todayTracker = getDailyTracker(dailyTrackers, today);
+  const waterAmount = parsePositiveAmount(waterInput);
   const foodEstimate = useMemo(() => estimateFoodNutrition(foodInput), [foodInput]);
   const showCycle = selectedProfile === "female" || (selectedProfile === "custom" && customTileIds.includes("period"));
   const medicationChecked = todayTracker.medicationStatus === "taken";
@@ -131,8 +139,38 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
     setDailyTrackers((current) => mergeDailyTracker(current, today, updates));
   };
 
-  const setWaterField = (value: string) => {
-    updateToday({ water: Number.parseFloat(value) || 0 });
+  const saveWaterEntry = () => {
+    if (!waterAmount) {
+      return;
+    }
+
+    const nextWaterEntry: DailyWaterEntry = {
+      id: createId("daily-water"),
+      amount: waterAmount,
+      createdAt: new Date().toISOString()
+    };
+
+    setDailyTrackers((current) => {
+      const currentEntry = getDailyTracker(current, today);
+      return mergeDailyTracker(current, today, {
+        waterEntries: [nextWaterEntry, ...currentEntry.waterEntries],
+        water: Math.round((currentEntry.water + waterAmount) * 10) / 10
+      });
+    });
+    setWaterInput("");
+  };
+
+  const removeWaterEntry = (entryId: string) => {
+    setDailyTrackers((current) => {
+      const currentEntry = getDailyTracker(current, today);
+      const removedEntry = currentEntry.waterEntries.find((entry) => entry.id === entryId);
+      const waterEntries = currentEntry.waterEntries.filter((entry) => entry.id !== entryId);
+      const nextWater = Math.max(0, currentEntry.water - (removedEntry?.amount ?? 0));
+      return mergeDailyTracker(current, today, {
+        waterEntries,
+        water: Math.round(nextWater * 10) / 10
+      });
+    });
   };
 
   const saveFoodEntry = () => {
@@ -188,6 +226,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
   const resetToday = () => {
     if (window.confirm("Reset today's daily tracker values? This will not delete saved entries or daily history.")) {
       setDailyTrackers((current) => resetDailyTracker(current, today));
+      setWaterInput("");
       setFoodInput("");
     }
   };
@@ -195,7 +234,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
   const snapshotItems = [
     { label: "Date", value: today, detail: "Daily values reset by date" },
     { label: "Mood", value: dailyDisplayValue(todayTracker.mood, dailyDefaults.mood), detail: isFilled(todayTracker.mood, dailyDefaults.mood) ? "Mood checked in" : "Not checked in" },
-    { label: "Water intake", value: `${todayTracker.water} oz`, detail: `Goal: ${waterGoal} oz` },
+    { label: "Water intake", value: formatMacro(todayTracker.water, "oz"), detail: `Goal: ${waterGoal} oz` },
     { label: "Protein", value: formatMacro(todayTracker.protein, "g"), detail: "From logged food" },
     { label: "Fiber", value: formatMacro(todayTracker.fiber, "g"), detail: "From logged food" },
     { label: "Calories", value: `${Math.round(todayTracker.calories)} kcal`, detail: "From logged food" },
@@ -226,7 +265,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
       <div className="grid gap-3 lg:grid-cols-4">
         <ProgressRing label="Daily consistency" value={todayTracker.dailyConsistency} caption={`${today}: today's daily tracker`} />
         <div className="grid gap-3 md:grid-cols-2 lg:col-span-3">
-          <ProgressBar label="Water" value={progress(todayTracker.water, waterGoal)} detail={`${todayTracker.water} oz of ${waterGoal} oz target`} tone="aqua" />
+          <ProgressBar label="Water" value={progress(todayTracker.water, waterGoal)} detail={`${formatMacro(todayTracker.water, "oz")} of ${waterGoal} oz target`} tone="aqua" />
           <ProgressBar label="Protein" value={progress(todayTracker.protein, proteinGoal)} detail={`${formatMacro(todayTracker.protein, "g")} of ${proteinGoal} g target`} tone="lavender" />
           <ProgressBar label="Fiber" value={progress(todayTracker.fiber, fiberGoal)} detail={`${formatMacro(todayTracker.fiber, "g")} of ${fiberGoal} g target`} tone="blue" />
           <ProgressBar label="Calories" value={progress(todayTracker.calories, calorieGoal)} detail={`${Math.round(todayTracker.calories)} kcal of ${calorieGoal.toLocaleString()} kcal target`} tone="aqua" />
@@ -235,7 +274,40 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
 
       <SectionCard title="Today's daily tracker" description="These values save by date and reset automatically when a new day starts.">
         <div className="grid gap-4">
-          <FormField label="Water" type="number" value={todayTracker.water ? String(todayTracker.water) : ""} onChange={setWaterField} placeholder="oz" />
+          <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <FormField label="Water tracker" value={waterInput} onChange={setWaterInput} placeholder="16.9 or 24 ounces" />
+              <button
+                type="button"
+                onClick={saveWaterEntry}
+                disabled={!waterAmount}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow disabled:opacity-50 sm:mt-6"
+              >
+                <Plus size={18} aria-hidden="true" />
+                Log water
+              </button>
+            </div>
+            {todayTracker.waterEntries.length ? (
+              <div className="grid gap-2">
+                {todayTracker.waterEntries.map((entry) => (
+                  <div key={entry.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-midnight/45 p-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">{formatMacro(entry.amount, "oz")}</p>
+                      <p className="mt-1 text-xs leading-5 text-periwinkle/75">{new Date(entry.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeWaterEntry(entry.id)}
+                      className="inline-flex size-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-periwinkle/80"
+                      aria-label={`Remove ${formatMacro(entry.amount, "oz")} water entry`}
+                    >
+                      <Trash2 size={17} aria-hidden="true" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
 
           <div className="grid gap-3">
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">

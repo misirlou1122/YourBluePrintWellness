@@ -1,3 +1,9 @@
+export interface DailyWaterEntry {
+  id: string;
+  amount: number;
+  createdAt: string;
+}
+
 export interface DailyFoodEntry {
   id: string;
   input: string;
@@ -12,6 +18,7 @@ export interface DailyFoodEntry {
 export interface DailyTrackerEntry {
   date: string;
   water: number;
+  waterEntries: DailyWaterEntry[];
   protein: number;
   fiber: number;
   calories: number;
@@ -37,6 +44,7 @@ export function emptyDailyTracker(date = todayKey()): DailyTrackerEntry {
   return {
     date,
     water: 0,
+    waterEntries: [],
     protein: 0,
     fiber: 0,
     calories: 0,
@@ -88,6 +96,7 @@ export function getDailyTracker(trackers: DailyTrackerMap, date = todayKey()) {
     ...emptyDailyTracker(date),
     ...existing,
     date,
+    waterEntries: Array.isArray(existing.waterEntries) ? existing.waterEntries : [],
     foodEntries: Array.isArray(existing.foodEntries) ? existing.foodEntries : []
   };
 }
