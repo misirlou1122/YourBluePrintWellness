@@ -191,6 +191,33 @@ const brandedTemplates: BrandedTemplate[] = [
     calories: 190,
     protein: 13,
     fiber: 0
+  },
+  {
+    brandKeywords: ["costco", "westend", "west end"],
+    itemKeywords: ["mediterranean", "chicken"],
+    name: "Costco Mediterranean chicken bites/skewers",
+    quantityLabel: "1 serving/default serving",
+    calories: 150,
+    protein: 24,
+    fiber: 0
+  },
+  {
+    brandKeywords: ["kirkland", "costco"],
+    itemKeywords: ["chocolate", "protein", "shake"],
+    name: "Kirkland Signature chocolate protein shake",
+    quantityLabel: "1 shake/default serving",
+    calories: 160,
+    protein: 30,
+    fiber: 0
+  },
+  {
+    brandKeywords: ["fiber one", "fibre one"],
+    itemKeywords: ["brownie"],
+    name: "Fiber One chocolate brownie",
+    quantityLabel: "1 brownie/default serving",
+    calories: 70,
+    protein: 1,
+    fiber: 5
   }
 ];
 
@@ -327,28 +354,29 @@ function hasKeyword(input: string, keyword: string) {
   return new RegExp(`\\b${keyword.replace(/\s+/g, "\\s+")}\\b`).test(input);
 }
 
-function findBrandedTemplate(input: string): NutritionEstimate | null {
+function findBrandedTemplates(input: string) {
+  const estimates: NutritionEstimate[] = [];
   const chipotleEstimate = estimateChipotle(input);
   if (chipotleEstimate) {
-    return chipotleEstimate;
+    estimates.push(chipotleEstimate);
   }
 
-  const template = brandedTemplates.find(
-    (candidate) => candidate.brandKeywords.some((keyword) => hasKeyword(input, keyword)) && candidate.itemKeywords.every((keyword) => hasKeyword(input, keyword))
-  );
+  brandedTemplates
+    .filter(
+      (candidate) => candidate.brandKeywords.some((keyword) => hasKeyword(input, keyword)) && candidate.itemKeywords.every((keyword) => hasKeyword(input, keyword))
+    )
+    .forEach((template) => {
+      estimates.push({
+        input,
+        matchedFoodName: template.name,
+        quantityLabel: template.quantityLabel,
+        calories: template.calories,
+        protein: template.protein,
+        fiber: template.fiber
+      });
+    });
 
-  if (!template) {
-    return null;
-  }
-
-  return {
-    input,
-    matchedFoodName: template.name,
-    quantityLabel: template.quantityLabel,
-    calories: template.calories,
-    protein: template.protein,
-    fiber: template.fiber
-  };
+  return estimates;
 }
 
 function estimateChipotle(input: string): NutritionEstimate | null {
@@ -392,9 +420,16 @@ export function estimateFoodNutrition(input: string): NutritionEstimate | null {
     return null;
   }
 
-  const brandedEstimate = findBrandedTemplate(normalizedInput);
-  if (brandedEstimate) {
-    return { ...brandedEstimate, input: input.trim() };
+  const brandedEstimates = findBrandedTemplates(normalizedInput);
+  if (brandedEstimates.length) {
+    return {
+      input: input.trim(),
+      matchedFoodName: brandedEstimates.map((estimate) => estimate.matchedFoodName).join(" + "),
+      quantityLabel: brandedEstimates.length === 1 ? brandedEstimates[0].quantityLabel : `${brandedEstimates.length} branded items`,
+      calories: brandedEstimates.reduce((total, estimate) => total + estimate.calories, 0),
+      protein: roundMacro(brandedEstimates.reduce((total, estimate) => total + estimate.protein, 0)),
+      fiber: roundMacro(brandedEstimates.reduce((total, estimate) => total + estimate.fiber, 0))
+    };
   }
 
   const matches = findFoodMatches(normalizedInput);
