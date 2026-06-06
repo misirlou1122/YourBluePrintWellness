@@ -447,23 +447,23 @@ export const wellnessTiles: WellnessTile[] = [
     title: "Fitness",
     subtitle: "Plans, selected workouts, calories burned",
     icon: "dumbbell",
-    subcategories: ["Workout picks", "Calories burned", "Cardio", "Strength machines", "Treadmill", "Pilates", "Yoga", "Recovery"],
+    subcategories: ["Calories burned", "Cardio", "Strength machines", "Treadmill", "Swimming", "Pilates", "Yoga", "Recovery"],
     groups: [
       {
         title: "What I Want To Do",
         description: "Choose from supportive movement categories.",
-        checklist: ["Treadmill", "Strength machines", "Pilates", "Yoga", "Stretching", "Recovery day"]
+        checklist: ["Treadmill", "Swimming", "Strength machines", "Pilates", "Yoga", "Stretching", "Recovery day"]
       },
       {
         title: "What I Did Today",
         description: "Select completed movement and estimate calories burned.",
-        fields: ["Workout picks", "Calories burned", "Duration", "Status", "Notes"]
+        fields: ["Cardio", "Strength machines", "Calories burned", "Duration", "Status", "Notes"]
       },
       {
         title: "Treadmill",
         description: "Track treadmill sessions with simple fields.",
-        fields: ["Minutes", "Incline", "Speed", "Calories burned"],
-        cards: [{ title: "Treadmill note", body: "Log minutes, incline, speed, and estimated calories.", meta: "Personal tracking" }]
+        fields: ["Minutes", "Calories burned"],
+        cards: [{ title: "Treadmill note", body: "Log minutes and estimated calories.", meta: "Personal tracking" }]
       },
       {
         title: "Strength",

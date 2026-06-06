@@ -16,7 +16,6 @@ import {
   getFitnessActivityOption,
   mindBodyOptions,
   parsePositiveNumber,
-  quickWorkoutOptions,
   strengthMachineOptions,
   summarizeWorkout,
   type FitnessActivityEntry,
@@ -176,10 +175,6 @@ function activityDetail(activity: FitnessActivityEntry) {
     const setLabel = sets.length ? `${sets.length} set${sets.length === 1 ? "" : "s"}` : "sets";
     const weights = sets.map((set) => (set.weight ? `${set.weight} lb` : "")).filter(Boolean);
     return [setLabel, weights.join(", ")].filter(Boolean).join(" | ");
-  }
-
-  if (activity.optionId === "treadmill-walk") {
-    return `${activity.minutes || "0"} min | ${activity.speed || "0"} mph | ${activity.incline || "0"}% incline`;
   }
 
   return `${activity.minutes || "0"} min`;
@@ -432,45 +427,12 @@ export function FitnessScreen() {
     updateDraft((current) => ({ ...current, activities: updater(current.activities ?? []) }));
   };
 
-  const toggleQuickPlan = (option: (typeof quickWorkoutOptions)[number]) => {
-    updateDraft((current) => {
-      const currentPlans = current.selectedPlans ?? [];
-      const isSelected = currentPlans.includes(option.id);
-      const selectedPlans = isSelected ? currentPlans.filter((planId) => planId !== option.id) : [...currentPlans, option.id];
-      let nextActivities = current.activities ?? [];
-
-      if (option.activityOptionId) {
-        const activityOption = getFitnessActivityOption(option.activityOptionId);
-        if (isSelected) {
-          nextActivities = nextActivities.filter((activity) => activity.optionId !== option.activityOptionId);
-        } else if (activityOption && !nextActivities.some((activity) => activity.optionId === option.activityOptionId)) {
-          nextActivities = [...nextActivities, createActivity(activityOption)];
-        }
-      }
-
-      return { ...current, selectedPlans, activities: nextActivities };
-    });
-  };
-
   const toggleActivity = (option: FitnessActivityOption) => {
     updateDraft((current) => {
       const currentActivities = current.activities ?? [];
       const hasActivity = currentActivities.some((activity) => activity.optionId === option.id);
       const activities = hasActivity ? currentActivities.filter((activity) => activity.optionId !== option.id) : [...currentActivities, createActivity(option)];
-      const linkedQuickPlan = quickWorkoutOptions.find((quickOption) => quickOption.activityOptionId === option.id);
-      let selectedPlans = current.selectedPlans ?? [];
-
-      if (linkedQuickPlan) {
-        selectedPlans = hasActivity
-          ? selectedPlans.filter((planId) => planId !== linkedQuickPlan.id)
-          : selectedPlans.includes(linkedQuickPlan.id)
-            ? selectedPlans
-            : [...selectedPlans, linkedQuickPlan.id];
-      } else if (option.type === "strength" && !selectedPlans.includes("strength-machines")) {
-        selectedPlans = [...selectedPlans, "strength-machines"];
-      }
-
-      return { ...current, selectedPlans, activities };
+      return { ...current, activities };
     });
   };
 
@@ -629,15 +591,6 @@ export function FitnessScreen() {
           </div>
 
           <div className="grid gap-2">
-            <p className="text-sm font-semibold text-periwinkle/85">Workout picks</p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {quickWorkoutOptions.map((option) => (
-                <ChoiceButton key={option.id} label={option.label} selected={selectedPlans.includes(option.id)} onClick={() => toggleQuickPlan(option)} />
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-2">
             <p className="text-sm font-semibold text-periwinkle/85">Cardio + classes</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {[...cardioOptions, ...mindBodyOptions].map((option) => (
@@ -687,14 +640,8 @@ export function FitnessScreen() {
                     </div>
 
                     {activity.type === "cardio" ? (
-                      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      <div className="mt-3 max-w-sm">
                         <NumberStepper label="Minutes" value={activity.minutes} onChange={(value) => updateActivity(activity.id, { minutes: value })} suffix="min" />
-                        {activity.optionId === "treadmill-walk" ? (
-                          <>
-                            <NumberStepper label="Speed" value={activity.speed ?? ""} onChange={(value) => updateActivity(activity.id, { speed: value })} step={0.1} suffix="mph" />
-                            <NumberStepper label="Incline" value={activity.incline ?? ""} onChange={(value) => updateActivity(activity.id, { incline: value })} step={0.5} suffix="%" />
-                          </>
-                        ) : null}
                       </div>
                     ) : null}
 

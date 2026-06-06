@@ -45,10 +45,11 @@ export const quickWorkoutOptions: QuickWorkoutOption[] = [
 ];
 
 export const cardioOptions: FitnessActivityOption[] = [
-  { id: "treadmill-walk", label: "Treadmill walk", type: "cardio", defaultMinutes: "30", met: 3.4, defaultSpeed: "2.5", defaultIncline: "2" },
+  { id: "treadmill-walk", label: "Treadmill walk", type: "cardio", defaultMinutes: "30", met: 3.4 },
   { id: "outdoor-walk", label: "Outdoor walk", type: "cardio", defaultMinutes: "30", met: 3.3 },
   { id: "elliptical", label: "Elliptical", type: "cardio", defaultMinutes: "30", met: 5 },
-  { id: "stationary-bike", label: "Stationary bike", type: "cardio", defaultMinutes: "30", met: 4.8 }
+  { id: "stationary-bike", label: "Stationary bike", type: "cardio", defaultMinutes: "30", met: 4.8 },
+  { id: "swimming", label: "Swimming", type: "cardio", defaultMinutes: "30", met: 6 }
 ];
 
 export const strengthMachineOptions: FitnessActivityOption[] = [
@@ -148,4 +149,3 @@ export function summarizeWorkout(activities: FitnessActivityEntry[], selectedPla
     .filter((label): label is string => Boolean(label))
     .join(" + ");
 }
-
