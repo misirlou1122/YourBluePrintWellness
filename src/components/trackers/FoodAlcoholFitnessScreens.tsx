@@ -653,9 +653,6 @@ export function FitnessScreen() {
 
                     {activity.type === "strength" ? (
                       <div className="mt-3 grid gap-3">
-                        <div className="max-w-sm">
-                          <NumberStepper label="Minutes" value={activity.minutes} onChange={(value) => updateActivity(activity.id, { minutes: value })} suffix="min" />
-                        </div>
                         {(activity.sets ?? []).map((set, index) => (
                           <div key={set.id} className="grid gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:grid-cols-[5rem_1fr_1fr_auto] sm:items-end">
                             <p className="text-sm font-semibold text-white sm:pb-3">Set {index + 1}</p>
