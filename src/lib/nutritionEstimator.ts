@@ -25,6 +25,24 @@ interface MealTemplate {
   fiber: number;
 }
 
+interface BrandedTemplate {
+  brandKeywords: string[];
+  itemKeywords: string[];
+  name: string;
+  quantityLabel: string;
+  calories: number;
+  protein: number;
+  fiber: number;
+}
+
+interface BrandedIngredient {
+  keywords: string[];
+  name: string;
+  calories: number;
+  protein: number;
+  fiber: number;
+}
+
 interface FoodMatch {
   food: FoodProfile;
   alias: string;
@@ -155,6 +173,50 @@ const mealTemplates: MealTemplate[] = [
   { keywords: ["meal"], name: "Estimated meal", calories: 550, protein: 28, fiber: 6 }
 ];
 
+const brandedTemplates: BrandedTemplate[] = [
+  {
+    brandKeywords: ["starbucks"],
+    itemKeywords: ["caramel", "macchiato"],
+    name: "Starbucks Caramel Macchiato",
+    quantityLabel: "1 grande/default serving",
+    calories: 250,
+    protein: 10,
+    fiber: 0
+  },
+  {
+    brandKeywords: ["starbucks"],
+    itemKeywords: ["latte"],
+    name: "Starbucks latte",
+    quantityLabel: "1 grande/default serving",
+    calories: 190,
+    protein: 13,
+    fiber: 0
+  }
+];
+
+const chipotleIngredients: BrandedIngredient[] = [
+  { keywords: ["chicken"], name: "Chipotle chicken", calories: 180, protein: 32, fiber: 0 },
+  { keywords: ["steak"], name: "Chipotle steak", calories: 150, protein: 21, fiber: 0 },
+  { keywords: ["barbacoa"], name: "Chipotle barbacoa", calories: 170, protein: 24, fiber: 0 },
+  { keywords: ["carnitas"], name: "Chipotle carnitas", calories: 210, protein: 23, fiber: 0 },
+  { keywords: ["sofritas"], name: "Chipotle sofritas", calories: 150, protein: 8, fiber: 3 },
+  { keywords: ["white rice"], name: "White rice", calories: 210, protein: 4, fiber: 1 },
+  { keywords: ["brown rice"], name: "Brown rice", calories: 210, protein: 4, fiber: 2 },
+  { keywords: ["black beans"], name: "Black beans", calories: 130, protein: 8, fiber: 8 },
+  { keywords: ["pinto beans"], name: "Pinto beans", calories: 130, protein: 8, fiber: 8 },
+  { keywords: ["fajita", "fajita veggies", "peppers"], name: "Fajita veggies", calories: 20, protein: 1, fiber: 1 },
+  { keywords: ["fresh tomato salsa", "mild salsa", "tomato salsa", "salsa"], name: "Fresh tomato salsa", calories: 25, protein: 0, fiber: 1 },
+  { keywords: ["corn salsa"], name: "Roasted chili-corn salsa", calories: 80, protein: 3, fiber: 3 },
+  { keywords: ["green salsa", "tomatillo green"], name: "Tomatillo-green chili salsa", calories: 15, protein: 0, fiber: 0 },
+  { keywords: ["red salsa", "hot salsa", "tomatillo red"], name: "Tomatillo-red chili salsa", calories: 30, protein: 0, fiber: 0 },
+  { keywords: ["sour cream"], name: "Sour cream", calories: 110, protein: 2, fiber: 0 },
+  { keywords: ["cheese"], name: "Cheese", calories: 110, protein: 6, fiber: 0 },
+  { keywords: ["guac", "guacamole"], name: "Guacamole", calories: 230, protein: 2, fiber: 6 },
+  { keywords: ["lettuce", "romaine"], name: "Romaine lettuce", calories: 5, protein: 0, fiber: 1 }
+];
+
+const defaultChipotleChickenBowl = ["chicken", "white rice", "black beans", "fresh tomato salsa", "cheese", "lettuce"];
+
 function normalizeInput(input: string) {
   return input
     .toLowerCase()
@@ -261,6 +323,61 @@ function findTemplate(input: string) {
   return mealTemplates.find((template) => template.keywords.some((keyword) => new RegExp(`\\b${keyword}\\b`).test(input)));
 }
 
+function hasKeyword(input: string, keyword: string) {
+  return new RegExp(`\\b${keyword.replace(/\s+/g, "\\s+")}\\b`).test(input);
+}
+
+function findBrandedTemplate(input: string): NutritionEstimate | null {
+  const chipotleEstimate = estimateChipotle(input);
+  if (chipotleEstimate) {
+    return chipotleEstimate;
+  }
+
+  const template = brandedTemplates.find(
+    (candidate) => candidate.brandKeywords.some((keyword) => hasKeyword(input, keyword)) && candidate.itemKeywords.every((keyword) => hasKeyword(input, keyword))
+  );
+
+  if (!template) {
+    return null;
+  }
+
+  return {
+    input,
+    matchedFoodName: template.name,
+    quantityLabel: template.quantityLabel,
+    calories: template.calories,
+    protein: template.protein,
+    fiber: template.fiber
+  };
+}
+
+function estimateChipotle(input: string): NutritionEstimate | null {
+  if (!hasKeyword(input, "chipotle")) {
+    return null;
+  }
+
+  const isBowl = hasKeyword(input, "bowl") || hasKeyword(input, "burrito bowl");
+  if (!isBowl) {
+    return null;
+  }
+
+  const selectedIngredients = chipotleIngredients.filter((ingredient) => ingredient.keywords.some((keyword) => hasKeyword(input, keyword)));
+  const proteinOnly = selectedIngredients.length === 1 && ["chicken", "steak", "barbacoa", "carnitas", "sofritas"].some((keyword) => selectedIngredients[0].keywords.includes(keyword));
+  const useDefaultBowl = !selectedIngredients.length || proteinOnly;
+  const ingredients = useDefaultBowl
+    ? chipotleIngredients.filter((ingredient) => defaultChipotleChickenBowl.some((keyword) => ingredient.keywords.includes(keyword)))
+    : selectedIngredients;
+
+  return {
+    input,
+    matchedFoodName: useDefaultBowl ? "Chipotle chicken bowl estimate" : `Chipotle bowl: ${ingredients.map((ingredient) => ingredient.name).join(" + ")}`,
+    quantityLabel: "1 bowl/default serving",
+    calories: ingredients.reduce((total, ingredient) => total + ingredient.calories, 0),
+    protein: roundMacro(ingredients.reduce((total, ingredient) => total + ingredient.protein, 0)),
+    fiber: roundMacro(ingredients.reduce((total, ingredient) => total + ingredient.fiber, 0))
+  };
+}
+
 function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
 }
@@ -273,6 +390,11 @@ export function estimateFoodNutrition(input: string): NutritionEstimate | null {
   const normalizedInput = normalizeInput(input);
   if (!normalizedInput) {
     return null;
+  }
+
+  const brandedEstimate = findBrandedTemplate(normalizedInput);
+  if (brandedEstimate) {
+    return { ...brandedEstimate, input: input.trim() };
   }
 
   const matches = findFoodMatches(normalizedInput);
