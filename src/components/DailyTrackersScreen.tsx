@@ -239,7 +239,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
 
           <div className="grid gap-3">
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-              <FormField label="Food item" value={foodInput} onChange={setFoodInput} placeholder="half cup cottage cheese" />
+              <FormField label="Meal tracker" value={foodInput} onChange={setFoodInput} placeholder="eggs and toast, chicken rice and broccoli" />
               <button
                 type="button"
                 onClick={saveFoodEntry}

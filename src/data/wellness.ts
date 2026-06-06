@@ -134,7 +134,7 @@ export const wellnessTiles: WellnessTile[] = [
       {
         title: "Today at a glance",
         description: "View and update today's water, food-derived protein, fiber, calories, mood, medication, workout, and alcohol status.",
-        fields: ["Water", "Food item", "Protein", "Fiber", "Calories", "Mood", "Medication", "Workout", "Alcohol"]
+        fields: ["Water", "Meal tracker", "Protein", "Fiber", "Calories", "Mood", "Medication", "Workout", "Alcohol"]
       }
     ]
   },
@@ -501,7 +501,7 @@ export const wellnessTiles: WellnessTile[] = [
       {
         title: "Progress trackers",
         description: "Glowing progress for hydration and nutrition habits.",
-        fields: ["Water", "Food item", "Protein", "Fiber", "Calories"]
+        fields: ["Water", "Meal tracker", "Protein", "Fiber", "Calories"]
       },
       {
         title: "Meals and snacks",
