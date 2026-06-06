@@ -88,7 +88,9 @@ const unitAliases: Record<string, string> = {
   bowl: "bowl",
   bowls: "bowl",
   plate: "plate",
-  plates: "plate"
+  plates: "plate",
+  bun: "bun",
+  buns: "bun"
 };
 
 const foods: FoodProfile[] = [
@@ -96,6 +98,7 @@ const foods: FoodProfile[] = [
   { name: "Greek yogurt", aliases: ["greek yogurt", "yogurt"], servingUnit: "cup", calories: 130, protein: 23, fiber: 0, unitMultipliers: { cup: 1, serving: 0.75, gram: 1 / 245, ounce: 1 / 8.6 } },
   { name: "Egg", aliases: ["egg", "eggs"], servingUnit: "egg", calories: 72, protein: 6, fiber: 0, unitMultipliers: { egg: 1, piece: 1, serving: 1 } },
   { name: "Chicken breast", aliases: ["chicken breast", "grilled chicken", "chicken"], servingUnit: "ounce", calories: 47, protein: 8.8, fiber: 0, unitMultipliers: { ounce: 1, gram: 1 / 28.35, pound: 16, serving: 3 } },
+  { name: "Turkey burger patty", aliases: ["turkey burger patty", "turkey burger patties", "turkey burger"], servingUnit: "patty", calories: 170, protein: 22, fiber: 0, unitMultipliers: { patty: 1, piece: 1, serving: 1 } },
   { name: "Turkey", aliases: ["turkey"], servingUnit: "ounce", calories: 45, protein: 8, fiber: 0, unitMultipliers: { ounce: 1, gram: 1 / 28.35, serving: 3 } },
   { name: "Steak", aliases: ["steak", "beef"], servingUnit: "ounce", calories: 65, protein: 7, fiber: 0, unitMultipliers: { ounce: 1, gram: 1 / 28.35, pound: 16, serving: 4 } },
   { name: "Ground beef", aliases: ["ground beef"], servingUnit: "ounce", calories: 71, protein: 7, fiber: 0, unitMultipliers: { ounce: 1, gram: 1 / 28.35, pound: 16, serving: 4 } },
@@ -127,7 +130,9 @@ const foods: FoodProfile[] = [
   { name: "Protein bar", aliases: ["protein bar"], servingUnit: "bar", calories: 200, protein: 20, fiber: 6, unitMultipliers: { bar: 1, serving: 1 } },
   { name: "Whole wheat bread", aliases: ["whole wheat bread", "bread", "toast"], servingUnit: "slice", calories: 80, protein: 4, fiber: 2, unitMultipliers: { slice: 1, piece: 1, serving: 1 } },
   { name: "Tortilla", aliases: ["tortilla"], servingUnit: "tortilla", calories: 140, protein: 4, fiber: 2, unitMultipliers: { tortilla: 1, piece: 1, serving: 1 } },
+  { name: "American cheese", aliases: ["american cheese"], servingUnit: "slice", calories: 60, protein: 3.5, fiber: 0, unitMultipliers: { slice: 1, ounce: 1.6, serving: 1, gram: 1 / 19 } },
   { name: "Cheese", aliases: ["cheese", "cheddar", "mozzarella"], servingUnit: "ounce", calories: 113, protein: 7, fiber: 0, unitMultipliers: { ounce: 1, slice: 0.75, serving: 1, gram: 1 / 28.35 } },
+  { name: "Wheat bun", aliases: ["whole wheat bun", "wheat bun", "burger bun", "bun"], servingUnit: "bun", calories: 160, protein: 6, fiber: 4, unitMultipliers: { bun: 1, piece: 1 } },
   { name: "Milk", aliases: ["milk"], servingUnit: "cup", calories: 122, protein: 8, fiber: 0, unitMultipliers: { cup: 1, serving: 1, ounce: 1 / 8 } },
   { name: "Hummus", aliases: ["hummus"], servingUnit: "tablespoon", calories: 27, protein: 1.2, fiber: 0.9, unitMultipliers: { tablespoon: 1, serving: 4, cup: 16, gram: 1 / 15 } },
   { name: "Pizza", aliases: ["pizza"], servingUnit: "slice", calories: 285, protein: 12, fiber: 2.5, unitMultipliers: { slice: 1, piece: 1, serving: 1 } },
@@ -201,16 +206,16 @@ function parseServing(input: string, match: FoodMatch) {
 
   for (const context of contexts) {
     const matches = Array.from(context.matchAll(quantityPattern()));
-    const lastMatch = matches[matches.length - 1];
-    if (!lastMatch) continue;
+    for (let index = matches.length - 1; index >= 0; index -= 1) {
+      const lastMatch = matches[index];
+      const unit = normalizeUnit(lastMatch[2], match.food.servingUnit);
+      if (!match.food.unitMultipliers[unit]) continue;
 
-    const unit = normalizeUnit(lastMatch[2], match.food.servingUnit);
-    if (!match.food.unitMultipliers[unit]) continue;
-
-    return {
-      quantity: parseQuantityValue(lastMatch[1].replace(/\s+/g, "")),
-      unit
-    };
+      return {
+        quantity: parseQuantityValue(lastMatch[1].replace(/\s+/g, "")),
+        unit
+      };
+    }
   }
 
   return {
