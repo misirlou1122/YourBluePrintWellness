@@ -31,6 +31,8 @@ interface SavedMealProduct {
   calories: number;
   protein: number;
   fiber: number;
+  sugar?: number;
+  addedSugar?: number;
   quantityLabel: string;
   createdAt: string;
   updatedAt: string;
@@ -106,6 +108,18 @@ function parsePositiveAmount(value: string) {
   return Number.isFinite(amount) && amount > 0 ? Math.round(amount * 10) / 10 : 0;
 }
 
+function formatFoodNutrition(entry: Pick<DailyFoodEntry, "calories" | "protein" | "fiber" | "sugar" | "addedSugar">) {
+  return [
+    `${Math.round(entry.calories)} kcal`,
+    formatMacro(entry.protein, "g protein"),
+    formatMacro(entry.fiber, "g fiber"),
+    Number(entry.sugar) ? `Sugar ${formatMacro(Number(entry.sugar), "g")}` : "",
+    Number(entry.addedSugar) ? `Added sugar ${formatMacro(Number(entry.addedSugar), "g")}` : ""
+  ]
+    .filter(Boolean)
+    .join(" | ");
+}
+
 function savedProductKey(value: string) {
   return value
     .toLowerCase()
@@ -147,8 +161,10 @@ function CheckToggle({ label, checked, onChange }: { label: string; checked: boo
 }
 
 export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTrackersScreenProps) {
+  const today = todayKey();
   const [dailyTrackers, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const [lastDailyDate, setLastDailyDate] = useLocalStorage("ybw.lastDailyTrackingDate", todayKey());
+  const [trackingDate, setTrackingDate] = useState(today);
   const [manualNutritionOpen, setManualNutritionOpen] = useLocalStorage("ybw.daily.manualNutritionOpen", false);
   const [savedProductsOpen, setSavedProductsOpen] = useLocalStorage("ybw.daily.savedProductsOpen", true);
   const [savedMealProducts, setSavedMealProducts] = useLocalStorage<SavedMealProduct[]>("ybw.savedMealProducts", []);
@@ -158,8 +174,11 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
   const [manualCalories, setManualCalories] = useState("");
   const [manualProtein, setManualProtein] = useState("");
   const [manualFiber, setManualFiber] = useState("");
-  const today = todayKey();
-  const todayTracker = getDailyTracker(dailyTrackers, today);
+  const [manualSugar, setManualSugar] = useState("");
+  const [manualAddedSugar, setManualAddedSugar] = useState("");
+  const activeDate = trackingDate || today;
+  const isTrackingToday = activeDate === today;
+  const todayTracker = getDailyTracker(dailyTrackers, activeDate);
   const waterAmount = parsePositiveAmount(waterInput);
   const savedProducts = useMemo(() => normalizeSavedProducts(savedMealProducts), [savedMealProducts]);
   const savedProductMatch = useMemo(() => findSavedProduct(foodInput, savedProducts), [foodInput, savedProducts]);
@@ -172,7 +191,9 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
             quantityLabel: savedProductMatch.quantityLabel || "saved serving",
             calories: savedProductMatch.calories,
             protein: savedProductMatch.protein,
-            fiber: savedProductMatch.fiber
+            fiber: savedProductMatch.fiber,
+            sugar: savedProductMatch.sugar ?? 0,
+            addedSugar: savedProductMatch.addedSugar ?? 0
           }
         : estimateFoodNutrition(foodInput),
     [foodInput, savedProductMatch]
@@ -180,13 +201,15 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
   const manualCaloriesAmount = parsePositiveAmount(manualCalories);
   const manualProteinAmount = parsePositiveAmount(manualProtein);
   const manualFiberAmount = parsePositiveAmount(manualFiber);
-  const manualEntryReady = Boolean(manualFoodName.trim()) && Boolean(manualCaloriesAmount || manualProteinAmount || manualFiberAmount);
+  const manualSugarAmount = parsePositiveAmount(manualSugar);
+  const manualAddedSugarAmount = parsePositiveAmount(manualAddedSugar);
+  const manualEntryReady = Boolean(manualFoodName.trim()) && Boolean(manualCaloriesAmount || manualProteinAmount || manualFiberAmount || manualSugarAmount || manualAddedSugarAmount);
   const showCycle = selectedProfile === "female" || (selectedProfile === "custom" && customTileIds.includes("period"));
   const medicationChecked = todayTracker.medicationStatus === "taken";
   const workoutChecked = isFilled(todayTracker.workoutStatus, dailyDefaults.workoutStatus);
   const alcoholChecked = isFilled(todayTracker.alcohol, dailyDefaults.alcohol);
   const dailyHistory = Object.keys(dailyTrackers)
-    .filter((date) => date !== today)
+    .filter((date) => date !== activeDate)
     .map((date) => getDailyTracker(dailyTrackers, date))
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 14);
@@ -199,8 +222,8 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
     }
   }, [lastDailyDate, setDailyTrackers, setLastDailyDate, today]);
 
-  const updateToday = (updates: Partial<DailyTrackerEntry>) => {
-    setDailyTrackers((current) => mergeDailyTracker(current, today, updates));
+  const updateActiveDate = (updates: Partial<DailyTrackerEntry>) => {
+    setDailyTrackers((current) => mergeDailyTracker(current, activeDate, updates));
   };
 
   const saveWaterEntry = () => {
@@ -215,8 +238,8 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
     };
 
     setDailyTrackers((current) => {
-      const currentEntry = getDailyTracker(current, today);
-      return mergeDailyTracker(current, today, {
+      const currentEntry = getDailyTracker(current, activeDate);
+      return mergeDailyTracker(current, activeDate, {
         waterEntries: [nextWaterEntry, ...currentEntry.waterEntries],
         water: Math.round((currentEntry.water + waterAmount) * 10) / 10
       });
@@ -226,11 +249,11 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
 
   const removeWaterEntry = (entryId: string) => {
     setDailyTrackers((current) => {
-      const currentEntry = getDailyTracker(current, today);
+      const currentEntry = getDailyTracker(current, activeDate);
       const removedEntry = currentEntry.waterEntries.find((entry) => entry.id === entryId);
       const waterEntries = currentEntry.waterEntries.filter((entry) => entry.id !== entryId);
       const nextWater = Math.max(0, currentEntry.water - (removedEntry?.amount ?? 0));
-      return mergeDailyTracker(current, today, {
+      return mergeDailyTracker(current, activeDate, {
         waterEntries,
         water: Math.round(nextWater * 10) / 10
       });
@@ -245,9 +268,9 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
     };
 
     setDailyTrackers((current) => {
-      const currentEntry = getDailyTracker(current, today);
+      const currentEntry = getDailyTracker(current, activeDate);
       const foodEntries = [nextFoodEntry, ...currentEntry.foodEntries];
-      return mergeDailyTracker(current, today, {
+      return mergeDailyTracker(current, activeDate, {
         foodEntries,
         ...totalFoodNutrition(foodEntries)
       });
@@ -266,7 +289,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
     });
   };
 
-  const upsertSavedMealProduct = (product: Pick<SavedMealProduct, "name" | "calories" | "protein" | "fiber" | "quantityLabel">) => {
+  const upsertSavedMealProduct = (product: Pick<SavedMealProduct, "name" | "calories" | "protein" | "fiber" | "sugar" | "addedSugar" | "quantityLabel">) => {
     const now = new Date().toISOString();
     const productName = product.name.trim();
     if (!productName) return;
@@ -282,6 +305,8 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
         calories: Math.round(product.calories),
         protein: product.protein,
         fiber: product.fiber,
+        sugar: product.sugar ?? 0,
+        addedSugar: product.addedSugar ?? 0,
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
         lastLoggedAt: now
@@ -298,7 +323,9 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
       quantityLabel: product.quantityLabel || "saved serving",
       calories: product.calories,
       protein: product.protein,
-      fiber: product.fiber
+      fiber: product.fiber,
+      sugar: product.sugar ?? 0,
+      addedSugar: product.addedSugar ?? 0
     });
     touchSavedProduct(product.id);
   };
@@ -333,6 +360,8 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
       calories: Math.round(manualCaloriesAmount),
       protein: manualProteinAmount,
       fiber: manualFiberAmount,
+      sugar: manualSugarAmount,
+      addedSugar: manualAddedSugarAmount,
       createdAt: new Date().toISOString()
     };
 
@@ -342,19 +371,23 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
       quantityLabel: "saved serving",
       calories: Math.round(manualCaloriesAmount),
       protein: manualProteinAmount,
-      fiber: manualFiberAmount
+      fiber: manualFiberAmount,
+      sugar: manualSugarAmount,
+      addedSugar: manualAddedSugarAmount
     });
     setManualFoodName("");
     setManualCalories("");
     setManualProtein("");
     setManualFiber("");
+    setManualSugar("");
+    setManualAddedSugar("");
   };
 
   const removeFoodEntry = (entryId: string) => {
     setDailyTrackers((current) => {
-      const currentEntry = getDailyTracker(current, today);
+      const currentEntry = getDailyTracker(current, activeDate);
       const foodEntries = currentEntry.foodEntries.filter((entry) => entry.id !== entryId);
-      return mergeDailyTracker(current, today, {
+      return mergeDailyTracker(current, activeDate, {
         foodEntries,
         ...totalFoodNutrition(foodEntries)
       });
@@ -362,7 +395,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
   };
 
   const updateAlcohol = (drinkType: string, amount: number) => {
-    updateToday({
+    updateActiveDate({
       alcoholDrinkType: drinkType,
       alcoholAmount: amount,
       alcohol: buildAlcoholSummary(drinkType, amount)
@@ -371,27 +404,29 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
 
   const toggleAlcohol = (checked: boolean) => {
     if (!checked) {
-      updateToday({ alcohol: dailyDefaults.alcohol, alcoholDrinkType: "", alcoholAmount: 0 });
+      updateActiveDate({ alcohol: dailyDefaults.alcohol, alcoholDrinkType: "", alcoholAmount: 0 });
       return;
     }
 
     updateAlcohol(todayTracker.alcoholDrinkType || alcoholDrinkOptions[0], todayTracker.alcoholAmount || 1);
   };
 
-  const resetToday = () => {
-    if (window.confirm("Reset today's daily tracker values? This will not delete saved entries or daily history.")) {
-      setDailyTrackers((current) => resetDailyTracker(current, today));
+  const resetActiveDate = () => {
+    if (window.confirm(`Reset daily tracker values for ${activeDate}? This will not delete saved products.`)) {
+      setDailyTrackers((current) => resetDailyTracker(current, activeDate));
       setWaterInput("");
       setFoodInput("");
       setManualFoodName("");
       setManualCalories("");
       setManualProtein("");
       setManualFiber("");
+      setManualSugar("");
+      setManualAddedSugar("");
     }
   };
 
   const snapshotItems = [
-    { label: "Date", value: today, detail: "Daily values reset by date" },
+    { label: "Date", value: activeDate, detail: isTrackingToday ? "Today's tracker" : "Editing a previous day" },
     { label: "Mood", value: dailyDisplayValue(todayTracker.mood, dailyDefaults.mood), detail: isFilled(todayTracker.mood, dailyDefaults.mood) ? "Mood checked in" : "Not checked in" },
     { label: "Water intake", value: formatMacro(todayTracker.water, "oz"), detail: `Goal: ${waterGoal} oz` },
     { label: "Protein", value: formatMacro(todayTracker.protein, "g"), detail: "From logged food" },
@@ -405,7 +440,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
 
   return (
     <div className="grid gap-4">
-      <SectionCard title="Today at a glance" description="A clean snapshot of today's daily tracking.">
+      <SectionCard title={isTrackingToday ? "Today at a glance" : "Selected day at a glance"} description={`Daily tracking for ${activeDate}.`}>
         <div className="mb-4 flex items-center justify-between gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-aqua/75">Daily Snapshot</p>
           <ShieldCheck size={22} className="text-ice" aria-hidden="true" />
@@ -422,7 +457,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
       </SectionCard>
 
       <div className="grid gap-3 lg:grid-cols-4">
-        <ProgressRing label="Daily consistency" value={todayTracker.dailyConsistency} caption={`${today}: today's daily tracker`} />
+        <ProgressRing label="Daily consistency" value={todayTracker.dailyConsistency} caption={`${activeDate}: selected daily tracker`} />
         <div className="grid gap-3 md:grid-cols-2 lg:col-span-3">
           <ProgressBar label="Water" value={progress(todayTracker.water, waterGoal)} detail={`${formatMacro(todayTracker.water, "oz")} of ${waterGoal} oz target`} tone="aqua" />
           <ProgressBar label="Protein" value={progress(todayTracker.protein, proteinGoal)} detail={`${formatMacro(todayTracker.protein, "g")} of ${proteinGoal} g target`} tone="lavender" />
@@ -431,8 +466,21 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
         </div>
       </div>
 
-      <SectionCard title="Today's daily tracker" description="These values save by date and reset automatically when a new day starts.">
+      <SectionCard title={isTrackingToday ? "Today's daily tracker" : "Edit previous day"} description="Choose a date, then update that day's saved tracker values.">
         <div className="grid gap-4">
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+            <FormField label="Tracking date" type="date" value={activeDate} onChange={(value) => setTrackingDate(value || today)} />
+            {!isTrackingToday ? (
+              <button
+                type="button"
+                onClick={() => setTrackingDate(today)}
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice sm:mt-6"
+              >
+                Back to Today
+              </button>
+            ) : null}
+          </div>
+
           <div className="grid gap-3">
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
               <FormField label="Water tracker" value={waterInput} onChange={setWaterInput} placeholder="16.9 or 24 ounces" />
@@ -484,7 +532,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
             {foodInput.trim() ? (
               <p className={`rounded-2xl border p-3 text-sm leading-6 ${foodEstimate ? "border-ice/20 bg-ice/10 text-ice" : "border-champagne/20 bg-champagne/10 text-champagne"}`}>
                 {foodEstimate
-                  ? `${foodEstimate.quantityLabel} ${foodEstimate.matchedFoodName}: ${Math.round(foodEstimate.calories)} kcal | ${formatMacro(foodEstimate.protein, "g protein")} | ${formatMacro(foodEstimate.fiber, "g fiber")}`
+                  ? `${foodEstimate.quantityLabel} ${foodEstimate.matchedFoodName}: ${formatFoodNutrition(foodEstimate)}`
                   : "No estimate found yet"}
               </p>
             ) : null}
@@ -509,7 +557,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-white">{product.name}</p>
                           <p className="mt-1 text-xs leading-5 text-periwinkle/75">
-                            {Math.round(product.calories)} kcal | {formatMacro(product.protein, "g protein")} | {formatMacro(product.fiber, "g fiber")}
+                            {formatFoodNutrition(product)}
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
@@ -554,6 +602,10 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
                     <FormField label="Protein" type="number" value={manualProtein} onChange={setManualProtein} placeholder="grams" />
                     <FormField label="Fiber" type="number" value={manualFiber} onChange={setManualFiber} placeholder="grams" />
                   </div>
+                  <div className="grid gap-3 rounded-2xl border border-white/10 bg-midnight/35 p-3 sm:grid-cols-2">
+                    <FormField label="Sugar" type="number" value={manualSugar} onChange={setManualSugar} placeholder="grams" />
+                    <FormField label="Added sugar" type="number" value={manualAddedSugar} onChange={setManualAddedSugar} placeholder="grams" />
+                  </div>
                   <button
                     type="button"
                     onClick={saveManualFoodEntry}
@@ -573,7 +625,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
                     <div>
                       <p className="text-sm font-semibold text-white">{entry.input}</p>
                       <p className="mt-1 text-xs leading-5 text-periwinkle/75">
-                        {entry.matchedFoodName} | {Math.round(entry.calories)} kcal | {formatMacro(entry.protein, "g protein")} | {formatMacro(entry.fiber, "g fiber")}
+                        {entry.matchedFoodName} | {formatFoodNutrition(entry)}
                       </p>
                     </div>
                     <button
@@ -597,7 +649,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => updateToday({ mood: option.value })}
+                  onClick={() => updateActiveDate({ mood: option.value })}
                   className={`grid min-h-20 place-items-center rounded-2xl border px-2 text-center text-xs font-semibold ${
                     todayTracker.mood === option.value ? "border-ice/70 bg-ice/15 text-ice shadow-ice" : "border-white/10 bg-white/[0.05] text-periwinkle/80"
                   }`}
@@ -612,8 +664,8 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <CheckToggle label="Medication" checked={medicationChecked} onChange={(checked) => updateToday({ medicationStatus: checked ? "taken" : dailyDefaults.medicationStatus })} />
-            <CheckToggle label="Workout" checked={workoutChecked} onChange={(checked) => updateToday({ workoutStatus: checked ? "completed" : dailyDefaults.workoutStatus })} />
+            <CheckToggle label="Medication" checked={medicationChecked} onChange={(checked) => updateActiveDate({ medicationStatus: checked ? "taken" : dailyDefaults.medicationStatus })} />
+            <CheckToggle label="Workout" checked={workoutChecked} onChange={(checked) => updateActiveDate({ workoutStatus: checked ? "completed" : dailyDefaults.workoutStatus })} />
             <CheckToggle label="Alcohol" checked={alcoholChecked} onChange={toggleAlcohol} />
           </div>
 
@@ -637,11 +689,11 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
 
           <button
             type="button"
-            onClick={resetToday}
+            onClick={resetActiveDate}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-lavender/25 bg-lavender/10 px-4 text-sm font-semibold text-lavender"
           >
             <RotateCcw size={18} aria-hidden="true" />
-            Reset Today
+            Reset Selected Day
           </button>
         </div>
       </SectionCard>
@@ -656,7 +708,27 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
                     <h3 className="text-sm font-semibold text-white">{entry.date}</h3>
                     <p className="mt-1 text-xs text-lavender/80">{entry.dailyConsistency}% daily consistency</p>
                   </div>
-                  <p className="text-xs text-periwinkle/70">{dailyDisplayValue(entry.medicationStatus, dailyDefaults.medicationStatus)}</p>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <p className="hidden text-xs text-periwinkle/70 sm:block">{dailyDisplayValue(entry.medicationStatus, dailyDefaults.medicationStatus)}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTrackingDate(entry.date);
+                        setWaterInput("");
+                        setFoodInput("");
+                        setManualFoodName("");
+                        setManualCalories("");
+                        setManualProtein("");
+                        setManualFiber("");
+                        setManualSugar("");
+                        setManualAddedSugar("");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-ice/25 bg-ice/10 px-3 text-xs font-semibold text-ice"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-periwinkle/85">
                   Water {entry.water} oz | Calories {Math.round(entry.calories)} kcal | Protein {formatMacro(entry.protein, "g")} | Fiber {formatMacro(entry.fiber, "g")} | Mood {dailyDisplayValue(entry.mood, dailyDefaults.mood)} | Workout {dailyDisplayValue(entry.workoutStatus, dailyDefaults.workoutStatus)}{entry.workoutCalories ? ` | Workout calories ${Math.round(entry.workoutCalories)} kcal` : ""} | Alcohol {dailyDisplayValue(entry.alcohol, dailyDefaults.alcohol)}

@@ -134,7 +134,7 @@ export const wellnessTiles: WellnessTile[] = [
       {
         title: "Today at a glance",
         description: "View and update today's water, food-derived protein, fiber, calories, mood, medication, workout, and alcohol status.",
-        fields: ["Water tracker", "Meal tracker", "Manual nutrition", "Saved foods", "Protein", "Fiber", "Calories", "Mood", "Medication", "Workout", "Alcohol"]
+        fields: ["Water tracker", "Meal tracker", "Manual nutrition", "Sugar", "Added sugar", "Saved foods", "Protein", "Fiber", "Calories", "Mood", "Medication", "Workout", "Alcohol"]
       }
     ]
   },
@@ -496,12 +496,12 @@ export const wellnessTiles: WellnessTile[] = [
     title: "Food & Hydration",
     subtitle: "Water, protein, fiber, calories, meals",
     icon: "droplets",
-    subcategories: ["Water tracker", "Protein tracker", "Fiber tracker", "Calorie tracker", "Meal tracker", "Saved foods", "Meals", "Snacks", "Caffeine", "Cravings", "Nausea notes"],
+    subcategories: ["Water tracker", "Protein tracker", "Fiber tracker", "Calorie tracker", "Meal tracker", "Manual sugar", "Added sugar", "Saved foods", "Meals", "Snacks", "Caffeine", "Cravings", "Nausea notes"],
     groups: [
       {
         title: "Progress trackers",
         description: "Glowing progress for hydration and nutrition habits.",
-        fields: ["Water tracker", "Meal tracker", "Manual nutrition", "Saved foods", "Protein", "Fiber", "Calories"]
+        fields: ["Water tracker", "Meal tracker", "Manual nutrition", "Sugar", "Added sugar", "Saved foods", "Protein", "Fiber", "Calories"]
       },
       {
         title: "Meals and snacks",

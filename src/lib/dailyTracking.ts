@@ -12,6 +12,8 @@ export interface DailyFoodEntry {
   calories: number;
   protein: number;
   fiber: number;
+  sugar?: number;
+  addedSugar?: number;
   createdAt: string;
 }
 
@@ -22,6 +24,8 @@ export interface DailyTrackerEntry {
   protein: number;
   fiber: number;
   calories: number;
+  sugar: number;
+  addedSugar: number;
   dailyConsistency: number;
   medicationStatus: string;
   mood: string;
@@ -49,6 +53,8 @@ export function emptyDailyTracker(date = todayKey()): DailyTrackerEntry {
     protein: 0,
     fiber: 0,
     calories: 0,
+    sugar: 0,
+    addedSugar: 0,
     dailyConsistency: 0,
     medicationStatus: "not taken",
     mood: "not checked in",
@@ -67,9 +73,11 @@ export function totalFoodNutrition(foodEntries: DailyFoodEntry[] = []) {
     (totals, entry) => ({
       calories: totals.calories + (Number(entry.calories) || 0),
       protein: totals.protein + (Number(entry.protein) || 0),
-      fiber: totals.fiber + (Number(entry.fiber) || 0)
+      fiber: totals.fiber + (Number(entry.fiber) || 0),
+      sugar: totals.sugar + (Number(entry.sugar) || 0),
+      addedSugar: totals.addedSugar + (Number(entry.addedSugar) || 0)
     }),
-    { calories: 0, protein: 0, fiber: 0 }
+    { calories: 0, protein: 0, fiber: 0, sugar: 0, addedSugar: 0 }
   );
 }
 
