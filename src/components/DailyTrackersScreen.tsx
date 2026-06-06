@@ -25,6 +25,18 @@ interface DailyTrackersScreenProps {
   customTileIds: TileId[];
 }
 
+interface SavedMealProduct {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  fiber: number;
+  quantityLabel: string;
+  createdAt: string;
+  updatedAt: string;
+  lastLoggedAt?: string;
+}
+
 const waterGoal = 80;
 const proteinGoal = 110;
 const fiberGoal = 25;
@@ -94,6 +106,32 @@ function parsePositiveAmount(value: string) {
   return Number.isFinite(amount) && amount > 0 ? Math.round(amount * 10) / 10 : 0;
 }
 
+function savedProductKey(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeSavedProducts(products: SavedMealProduct[]) {
+  return Array.isArray(products) ? products.filter((product) => product?.name?.trim()) : [];
+}
+
+function findSavedProduct(input: string, products: SavedMealProduct[]) {
+  const normalizedInput = savedProductKey(input);
+  if (!normalizedInput) return null;
+
+  return (
+    products.find((product) => savedProductKey(product.name) === normalizedInput) ??
+    products.find((product) => {
+      const productKey = savedProductKey(product.name);
+      return productKey.length > 4 && normalizedInput.includes(productKey);
+    }) ??
+    null
+  );
+}
+
 function CheckToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
   return (
     <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-midnight/45 px-3 text-sm font-semibold text-white">
@@ -112,6 +150,8 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
   const [dailyTrackers, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const [lastDailyDate, setLastDailyDate] = useLocalStorage("ybw.lastDailyTrackingDate", todayKey());
   const [manualNutritionOpen, setManualNutritionOpen] = useLocalStorage("ybw.daily.manualNutritionOpen", false);
+  const [savedProductsOpen, setSavedProductsOpen] = useLocalStorage("ybw.daily.savedProductsOpen", true);
+  const [savedMealProducts, setSavedMealProducts] = useLocalStorage<SavedMealProduct[]>("ybw.savedMealProducts", []);
   const [waterInput, setWaterInput] = useState("");
   const [foodInput, setFoodInput] = useState("");
   const [manualFoodName, setManualFoodName] = useState("");
@@ -121,7 +161,22 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
   const today = todayKey();
   const todayTracker = getDailyTracker(dailyTrackers, today);
   const waterAmount = parsePositiveAmount(waterInput);
-  const foodEstimate = useMemo(() => estimateFoodNutrition(foodInput), [foodInput]);
+  const savedProducts = useMemo(() => normalizeSavedProducts(savedMealProducts), [savedMealProducts]);
+  const savedProductMatch = useMemo(() => findSavedProduct(foodInput, savedProducts), [foodInput, savedProducts]);
+  const foodEstimate = useMemo(
+    () =>
+      savedProductMatch
+        ? {
+            input: foodInput.trim() || savedProductMatch.name,
+            matchedFoodName: savedProductMatch.name,
+            quantityLabel: savedProductMatch.quantityLabel || "saved serving",
+            calories: savedProductMatch.calories,
+            protein: savedProductMatch.protein,
+            fiber: savedProductMatch.fiber
+          }
+        : estimateFoodNutrition(foodInput),
+    [foodInput, savedProductMatch]
+  );
   const manualCaloriesAmount = parsePositiveAmount(manualCalories);
   const manualProteinAmount = parsePositiveAmount(manualProtein);
   const manualFiberAmount = parsePositiveAmount(manualFiber);
@@ -182,13 +237,9 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
     });
   };
 
-  const saveFoodEntry = () => {
-    if (!foodEstimate) {
-      return;
-    }
-
+  const logFoodEntry = (foodEntry: Omit<DailyFoodEntry, "id" | "createdAt">) => {
     const nextFoodEntry: DailyFoodEntry = {
-      ...foodEstimate,
+      ...foodEntry,
       id: createId("daily-food"),
       createdAt: new Date().toISOString()
     };
@@ -201,6 +252,70 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
         ...totalFoodNutrition(foodEntries)
       });
     });
+  };
+
+  const touchSavedProduct = (productId: string) => {
+    const now = new Date().toISOString();
+    setSavedMealProducts((current) => {
+      const products = normalizeSavedProducts(current);
+      const product = products.find((item) => item.id === productId);
+      if (!product) return products;
+
+      const updatedProduct = { ...product, lastLoggedAt: now, updatedAt: now };
+      return [updatedProduct, ...products.filter((item) => item.id !== productId)];
+    });
+  };
+
+  const upsertSavedMealProduct = (product: Pick<SavedMealProduct, "name" | "calories" | "protein" | "fiber" | "quantityLabel">) => {
+    const now = new Date().toISOString();
+    const productName = product.name.trim();
+    if (!productName) return;
+
+    setSavedMealProducts((current) => {
+      const products = normalizeSavedProducts(current);
+      const productKey = savedProductKey(productName);
+      const existing = products.find((item) => savedProductKey(item.name) === productKey);
+      const savedProduct: SavedMealProduct = {
+        id: existing?.id ?? createId("saved-food"),
+        name: productName,
+        quantityLabel: product.quantityLabel || "saved serving",
+        calories: Math.round(product.calories),
+        protein: product.protein,
+        fiber: product.fiber,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+        lastLoggedAt: now
+      };
+
+      return [savedProduct, ...products.filter((item) => item.id !== existing?.id)].slice(0, 60);
+    });
+  };
+
+  const logSavedMealProduct = (product: SavedMealProduct) => {
+    logFoodEntry({
+      input: product.name,
+      matchedFoodName: product.name,
+      quantityLabel: product.quantityLabel || "saved serving",
+      calories: product.calories,
+      protein: product.protein,
+      fiber: product.fiber
+    });
+    touchSavedProduct(product.id);
+  };
+
+  const removeSavedMealProduct = (productId: string) => {
+    setSavedMealProducts((current) => normalizeSavedProducts(current).filter((product) => product.id !== productId));
+  };
+
+  const saveFoodEntry = () => {
+    if (!foodEstimate) {
+      return;
+    }
+
+    logFoodEntry(foodEstimate);
+    if (savedProductMatch) {
+      touchSavedProduct(savedProductMatch.id);
+    }
     setFoodInput("");
   };
 
@@ -221,13 +336,13 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
       createdAt: new Date().toISOString()
     };
 
-    setDailyTrackers((current) => {
-      const currentEntry = getDailyTracker(current, today);
-      const foodEntries = [nextFoodEntry, ...currentEntry.foodEntries];
-      return mergeDailyTracker(current, today, {
-        foodEntries,
-        ...totalFoodNutrition(foodEntries)
-      });
+    logFoodEntry(nextFoodEntry);
+    upsertSavedMealProduct({
+      name: label,
+      quantityLabel: "saved serving",
+      calories: Math.round(manualCaloriesAmount),
+      protein: manualProteinAmount,
+      fiber: manualFiberAmount
     });
     setManualFoodName("");
     setManualCalories("");
@@ -373,6 +488,54 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
                   : "No estimate found yet"}
               </p>
             ) : null}
+            {savedProducts.length ? (
+              <div className="rounded-2xl border border-white/10 bg-midnight/35 p-3">
+                <button
+                  type="button"
+                  onClick={() => setSavedProductsOpen((current) => !current)}
+                  className="flex min-h-11 w-full items-center justify-between gap-3 text-left text-sm font-semibold text-ice"
+                  aria-expanded={savedProductsOpen}
+                >
+                  <span>Saved foods</span>
+                  <span className="inline-flex items-center gap-2 text-xs text-periwinkle/75">
+                    {savedProducts.length}
+                    {savedProductsOpen ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}
+                  </span>
+                </button>
+                {savedProductsOpen ? (
+                  <div className="mt-3 grid gap-2">
+                    {savedProducts.map((product) => (
+                      <div key={product.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-midnight/45 p-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-white">{product.name}</p>
+                          <p className="mt-1 text-xs leading-5 text-periwinkle/75">
+                            {Math.round(product.calories)} kcal | {formatMacro(product.protein, "g protein")} | {formatMacro(product.fiber, "g fiber")}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => logSavedMealProduct(product)}
+                            className="inline-flex size-10 items-center justify-center rounded-2xl border border-ice/25 bg-ice/10 text-ice"
+                            aria-label={`Log ${product.name}`}
+                          >
+                            <Plus size={17} aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeSavedMealProduct(product.id)}
+                            className="inline-flex size-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-periwinkle/80"
+                            aria-label={`Remove saved food ${product.name}`}
+                          >
+                            <Trash2 size={17} aria-hidden="true" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <div className="rounded-2xl border border-white/10 bg-midnight/35 p-3">
               <button
                 type="button"
@@ -385,7 +548,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
               </button>
               {manualNutritionOpen ? (
                 <div className="mt-3 grid gap-3">
-                  <FormField label="Food name" value={manualFoodName} onChange={setManualFoodName} placeholder="Nutrition label item" />
+                  <FormField label="Food name" value={manualFoodName} onChange={setManualFoodName} placeholder="Costco steak bites + Fiber One brownie" />
                   <div className="grid gap-3 sm:grid-cols-3">
                     <FormField label="Calories" type="number" value={manualCalories} onChange={setManualCalories} placeholder="kcal" />
                     <FormField label="Protein" type="number" value={manualProtein} onChange={setManualProtein} placeholder="grams" />
@@ -398,7 +561,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
                     className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice shadow-ice disabled:opacity-50"
                   >
                     <Plus size={18} aria-hidden="true" />
-                    Log manual nutrition
+                    Log and save nutrition
                   </button>
                 </div>
               ) : null}
