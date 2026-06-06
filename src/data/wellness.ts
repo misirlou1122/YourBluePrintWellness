@@ -749,9 +749,9 @@ export const wellnessTiles: WellnessTile[] = [
   {
     id: "mood",
     title: "Mood / Mental Health",
-    subtitle: "Check-ins, notes, brain dump",
+    subtitle: "Mood, intensity, positive check-ins",
     icon: "brain",
-    subcategories: ["Quick tap mood", "Quick Notes / Brain Dump", "Sentence field", "Notes", "Intensity", "Date/time", "Patterns"],
+    subcategories: ["Quick tap mood", "Positive check-ins", "Intensity", "Date/time", "Patterns"],
     groups: [
       {
         title: "Quick tap options",
@@ -759,9 +759,10 @@ export const wellnessTiles: WellnessTile[] = [
         checklist: ["Calm", "Anxious", "Overwhelmed", "Tired", "Sad", "Hopeful", "Irritable", "Foggy", "Energetic", "Nauseous"]
       },
       {
-        title: "Entry fields",
-        description: "A short sentence and note area for context.",
-        fields: ["Short sentence", "Notes", "Intensity slider", "Date/time"]
+        title: "Positive check-ins",
+        description: "Lightweight wins and self-support moments to tap and save.",
+        checklist: ["I showed up", "I drank water", "I moved my body", "I got fresh air", "I rested", "Tiny win"],
+        fields: ["Intensity slider", "Date/time"]
       }
     ]
   },

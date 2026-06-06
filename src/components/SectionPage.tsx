@@ -250,12 +250,7 @@ function TileSpecificContent({
   }
 
   if (tile.id === "mood") {
-    return (
-      <div className="grid gap-4">
-        <MoodScreen />
-        <QuickNotes />
-      </div>
-    );
+    return <MoodScreen />;
   }
 
   if (tile.id === "skin") {

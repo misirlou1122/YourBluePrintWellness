@@ -58,6 +58,7 @@ interface MoodEntry {
   mood: string;
   intensity: number;
   note: string;
+  positiveCheckIns?: string[];
   dateTime: string;
 }
 
@@ -107,12 +108,37 @@ const periodSymptomOptions = [
   { field: "energy", label: "Low energy" }
 ] as const;
 
-const moodOptions = ["Calm", "Anxious", "Overwhelmed", "Tired", "Sad", "Hopeful", "Irritable", "Foggy", "Energetic", "Nauseous"];
+const moodOptions = [
+  { label: "Calm", emoji: "😌" },
+  { label: "Anxious", emoji: "😟" },
+  { label: "Overwhelmed", emoji: "😵‍💫" },
+  { label: "Tired", emoji: "😴" },
+  { label: "Sad", emoji: "😢" },
+  { label: "Hopeful", emoji: "🌤️" },
+  { label: "Irritable", emoji: "😤" },
+  { label: "Foggy", emoji: "🌫️" },
+  { label: "Energetic", emoji: "⚡" },
+  { label: "Nauseous", emoji: "🤢" }
+];
+
+const positiveCheckInOptions = [
+  { label: "I showed up", emoji: "✨" },
+  { label: "I drank water", emoji: "💧" },
+  { label: "I moved my body", emoji: "💃" },
+  { label: "I got fresh air", emoji: "☀️" },
+  { label: "I rested", emoji: "🛋️" },
+  { label: "I ate something nourishing", emoji: "🥗" },
+  { label: "I asked for help", emoji: "🤝" },
+  { label: "I did one hard thing", emoji: "🏆" },
+  { label: "I was kind to myself", emoji: "💗" },
+  { label: "Tiny win", emoji: "🎉" }
+];
 
 const emptyMood: Omit<MoodEntry, "id"> = {
-  mood: moodOptions[0],
+  mood: moodOptions[0].label,
   intensity: 3,
   note: "",
+  positiveCheckIns: [],
   dateTime: ""
 };
 
@@ -553,10 +579,24 @@ export function MoodScreen() {
   const store = useEditableCollection<MoodEntry, Omit<MoodEntry, "id">>("ybw.mood", "ybw.moodDraft", emptyMood, "mood");
   const [, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
   const setField = (field: keyof typeof emptyMood, value: string | number) => store.setDraft((current) => ({ ...current, [field]: value }));
+  const selectedPositiveCheckIns = Array.isArray(store.draft.positiveCheckIns) ? store.draft.positiveCheckIns : [];
+  const togglePositiveCheckIn = (label: string) => {
+    store.setDraft((current) => {
+      const selected = Array.isArray(current.positiveCheckIns) ? current.positiveCheckIns : [];
+      return {
+        ...current,
+        positiveCheckIns: selected.includes(label) ? selected.filter((item) => item !== label) : [...selected, label]
+      };
+    });
+  };
   const saveMood = () => {
-    if (!store.draft.mood && !store.draft.note) return;
+    if (!store.draft.mood && !store.draft.note && !selectedPositiveCheckIns.length) return;
     const dateKey = store.draft.dateTime ? store.draft.dateTime.slice(0, 10) : todayKey();
-    const nextDraft = { ...store.draft, dateTime: store.draft.dateTime || new Date().toLocaleString() };
+    const nextDraft = {
+      ...store.draft,
+      positiveCheckIns: selectedPositiveCheckIns,
+      dateTime: store.draft.dateTime || new Date().toLocaleString()
+    };
     store.save(() => true, () => nextDraft);
     setDailyTrackers((current) => mergeDailyTracker(current, dateKey, { mood: nextDraft.mood }));
   };
@@ -565,8 +605,16 @@ export function MoodScreen() {
       <CollapsibleSectionCard storageKey="ybw.mood.formOpen" forceOpen={Boolean(store.editingId)} title="Mood check-in" sectionLabel="Quick tap mood">
         <div className="flex flex-wrap gap-2">
           {moodOptions.map((option) => (
-            <button key={option} type="button" onClick={() => setField("mood", option)} className={`min-h-10 rounded-full border px-3 text-xs font-semibold ${store.draft.mood === option ? "border-ice/70 bg-ice/15 text-ice shadow-ice" : "border-white/10 bg-white/[0.05] text-periwinkle/80"}`}>
-              {option}
+            <button
+              key={option.label}
+              type="button"
+              onClick={() => setField("mood", option.label)}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-xs font-semibold ${
+                store.draft.mood === option.label ? "border-ice/70 bg-ice/15 text-ice shadow-ice" : "border-white/10 bg-white/[0.05] text-periwinkle/80"
+              }`}
+            >
+              <span aria-hidden="true">{option.emoji}</span>
+              {option.label}
             </button>
           ))}
         </div>
@@ -575,7 +623,27 @@ export function MoodScreen() {
             <span>Intensity: {store.draft.intensity}</span>
             <input type="range" min="1" max="5" value={store.draft.intensity} onChange={(event) => setField("intensity", Number(event.target.value))} className="accent-lavender" />
           </label>
-          <TextAreaField label="Short note" value={store.draft.note} onChange={(value) => setField("note", value)} />
+          <div className="grid gap-2">
+            <p className="text-sm font-semibold text-periwinkle/85">Positive check-ins</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {positiveCheckInOptions.map((option) => {
+                const selected = selectedPositiveCheckIns.includes(option.label);
+                return (
+                  <button
+                    key={option.label}
+                    type="button"
+                    onClick={() => togglePositiveCheckIn(option.label)}
+                    className={`inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border px-3 text-center text-xs font-semibold ${
+                      selected ? "border-lavender/70 bg-lavender/15 text-lavender shadow-ice" : "border-white/10 bg-midnight/45 text-periwinkle/85"
+                    }`}
+                  >
+                    <span aria-hidden="true">{option.emoji}</span>
+                    <span>{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <FormField label="Date/time" type="datetime-local" value={store.draft.dateTime} onChange={(value) => setField("dateTime", value)} />
         </div>
         <button type="button" onClick={saveMood} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
@@ -592,6 +660,19 @@ export function MoodScreen() {
                   <div>
                   <h3 className="text-sm font-semibold text-white">{entry.mood} | {entry.intensity}/5</h3>
                     <p className="mt-1 text-xs text-periwinkle/70">{entry.dateTime}</p>
+                    {entry.positiveCheckIns?.length ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {entry.positiveCheckIns.map((checkIn) => {
+                          const emoji = positiveCheckInOptions.find((option) => option.label === checkIn)?.emoji;
+                          return (
+                            <span key={checkIn} className="inline-flex items-center gap-1 rounded-full border border-lavender/20 bg-lavender/10 px-3 py-1 text-xs font-semibold text-lavender">
+                              {emoji ? <span aria-hidden="true">{emoji}</span> : null}
+                              {checkIn}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : null}
                     {entry.note ? <p className="mt-2 text-sm leading-6 text-periwinkle/85">{entry.note}</p> : null}
                   </div>
                   <EntryActions onEdit={() => store.startEdit(entry)} onDelete={() => store.remove(entry.id)} />
