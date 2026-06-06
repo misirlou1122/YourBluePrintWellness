@@ -1,13 +1,30 @@
 import { useState } from "react";
-import { AlertTriangle, Plus } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Dumbbell, Flame, Minus, Plus, Timer, Trash2 } from "lucide-react";
 import { CollapsibleSectionCard } from "../CollapsibleSectionCard";
 import { EntryActions } from "../EntryActions";
 import { EmptyState } from "../EmptyState";
 import { FormField, TextAreaField } from "../FormField";
 import { ProgressBar } from "../ProgressBar";
 import { SectionCard } from "../SectionCard";
-import { useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
+import { parseWeightPounds } from "../../lib/bodyMetrics";
 import { mergeDailyTracker, todayKey, type DailyTrackerMap } from "../../lib/dailyTracking";
+import {
+  buildFitnessActivity,
+  calculateActivityCalories,
+  calculateWorkoutCalories,
+  cardioOptions,
+  getFitnessActivityOption,
+  mindBodyOptions,
+  parsePositiveNumber,
+  quickWorkoutOptions,
+  strengthMachineOptions,
+  summarizeWorkout,
+  type FitnessActivityEntry,
+  type FitnessActivityOption,
+  type FitnessSetEntry
+} from "../../lib/fitnessEstimator";
+import { createId, useLocalCollection, useLocalStorage } from "../../lib/useLocalStorage";
+import { emptyUserProfile } from "../../types/userProfile";
 
 interface FoodLog {
   id: string;
@@ -50,6 +67,10 @@ interface FitnessLog {
   weight: string;
   notes: string;
   completed?: boolean;
+  selectedPlans?: string[];
+  activities?: FitnessActivityEntry[];
+  estimatedCalories?: number;
+  bodyWeight?: string;
 }
 
 const emptyFood: Omit<FoodLog, "id"> = {
@@ -89,7 +110,11 @@ const emptyFitness: Omit<FitnessLog, "id"> = {
   reps: "",
   weight: "",
   notes: "",
-  completed: false
+  completed: true,
+  selectedPlans: [],
+  activities: [],
+  estimatedCalories: 0,
+  bodyWeight: ""
 };
 
 function percent(value: string, goal: number) {
@@ -99,6 +124,123 @@ function percent(value: string, goal: number) {
   }
 
   return Math.min(100, Math.round((numeric / goal) * 100));
+}
+
+type FitnessDraft = Omit<FitnessLog, "id">;
+
+function normalizeFitnessActivity(activity: FitnessActivityEntry): FitnessActivityEntry {
+  const option = getFitnessActivityOption(activity.optionId);
+
+  return {
+    ...activity,
+    type: activity.type ?? option?.type ?? "cardio",
+    name: activity.name || option?.label || "Workout",
+    minutes: activity.minutes ?? option?.defaultMinutes ?? "",
+    met: activity.met ?? option?.met,
+    speed: activity.speed ?? option?.defaultSpeed,
+    incline: activity.incline ?? option?.defaultIncline,
+    sets: Array.isArray(activity.sets) ? activity.sets : option?.type === "strength" ? [] : undefined
+  };
+}
+
+function normalizeFitnessDraft(value: FitnessDraft): FitnessDraft {
+  return {
+    ...emptyFitness,
+    ...value,
+    selectedPlans: Array.isArray(value.selectedPlans) ? value.selectedPlans : [],
+    activities: Array.isArray(value.activities) ? value.activities.map(normalizeFitnessActivity) : [],
+    completed: value.completed ?? true
+  };
+}
+
+function normalizeFitnessLog(entry: FitnessLog) {
+  const { id, ...rest } = entry;
+  return { id, ...normalizeFitnessDraft(rest) };
+}
+
+function formatFitnessNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
+}
+
+function caloriesProgress(calories: number) {
+  return Math.min(100, Math.round((calories / 500) * 100));
+}
+
+function createActivity(option: FitnessActivityOption) {
+  return buildFitnessActivity(option, createId("fitness-activity"), [createId("fitness-set"), createId("fitness-set"), createId("fitness-set")]);
+}
+
+function activityDetail(activity: FitnessActivityEntry) {
+  if (activity.type === "strength") {
+    const sets = activity.sets ?? [];
+    const setLabel = sets.length ? `${sets.length} set${sets.length === 1 ? "" : "s"}` : "sets";
+    const weights = sets.map((set) => (set.weight ? `${set.weight} lb` : "")).filter(Boolean);
+    return [setLabel, weights.join(", ")].filter(Boolean).join(" | ");
+  }
+
+  if (activity.optionId === "treadmill-walk") {
+    return `${activity.minutes || "0"} min | ${activity.speed || "0"} mph | ${activity.incline || "0"}% incline`;
+  }
+
+  return `${activity.minutes || "0"} min`;
+}
+
+function ChoiceButton({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-h-14 rounded-2xl border px-3 text-sm font-semibold transition ${
+        selected ? "border-ice/70 bg-ice/15 text-ice shadow-ice" : "border-white/10 bg-midnight/45 text-periwinkle/85"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function NumberStepper({
+  label,
+  value,
+  onChange,
+  step = 1,
+  min = 0,
+  suffix
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  step?: number;
+  min?: number;
+  suffix?: string;
+}) {
+  const numeric = parsePositiveNumber(value);
+  const adjust = (delta: number) => onChange(formatFitnessNumber(Math.max(min, numeric + delta)));
+
+  return (
+    <label className="grid gap-1 text-sm text-periwinkle/85">
+      <span>{label}</span>
+      <div className="grid min-h-12 grid-cols-[2.75rem_1fr_2.75rem] overflow-hidden rounded-2xl border border-white/10 bg-midnight/55">
+        <button type="button" onClick={() => adjust(-step)} className="grid place-items-center border-r border-white/10 text-ice" aria-label={`Decrease ${label}`}>
+          <Minus size={16} aria-hidden="true" />
+        </button>
+        <div className="flex min-w-0 items-center">
+          <input
+            type="number"
+            value={value}
+            min={min}
+            step={step}
+            onChange={(event) => onChange(event.target.value)}
+            className="min-w-0 flex-1 bg-transparent px-2 text-center text-sm font-semibold text-white outline-none"
+          />
+          {suffix ? <span className="pr-3 text-xs text-periwinkle/65">{suffix}</span> : null}
+        </div>
+        <button type="button" onClick={() => adjust(step)} className="grid place-items-center border-l border-white/10 text-ice" aria-label={`Increase ${label}`}>
+          <Plus size={16} aria-hidden="true" />
+        </button>
+      </div>
+    </label>
+  );
 }
 
 export function FoodHydrationScreen() {
@@ -264,20 +406,163 @@ export function AlcoholScreen() {
 }
 
 export function FitnessScreen() {
-  const { items, add, update, remove, toggleComplete } = useLocalCollection<FitnessLog>("ybw.fitness", [], "fitness");
-  const [draft, setDraft] = useLocalStorage("ybw.fitnessDraft", emptyFitness);
+  const { items, add, update, remove } = useLocalCollection<FitnessLog>("ybw.fitness", [], "fitness");
+  const [draft, setDraft] = useLocalStorage<FitnessDraft>("ybw.fitnessDraft", emptyFitness);
   const [, setDailyTrackers] = useLocalStorage<DailyTrackerMap>("ybw.dailyTrackers", {});
+  const [profile] = useLocalStorage("ybw.userProfile", emptyUserProfile);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const setField = (field: keyof typeof emptyFitness, value: string | boolean) => setDraft((current) => ({ ...current, [field]: value }));
-  const reset = () => { setDraft(emptyFitness); setEditingId(null); };
+  const normalizedDraft = normalizeFitnessDraft(draft);
+  const activities = normalizedDraft.activities ?? [];
+  const selectedPlans = normalizedDraft.selectedPlans ?? [];
+  const estimateWeightLabel = String(normalizedDraft.bodyWeight ?? "").trim() || profile.weight || "170 lb";
+  const estimateWeightPounds = parseWeightPounds(estimateWeightLabel) || 170;
+  const estimatedCalories = calculateWorkoutCalories(activities, estimateWeightPounds);
+  const workoutSummary = summarizeWorkout(activities, selectedPlans) || normalizedDraft.completedWorkout || normalizedDraft.plannedWorkout || "Workout";
+  const latestEntry = items[0] ? normalizeFitnessLog(items[0]) : null;
+
+  const updateDraft = (updater: (current: FitnessDraft) => FitnessDraft) => {
+    setDraft((current) => updater(normalizeFitnessDraft(current)));
+  };
+
+  const setField = <K extends keyof FitnessDraft>(field: K, value: FitnessDraft[K]) => {
+    updateDraft((current) => ({ ...current, [field]: value }));
+  };
+
+  const setActivities = (updater: (current: FitnessActivityEntry[]) => FitnessActivityEntry[]) => {
+    updateDraft((current) => ({ ...current, activities: updater(current.activities ?? []) }));
+  };
+
+  const toggleQuickPlan = (option: (typeof quickWorkoutOptions)[number]) => {
+    updateDraft((current) => {
+      const currentPlans = current.selectedPlans ?? [];
+      const isSelected = currentPlans.includes(option.id);
+      const selectedPlans = isSelected ? currentPlans.filter((planId) => planId !== option.id) : [...currentPlans, option.id];
+      let nextActivities = current.activities ?? [];
+
+      if (option.activityOptionId) {
+        const activityOption = getFitnessActivityOption(option.activityOptionId);
+        if (isSelected) {
+          nextActivities = nextActivities.filter((activity) => activity.optionId !== option.activityOptionId);
+        } else if (activityOption && !nextActivities.some((activity) => activity.optionId === option.activityOptionId)) {
+          nextActivities = [...nextActivities, createActivity(activityOption)];
+        }
+      }
+
+      return { ...current, selectedPlans, activities: nextActivities };
+    });
+  };
+
+  const toggleActivity = (option: FitnessActivityOption) => {
+    updateDraft((current) => {
+      const currentActivities = current.activities ?? [];
+      const hasActivity = currentActivities.some((activity) => activity.optionId === option.id);
+      const activities = hasActivity ? currentActivities.filter((activity) => activity.optionId !== option.id) : [...currentActivities, createActivity(option)];
+      const linkedQuickPlan = quickWorkoutOptions.find((quickOption) => quickOption.activityOptionId === option.id);
+      let selectedPlans = current.selectedPlans ?? [];
+
+      if (linkedQuickPlan) {
+        selectedPlans = hasActivity
+          ? selectedPlans.filter((planId) => planId !== linkedQuickPlan.id)
+          : selectedPlans.includes(linkedQuickPlan.id)
+            ? selectedPlans
+            : [...selectedPlans, linkedQuickPlan.id];
+      } else if (option.type === "strength" && !selectedPlans.includes("strength-machines")) {
+        selectedPlans = [...selectedPlans, "strength-machines"];
+      }
+
+      return { ...current, selectedPlans, activities };
+    });
+  };
+
+  const updateActivity = (activityId: string, updates: Partial<FitnessActivityEntry>) => {
+    setActivities((current) => current.map((activity) => (activity.id === activityId ? { ...activity, ...updates } : activity)));
+  };
+
+  const removeActivity = (activityId: string) => {
+    setActivities((current) => current.filter((activity) => activity.id !== activityId));
+  };
+
+  const updateSet = (activityId: string, setId: string, updates: Partial<FitnessSetEntry>) => {
+    setActivities((current) =>
+      current.map((activity) =>
+        activity.id === activityId
+          ? {
+              ...activity,
+              sets: (activity.sets ?? []).map((set) => (set.id === setId ? { ...set, ...updates } : set))
+            }
+          : activity
+      )
+    );
+  };
+
+  const addSet = (activityId: string) => {
+    setActivities((current) =>
+      current.map((activity) => {
+        if (activity.id !== activityId) return activity;
+        const sets = activity.sets ?? [];
+        const lastSet = sets[sets.length - 1];
+        return {
+          ...activity,
+          sets: [...sets, { id: createId("fitness-set"), reps: lastSet?.reps || "10", weight: lastSet?.weight || "25" }]
+        };
+      })
+    );
+  };
+
+  const removeSet = (activityId: string, setId: string) => {
+    setActivities((current) =>
+      current.map((activity) =>
+        activity.id === activityId ? { ...activity, sets: (activity.sets ?? []).filter((set) => set.id !== setId) } : activity
+      )
+    );
+  };
+
+  const reset = () => {
+    setDraft(emptyFitness);
+    setEditingId(null);
+  };
+
   const save = () => {
-    if (!Object.values(draft).some((value) => String(value).trim())) return;
-    const entry = { ...draft, date: draft.date || todayKey() };
+    const current = normalizeFitnessDraft(draft);
+    const hasWorkout = Boolean((current.activities ?? []).length || (current.selectedPlans ?? []).length || current.notes.trim() || current.plannedWorkout.trim() || current.completedWorkout.trim());
+    if (!hasWorkout) return;
+
+    const entryActivities = current.activities ?? [];
+    const entrySelectedPlans = current.selectedPlans ?? [];
+    const weightLabel = String(current.bodyWeight ?? "").trim() || profile.weight || "170 lb";
+    const weightPounds = parseWeightPounds(weightLabel) || 170;
+    const calories = calculateWorkoutCalories(entryActivities, weightPounds);
+    const summary = summarizeWorkout(entryActivities, entrySelectedPlans) || current.completedWorkout || current.plannedWorkout || "Workout";
+    const cardioActivities = entryActivities.filter((activity) => activity.type === "cardio");
+    const strengthActivities = entryActivities.filter((activity) => activity.type === "strength");
+    const treadmill = cardioActivities.find((activity) => activity.optionId === "treadmill-walk");
+    const maxSets = Math.max(0, ...strengthActivities.map((activity) => activity.sets?.length ?? 0));
+    const allSets = strengthActivities.flatMap((activity) => activity.sets ?? []);
+    const entry: Omit<FitnessLog, "id"> = {
+      ...current,
+      date: current.date || todayKey(),
+      bodyWeight: weightLabel,
+      estimatedCalories: calories,
+      plannedWorkout: current.completed ? current.plannedWorkout || summary : summary,
+      completedWorkout: current.completed ? summary : "",
+      cardio: cardioActivities.map((activity) => `${activity.name} ${activityDetail(activity)}`).join(" | "),
+      treadmillMinutes: treadmill?.minutes ?? "",
+      treadmillIncline: treadmill?.incline ?? "",
+      treadmillSpeed: treadmill?.speed ?? "",
+      treadmillMiles: current.treadmillMiles,
+      strengthExercise: strengthActivities.map((activity) => `${activity.name} ${activityDetail(activity)}`).join(" | "),
+      sets: maxSets ? String(maxSets) : "",
+      reps: allSets[0]?.reps ?? "",
+      weight: allSets.map((set) => (set.weight ? `${set.weight} lb` : "")).filter(Boolean).join(", ")
+    };
+
     if (editingId) update(editingId, entry);
     else add(entry);
+
     setDailyTrackers((current) =>
       mergeDailyTracker(current, entry.date, {
-        workoutStatus: entry.completed ? entry.completedWorkout || entry.plannedWorkout || "completed" : entry.plannedWorkout || "planned"
+        workoutStatus: `${summary} ${entry.completed ? "completed" : "planned"}${entry.completed && calories ? ` | ${calories} kcal` : ""}`,
+        workoutCalories: entry.completed ? calories : 0
       })
     );
     reset();
@@ -285,68 +570,235 @@ export function FitnessScreen() {
 
   return (
     <div className="grid gap-4">
-      <CollapsibleSectionCard storageKey="ybw.fitness.formOpen" forceOpen={Boolean(editingId)} eyebrow={editingId ? "Edit workout" : "Add workout"} title="Fitness tracker" sectionLabel="What I Did Today">
-        <div className="grid gap-3">
-          <FormField label="Date" type="date" value={draft.date} onChange={(value) => setField("date", value)} />
-          <FormField label="Planned workout" value={draft.plannedWorkout} onChange={(value) => setField("plannedWorkout", value)} />
-          <FormField label="Completed workout" value={draft.completedWorkout} onChange={(value) => setField("completedWorkout", value)} />
-          <FormField label="Cardio" value={draft.cardio} onChange={(value) => setField("cardio", value)} />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FormField label="Treadmill minutes" type="number" value={draft.treadmillMinutes} onChange={(value) => setField("treadmillMinutes", value)} />
-            <FormField label="Treadmill miles" type="number" value={draft.treadmillMiles} onChange={(value) => setField("treadmillMiles", value)} />
-            <FormField label="Treadmill incline" type="number" value={draft.treadmillIncline} onChange={(value) => setField("treadmillIncline", value)} />
-            <FormField label="Treadmill speed" type="number" value={draft.treadmillSpeed} onChange={(value) => setField("treadmillSpeed", value)} />
+      <SectionCard title="Fitness snapshot" description={latestEntry ? `${latestEntry.date || "Latest workout"} | ${latestEntry.completed ? "Completed" : "Planned"}` : "No workouts logged yet."}>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-ice/20 bg-ice/10 p-4">
+            <div className="flex items-center gap-2 text-ice">
+              <Flame size={18} aria-hidden="true" />
+              <p className="text-xs font-semibold uppercase tracking-[0.18em]">Estimate</p>
+            </div>
+            <p className="mt-2 text-2xl font-semibold text-white">{estimatedCalories} kcal</p>
+            <p className="mt-1 text-xs leading-5 text-periwinkle/75">{estimateWeightLabel}</p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FormField label="Strength exercise" value={draft.strengthExercise} onChange={(value) => setField("strengthExercise", value)} />
-            <FormField label="Sets" type="number" value={draft.sets} onChange={(value) => setField("sets", value)} />
-            <FormField label="Reps" type="number" value={draft.reps} onChange={(value) => setField("reps", value)} />
-            <FormField label="Weight/resistance" value={draft.weight} onChange={(value) => setField("weight", value)} />
+          <div className="rounded-2xl border border-lavender/20 bg-lavender/10 p-4">
+            <div className="flex items-center gap-2 text-lavender">
+              <Dumbbell size={18} aria-hidden="true" />
+              <p className="text-xs font-semibold uppercase tracking-[0.18em]">Workout</p>
+            </div>
+            <p className="mt-2 text-lg font-semibold leading-tight text-white">{workoutSummary}</p>
+            <p className="mt-1 text-xs leading-5 text-periwinkle/75">{activities.length} selected</p>
           </div>
-          <TextAreaField label="Notes" value={draft.notes} onChange={(value) => setField("notes", value)} />
-          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-midnight/45 px-3 text-sm text-white">
-            <input type="checkbox" checked={Boolean(draft.completed)} onChange={(event) => setField("completed", event.target.checked)} className="size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40" />
-            Completed
-          </label>
+          <div className="rounded-2xl border border-aqua/20 bg-aqua/10 p-4">
+            <div className="flex items-center gap-2 text-aqua">
+              <Timer size={18} aria-hidden="true" />
+              <p className="text-xs font-semibold uppercase tracking-[0.18em]">Status</p>
+            </div>
+            <p className="mt-2 text-lg font-semibold text-white">{normalizedDraft.completed ? "Done" : "Planned"}</p>
+            <p className="mt-1 text-xs leading-5 text-periwinkle/75">{normalizedDraft.date || todayKey()}</p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <ProgressBar label="Calories burned" value={caloriesProgress(estimatedCalories)} detail={`${estimatedCalories} kcal estimated`} tone="aqua" />
+        </div>
+      </SectionCard>
+
+      <CollapsibleSectionCard storageKey="ybw.fitness.formOpen" forceOpen={Boolean(editingId)} eyebrow={editingId ? "Edit workout" : "Add workout"} title="Workout builder" sectionLabel="What I Did Today">
+        <div className="grid gap-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormField label="Date" type="date" value={normalizedDraft.date} onChange={(value) => setField("date", value)} />
+            <FormField label="Estimate weight" value={normalizedDraft.bodyWeight} onChange={(value) => setField("bodyWeight", value)} placeholder={profile.weight || "170 lb"} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-midnight/45 p-1">
+            <button
+              type="button"
+              onClick={() => setField("completed", true)}
+              className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold ${normalizedDraft.completed ? "bg-ice/15 text-ice shadow-ice" : "text-periwinkle/75"}`}
+            >
+              <CheckCircle2 size={17} aria-hidden="true" />
+              Done
+            </button>
+            <button
+              type="button"
+              onClick={() => setField("completed", false)}
+              className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold ${!normalizedDraft.completed ? "bg-lavender/15 text-lavender shadow-ice" : "text-periwinkle/75"}`}
+            >
+              <Timer size={17} aria-hidden="true" />
+              Plan
+            </button>
+          </div>
+
+          <div className="grid gap-2">
+            <p className="text-sm font-semibold text-periwinkle/85">Workout picks</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {quickWorkoutOptions.map((option) => (
+                <ChoiceButton key={option.id} label={option.label} selected={selectedPlans.includes(option.id)} onClick={() => toggleQuickPlan(option)} />
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <p className="text-sm font-semibold text-periwinkle/85">Cardio + classes</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {[...cardioOptions, ...mindBodyOptions].map((option) => (
+                <ChoiceButton
+                  key={option.id}
+                  label={option.label}
+                  selected={activities.some((activity) => activity.optionId === option.id)}
+                  onClick={() => toggleActivity(option)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <p className="text-sm font-semibold text-periwinkle/85">Gym machines</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {strengthMachineOptions.map((option) => (
+                <ChoiceButton
+                  key={option.id}
+                  label={option.label}
+                  selected={activities.some((activity) => activity.optionId === option.id)}
+                  onClick={() => toggleActivity(option)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            {activities.length ? (
+              activities.map((activity) => {
+                const activityCalories = calculateActivityCalories(activity, estimateWeightPounds);
+                return (
+                  <article key={activity.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-white">{activity.name}</h3>
+                        <p className="mt-1 text-xs text-lavender/80">{activityCalories} kcal | {activityDetail(activity)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeActivity(activity.id)}
+                        className="inline-flex size-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-periwinkle/80"
+                        aria-label={`Remove ${activity.name}`}
+                      >
+                        <Trash2 size={17} aria-hidden="true" />
+                      </button>
+                    </div>
+
+                    {activity.type === "cardio" ? (
+                      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                        <NumberStepper label="Minutes" value={activity.minutes} onChange={(value) => updateActivity(activity.id, { minutes: value })} suffix="min" />
+                        {activity.optionId === "treadmill-walk" ? (
+                          <>
+                            <NumberStepper label="Speed" value={activity.speed ?? ""} onChange={(value) => updateActivity(activity.id, { speed: value })} step={0.1} suffix="mph" />
+                            <NumberStepper label="Incline" value={activity.incline ?? ""} onChange={(value) => updateActivity(activity.id, { incline: value })} step={0.5} suffix="%" />
+                          </>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    {activity.type === "mind-body" ? (
+                      <div className="mt-3 max-w-sm">
+                        <NumberStepper label="Minutes" value={activity.minutes} onChange={(value) => updateActivity(activity.id, { minutes: value })} suffix="min" />
+                      </div>
+                    ) : null}
+
+                    {activity.type === "strength" ? (
+                      <div className="mt-3 grid gap-3">
+                        <div className="max-w-sm">
+                          <NumberStepper label="Minutes" value={activity.minutes} onChange={(value) => updateActivity(activity.id, { minutes: value })} suffix="min" />
+                        </div>
+                        {(activity.sets ?? []).map((set, index) => (
+                          <div key={set.id} className="grid gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:grid-cols-[5rem_1fr_1fr_auto] sm:items-end">
+                            <p className="text-sm font-semibold text-white sm:pb-3">Set {index + 1}</p>
+                            <NumberStepper label="Reps" value={set.reps} onChange={(value) => updateSet(activity.id, set.id, { reps: value })} />
+                            <NumberStepper label="Weight" value={set.weight} onChange={(value) => updateSet(activity.id, set.id, { weight: value })} step={5} suffix="lb" />
+                            <button
+                              type="button"
+                              onClick={() => removeSet(activity.id, set.id)}
+                              className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-3 text-periwinkle/80"
+                              aria-label={`Remove set ${index + 1}`}
+                            >
+                              <Trash2 size={17} aria-hidden="true" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => addSet(activity.id)}
+                          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-ice/25 bg-ice/10 px-4 text-sm font-semibold text-ice"
+                        >
+                          <Plus size={18} aria-hidden="true" />
+                          Add set
+                        </button>
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })
+            ) : (
+              <EmptyState title="No workout selected yet" message="Choose a workout, class, or machine." icon={Dumbbell} />
+            )}
+          </div>
+
+          <TextAreaField label="Notes" value={normalizedDraft.notes} onChange={(value) => setField("notes", value)} />
         </div>
         <button type="button" onClick={save} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sapphire via-periwinkle to-lavender px-4 text-sm font-semibold text-white shadow-glow">
           <Plus size={18} aria-hidden="true" />
-          {editingId ? "Save changes" : "Add workout"}
+          {editingId ? "Save changes" : normalizedDraft.completed ? "Save workout" : "Save plan"}
         </button>
       </CollapsibleSectionCard>
       {items.length ? (
         <SectionCard title="Fitness history">
           <div className="grid gap-3">
-            {items.map((entry) => (
-              <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <label className="flex flex-1 items-start gap-3 text-sm text-white">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(entry.completed)}
-                      onChange={() => {
-                        const nextCompleted = !entry.completed;
-                        toggleComplete(entry.id);
-                        setDailyTrackers((current) =>
-                          mergeDailyTracker(current, entry.date || todayKey(), {
-                            workoutStatus: nextCompleted ? entry.completedWorkout || entry.plannedWorkout || "completed" : entry.plannedWorkout || "planned"
-                          })
-                        );
-                      }}
-                      className="mt-1 size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40"
-                    />
-                    <span>
-                      <span className="block font-semibold">{entry.completedWorkout || entry.plannedWorkout || entry.cardio || "Workout"}</span>
-                      <span className="mt-1 block text-xs text-lavender/80">{entry.date || "No date"}</span>
-                      <span className="mt-1 block text-periwinkle/85">
-                        {[entry.treadmillMinutes && `${entry.treadmillMinutes} min treadmill`, entry.strengthExercise, entry.notes].filter(Boolean).join(" | ")}
+            {items.map((rawEntry) => {
+              const entry = normalizeFitnessLog(rawEntry);
+              const entryWeightPounds = parseWeightPounds(entry.bodyWeight || profile.weight) || 170;
+              const entryCalories = Number(entry.estimatedCalories) || calculateWorkoutCalories(entry.activities ?? [], entryWeightPounds);
+              const entrySummary = summarizeWorkout(entry.activities ?? [], entry.selectedPlans ?? []) || entry.completedWorkout || entry.plannedWorkout || entry.cardio || "Workout";
+              return (
+                <article key={entry.id} className="rounded-2xl border border-white/10 bg-midnight/45 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <label className="flex flex-1 items-start gap-3 text-sm text-white">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(entry.completed)}
+                        onChange={() => {
+                          const nextCompleted = !entry.completed;
+                          update(entry.id, { completed: nextCompleted });
+                          setDailyTrackers((current) =>
+                            mergeDailyTracker(current, entry.date || todayKey(), {
+                              workoutStatus: `${entrySummary} ${nextCompleted ? "completed" : "planned"}${nextCompleted && entryCalories ? ` | ${entryCalories} kcal` : ""}`,
+                              workoutCalories: nextCompleted ? entryCalories : 0
+                            })
+                          );
+                        }}
+                        className="mt-1 size-5 rounded border-white/20 bg-midnight text-lavender focus:ring-lavender/40"
+                      />
+                      <span>
+                        <span className="block font-semibold">{entrySummary}</span>
+                        <span className="mt-1 block text-xs text-lavender/80">{entry.date || "No date"} | {entryCalories} kcal estimated</span>
+                        <span className="mt-1 block text-periwinkle/85">
+                          {(entry.activities ?? []).length
+                            ? (entry.activities ?? []).map((activity) => `${activity.name}: ${activityDetail(activity)}`).join(" | ")
+                            : [entry.treadmillMinutes && `${entry.treadmillMinutes} min treadmill`, entry.strengthExercise, entry.notes].filter(Boolean).join(" | ")}
+                        </span>
+                        {entry.notes ? <span className="mt-1 block text-periwinkle/75">{entry.notes}</span> : null}
                       </span>
-                    </span>
-                  </label>
-                  <EntryActions onEdit={() => { const { id: _id, ...rest } = entry; setDraft(rest); setEditingId(entry.id); }} onDelete={() => remove(entry.id)} />
-                </div>
-              </article>
-            ))}
+                    </label>
+                    <EntryActions
+                      onEdit={() => {
+                        const { id: _id, ...rest } = entry;
+                        setDraft(rest);
+                        setEditingId(entry.id);
+                      }}
+                      onDelete={() => remove(entry.id)}
+                    />
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </SectionCard>
       ) : (

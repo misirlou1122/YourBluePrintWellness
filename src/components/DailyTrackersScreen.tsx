@@ -284,7 +284,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
     { label: "Calories", value: `${Math.round(todayTracker.calories)} kcal`, detail: "From logged food" },
     { label: "Medication", value: medicationChecked ? "Taken" : dailyDefaults.medicationStatus, detail: medicationChecked ? "Marked for today" : "Not marked yet" },
     ...(showCycle ? [{ label: "Cycle day", value: "Add note", detail: "Track in Period Tracker" }] : []),
-    { label: "Workout", value: workoutChecked ? "Completed" : dailyDefaults.workoutStatus, detail: workoutChecked ? "Marked for today" : "Not marked yet" },
+    { label: "Workout", value: workoutChecked ? "Completed" : dailyDefaults.workoutStatus, detail: todayTracker.workoutCalories ? `${Math.round(todayTracker.workoutCalories)} kcal estimated` : workoutChecked ? "Marked for today" : "Not marked yet" },
     { label: "Alcohol", value: dailyDisplayValue(todayTracker.alcohol, dailyDefaults.alcohol), detail: alcoholChecked ? "Logged for today" : "None logged" }
   ];
 
@@ -496,7 +496,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
                   <p className="text-xs text-periwinkle/70">{dailyDisplayValue(entry.medicationStatus, dailyDefaults.medicationStatus)}</p>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-periwinkle/85">
-                  Water {entry.water} oz | Calories {Math.round(entry.calories)} kcal | Protein {formatMacro(entry.protein, "g")} | Fiber {formatMacro(entry.fiber, "g")} | Mood {dailyDisplayValue(entry.mood, dailyDefaults.mood)} | Workout {dailyDisplayValue(entry.workoutStatus, dailyDefaults.workoutStatus)} | Alcohol {dailyDisplayValue(entry.alcohol, dailyDefaults.alcohol)}
+                  Water {entry.water} oz | Calories {Math.round(entry.calories)} kcal | Protein {formatMacro(entry.protein, "g")} | Fiber {formatMacro(entry.fiber, "g")} | Mood {dailyDisplayValue(entry.mood, dailyDefaults.mood)} | Workout {dailyDisplayValue(entry.workoutStatus, dailyDefaults.workoutStatus)}{entry.workoutCalories ? ` | Workout calories ${Math.round(entry.workoutCalories)} kcal` : ""} | Alcohol {dailyDisplayValue(entry.alcohol, dailyDefaults.alcohol)}
                 </p>
               </article>
             ))}

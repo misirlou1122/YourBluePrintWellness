@@ -445,30 +445,30 @@ export const wellnessTiles: WellnessTile[] = [
   {
     id: "fitness",
     title: "Fitness",
-    subtitle: "Plans, completed workouts, movement notes",
+    subtitle: "Plans, selected workouts, calories burned",
     icon: "dumbbell",
-    subcategories: ["What I Want To Do", "What I Did Today", "Cardio", "Strength", "Treadmill", "Recovery"],
+    subcategories: ["Workout picks", "Calories burned", "Cardio", "Strength machines", "Treadmill", "Pilates", "Yoga", "Recovery"],
     groups: [
       {
         title: "What I Want To Do",
         description: "Choose from supportive movement categories.",
-        checklist: ["Cardio", "Arms", "Legs", "Core", "Full body", "Pilates", "Stretching", "Recovery day"]
+        checklist: ["Treadmill", "Strength machines", "Pilates", "Yoga", "Stretching", "Recovery day"]
       },
       {
         title: "What I Did Today",
-        description: "Log completed movement without pressure.",
-        fields: ["Cardio completed", "Strength completed", "Sets/reps", "Duration", "Miles", "Intensity", "Notes"]
+        description: "Select completed movement and estimate calories burned.",
+        fields: ["Workout picks", "Calories burned", "Duration", "Status", "Notes"]
       },
       {
         title: "Treadmill",
         description: "Track treadmill sessions with simple fields.",
-        fields: ["Minutes", "Miles", "Incline", "Speed", "Notes"],
-        cards: [{ title: "Treadmill note", body: "Log minutes, miles, incline, speed, and how the session felt.", meta: "Personal tracking" }]
+        fields: ["Minutes", "Incline", "Speed", "Calories burned"],
+        cards: [{ title: "Treadmill note", body: "Log minutes, incline, speed, and estimated calories.", meta: "Personal tracking" }]
       },
       {
         title: "Strength",
-        description: "Capture exercises, sets, reps, and resistance.",
-        fields: ["Exercise name", "Sets", "Reps", "Weight/resistance", "Notes"]
+        description: "Capture machines, sets, reps, resistance, and estimates.",
+        fields: ["Machine", "Sets", "Reps", "Weight/resistance", "Calories burned"]
       }
     ]
   },

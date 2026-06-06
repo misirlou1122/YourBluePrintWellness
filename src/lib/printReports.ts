@@ -214,6 +214,7 @@ function wellnessReport() {
       row("Mood", todayEntry.mood),
       row("Medication status", todayEntry.medicationStatus),
       row("Workout status", todayEntry.workoutStatus),
+      row("Workout calories", todayEntry.workoutCalories ? `${todayEntry.workoutCalories} kcal` : ""),
       row("Alcohol", todayEntry.alcohol)
     ].join("")) || empty("No daily tracker values saved for today.")}`;
 }

@@ -26,6 +26,7 @@ export interface DailyTrackerEntry {
   medicationStatus: string;
   mood: string;
   workoutStatus: string;
+  workoutCalories: number;
   alcohol: string;
   alcoholDrinkType: string;
   alcoholAmount: number;
@@ -52,6 +53,7 @@ export function emptyDailyTracker(date = todayKey()): DailyTrackerEntry {
     medicationStatus: "not taken",
     mood: "not checked in",
     workoutStatus: "not logged",
+    workoutCalories: 0,
     alcohol: "none logged",
     alcoholDrinkType: "",
     alcoholAmount: 0,
