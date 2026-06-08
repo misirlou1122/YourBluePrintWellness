@@ -17,14 +17,6 @@ interface FoodProfile {
   unitMultipliers: Record<string, number>;
 }
 
-interface MealTemplate {
-  keywords: string[];
-  name: string;
-  calories: number;
-  protein: number;
-  fiber: number;
-}
-
 interface BrandedTemplate {
   brandKeywords: string[];
   itemKeywords: string[];
@@ -51,7 +43,10 @@ interface FoodMatch {
 }
 
 const quantityWords: Record<string, number> = {
+  a: 1,
+  an: 1,
   half: 0.5,
+  quarter: 0.25,
   one: 1,
   two: 2,
   three: 3,
@@ -135,14 +130,30 @@ const foods: FoodProfile[] = [
   { name: "Pasta", aliases: ["pasta", "spaghetti", "noodles"], servingUnit: "cup", calories: 220, protein: 8, fiber: 2.5, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 140, ounce: 1 / 5 } },
   { name: "Potato", aliases: ["potato", "potatoes"], servingUnit: "piece", calories: 161, protein: 4.3, fiber: 3.8, unitMultipliers: { piece: 1, serving: 1, cup: 0.85, gram: 1 / 173, ounce: 1 / 6.1 } },
   { name: "Sweet potato", aliases: ["sweet potato", "sweet potatoes"], servingUnit: "piece", calories: 112, protein: 2, fiber: 3.9, unitMultipliers: { piece: 1, serving: 1, cup: 1.6, gram: 1 / 130, ounce: 1 / 4.6 } },
-  { name: "Avocado", aliases: ["avocado"], servingUnit: "piece", calories: 240, protein: 3, fiber: 10, unitMultipliers: { piece: 1, serving: 0.5, cup: 1, gram: 1 / 150, ounce: 1 / 5.3 } },
-  { name: "Banana", aliases: ["banana"], servingUnit: "piece", calories: 105, protein: 1.3, fiber: 3.1, unitMultipliers: { piece: 1, serving: 1, gram: 1 / 118, ounce: 1 / 4.2 } },
-  { name: "Apple", aliases: ["apple"], servingUnit: "piece", calories: 95, protein: 0.5, fiber: 4.4, unitMultipliers: { piece: 1, serving: 1, gram: 1 / 182, ounce: 1 / 6.4 } },
+  { name: "Avocado", aliases: ["avocados", "avocado"], servingUnit: "piece", calories: 240, protein: 3, fiber: 10, unitMultipliers: { piece: 1, serving: 0.5, cup: 1, gram: 1 / 150, ounce: 1 / 5.3 } },
+  { name: "Banana", aliases: ["bananas", "banana"], servingUnit: "piece", calories: 105, protein: 1.3, fiber: 3.1, unitMultipliers: { piece: 1, serving: 1, gram: 1 / 118, ounce: 1 / 4.2 } },
+  { name: "Apple", aliases: ["apples", "apple"], servingUnit: "piece", calories: 95, protein: 0.5, fiber: 4.4, unitMultipliers: { piece: 1, serving: 1, gram: 1 / 182, ounce: 1 / 6.4 } },
   { name: "Berries", aliases: ["berries", "blueberries", "strawberries", "raspberries"], servingUnit: "cup", calories: 85, protein: 1.1, fiber: 3.6, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 148, ounce: 1 / 5.2 } },
   { name: "Broccoli", aliases: ["broccoli"], servingUnit: "cup", calories: 55, protein: 3.7, fiber: 5.1, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 156, ounce: 1 / 5.5 } },
+  { name: "Cabbage", aliases: ["shredded cabbage", "green cabbage", "red cabbage", "cabbage"], servingUnit: "cup", calories: 18, protein: 0.9, fiber: 1.8, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 70, ounce: 28.35 / 70 } },
+  { name: "Carrots", aliases: ["shredded carrots", "carrot sticks", "carrots", "carrot"], servingUnit: "cup", calories: 52, protein: 1.2, fiber: 3.6, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 128, ounce: 28.35 / 128 } },
+  { name: "Cauliflower", aliases: ["cauliflower"], servingUnit: "cup", calories: 27, protein: 2.1, fiber: 2.1, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 107, ounce: 28.35 / 107 } },
+  { name: "Cucumber", aliases: ["cucumber", "cucumbers"], servingUnit: "cup", calories: 16, protein: 0.7, fiber: 0.5, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 104, ounce: 28.35 / 104 } },
+  { name: "Kale", aliases: ["kale"], servingUnit: "cup", calories: 7, protein: 0.6, fiber: 0.8, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 21, ounce: 28.35 / 21 } },
+  { name: "Romaine lettuce", aliases: ["romaine lettuce", "lettuce"], servingUnit: "cup", calories: 8, protein: 0.6, fiber: 1, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 47, ounce: 28.35 / 47 } },
+  { name: "Tomato", aliases: ["tomatoes", "tomato"], servingUnit: "piece", calories: 22, protein: 1.1, fiber: 1.5, unitMultipliers: { piece: 1, serving: 1, cup: 1.45, gram: 1 / 123, ounce: 28.35 / 123 } },
+  { name: "Bell pepper", aliases: ["bell pepper", "peppers", "pepper"], servingUnit: "cup", calories: 30, protein: 1, fiber: 2.5, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 92, ounce: 28.35 / 92 } },
+  { name: "Onion", aliases: ["onions", "onion"], servingUnit: "cup", calories: 64, protein: 1.8, fiber: 2.7, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 160, ounce: 28.35 / 160 } },
+  { name: "Zucchini", aliases: ["zucchini"], servingUnit: "cup", calories: 21, protein: 1.5, fiber: 1.2, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 124, ounce: 28.35 / 124 } },
   { name: "Spinach", aliases: ["spinach"], servingUnit: "cup", calories: 7, protein: 0.9, fiber: 0.7, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 30, ounce: 1 / 1.1 } },
   { name: "Mixed salad", aliases: ["salad", "mixed greens"], servingUnit: "bowl", calories: 140, protein: 4, fiber: 5, unitMultipliers: { bowl: 1, plate: 1, cup: 0.2, serving: 1 } },
   { name: "Almonds", aliases: ["almonds", "almond"], servingUnit: "ounce", calories: 164, protein: 6, fiber: 3.5, unitMultipliers: { ounce: 1, handful: 1, serving: 1, gram: 1 / 28.35, cup: 4.9 } },
+  { name: "Chia seeds", aliases: ["ground chia seeds", "chia seeds", "chia seed"], servingUnit: "tablespoon", calories: 58, protein: 2, fiber: 4.1, unitMultipliers: { tablespoon: 1, teaspoon: 1 / 3, serving: 2, gram: 1 / 12, ounce: 28.35 / 12 } },
+  { name: "Ground flaxseed", aliases: ["ground flaxseed", "flaxseed", "flax seeds", "flax"], servingUnit: "tablespoon", calories: 37, protein: 1.3, fiber: 1.9, unitMultipliers: { tablespoon: 1, teaspoon: 1 / 3, serving: 2, gram: 1 / 7, ounce: 28.35 / 7 } },
+  { name: "Hemp seeds", aliases: ["hemp hearts", "hemp seeds", "hemp seed"], servingUnit: "tablespoon", calories: 57, protein: 3.2, fiber: 0.3, unitMultipliers: { tablespoon: 1, teaspoon: 1 / 3, serving: 3, gram: 1 / 10, ounce: 28.35 / 10 } },
+  { name: "Pumpkin seeds", aliases: ["pumpkin seeds", "pepitas"], servingUnit: "ounce", calories: 158, protein: 8.6, fiber: 1.7, unitMultipliers: { ounce: 1, handful: 1, serving: 1, tablespoon: 0.25, teaspoon: 1 / 12, gram: 1 / 28.35 } },
+  { name: "Walnuts", aliases: ["walnuts", "walnut"], servingUnit: "ounce", calories: 185, protein: 4.3, fiber: 1.9, unitMultipliers: { ounce: 1, handful: 1, serving: 1, cup: 4.2, gram: 1 / 28.35 } },
+  { name: "Pecans", aliases: ["pecans", "pecan"], servingUnit: "ounce", calories: 196, protein: 2.6, fiber: 2.7, unitMultipliers: { ounce: 1, handful: 1, serving: 1, cup: 3.9, gram: 1 / 28.35 } },
   { name: "Peanut butter", aliases: ["peanut butter"], servingUnit: "tablespoon", calories: 95, protein: 3.5, fiber: 1, unitMultipliers: { tablespoon: 1, teaspoon: 1 / 3, serving: 2, gram: 1 / 16 } },
   { name: "Protein shake", aliases: ["protein shake", "protein powder"], servingUnit: "scoop", calories: 120, protein: 24, fiber: 1, unitMultipliers: { scoop: 1, serving: 1 } },
   { name: "Protein bar", aliases: ["protein bar"], servingUnit: "bar", calories: 200, protein: 20, fiber: 6, unitMultipliers: { bar: 1, serving: 1 } },
@@ -163,14 +174,6 @@ const foods: FoodProfile[] = [
   { name: "Smoothie", aliases: ["smoothie"], servingUnit: "serving", calories: 280, protein: 12, fiber: 5, unitMultipliers: { serving: 1, cup: 0.5 } },
   { name: "Sushi", aliases: ["sushi"], servingUnit: "piece", calories: 45, protein: 2, fiber: 0.4, unitMultipliers: { piece: 1, serving: 6 } },
   { name: "Cereal", aliases: ["cereal"], servingUnit: "cup", calories: 160, protein: 4, fiber: 3, unitMultipliers: { cup: 1, bowl: 1.5, serving: 1 } }
-];
-
-const mealTemplates: MealTemplate[] = [
-  { keywords: ["breakfast"], name: "Estimated breakfast", calories: 420, protein: 22, fiber: 5 },
-  { keywords: ["lunch"], name: "Estimated lunch", calories: 550, protein: 28, fiber: 6 },
-  { keywords: ["dinner"], name: "Estimated dinner", calories: 650, protein: 35, fiber: 7 },
-  { keywords: ["snack"], name: "Estimated snack", calories: 220, protein: 8, fiber: 3 },
-  { keywords: ["meal"], name: "Estimated meal", calories: 550, protein: 28, fiber: 6 }
 ];
 
 const brandedTemplates: BrandedTemplate[] = [
@@ -281,6 +284,11 @@ function quantityPattern(unitOptional = true) {
   return new RegExp(`\\b(\\d+\\s*\\/\\s*\\d+|\\d+(?:\\.\\d+)?|${words})\\s*(${units})?\\b`, unitOptional ? "gi" : "g");
 }
 
+function bareUnitPattern() {
+  const units = Object.keys(unitAliases).join("|");
+  return new RegExp(`\\b(${units})\\b`, "gi");
+}
+
 function lastSeparatorIndex(value: string) {
   return Math.max(value.lastIndexOf(" and "), value.lastIndexOf(" with "), value.lastIndexOf(" plus "), value.lastIndexOf(","), value.lastIndexOf("+"));
 }
@@ -302,6 +310,17 @@ function parseServing(input: string, match: FoodMatch) {
 
       return {
         quantity: parseQuantityValue(lastMatch[1].replace(/\s+/g, "")),
+        unit
+      };
+    }
+
+    const bareMatches = Array.from(context.matchAll(bareUnitPattern()));
+    for (let index = bareMatches.length - 1; index >= 0; index -= 1) {
+      const unit = normalizeUnit(bareMatches[index][1], match.food.servingUnit);
+      if (!match.food.unitMultipliers[unit]) continue;
+
+      return {
+        quantity: 1,
         unit
       };
     }
@@ -344,10 +363,6 @@ function findFoodMatches(input: string) {
   }
 
   return matches.sort((a, b) => a.index - b.index);
-}
-
-function findTemplate(input: string) {
-  return mealTemplates.find((template) => template.keywords.some((keyword) => new RegExp(`\\b${keyword}\\b`).test(input)));
 }
 
 function hasKeyword(input: string, keyword: string) {
@@ -410,6 +425,12 @@ function formatNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
 }
 
+function formatUnit(unit: string, quantity: number) {
+  if (quantity === 1) return unit;
+  if (unit.endsWith("y")) return `${unit.slice(0, -1)}ies`;
+  return `${unit}s`;
+}
+
 function roundMacro(value: number) {
   return Math.round(value * 10) / 10;
 }
@@ -439,7 +460,7 @@ export function estimateFoodNutrition(input: string): NutritionEstimate | null {
       const multiplier = serving.quantity * (match.food.unitMultipliers[serving.unit] ?? 1);
       return {
         name: match.food.name,
-        quantityLabel: `${formatNumber(serving.quantity)} ${serving.unit}${serving.quantity === 1 ? "" : "s"}`,
+        quantityLabel: `${formatNumber(serving.quantity)} ${formatUnit(serving.unit, serving.quantity)}`,
         calories: Math.round(match.food.calories * multiplier),
         protein: roundMacro(match.food.protein * multiplier),
         fiber: roundMacro(match.food.fiber * multiplier)
@@ -448,7 +469,7 @@ export function estimateFoodNutrition(input: string): NutritionEstimate | null {
 
     return {
       input: input.trim(),
-      matchedFoodName: lineItems.map((item) => item.name).join(" + "),
+      matchedFoodName: lineItems.length === 1 ? lineItems[0].name : lineItems.map((item) => `${item.quantityLabel} ${item.name}`).join(" + "),
       quantityLabel: lineItems.length === 1 ? lineItems[0].quantityLabel : `${lineItems.length} matched foods`,
       calories: lineItems.reduce((total, item) => total + item.calories, 0),
       protein: roundMacro(lineItems.reduce((total, item) => total + item.protein, 0)),
@@ -456,14 +477,5 @@ export function estimateFoodNutrition(input: string): NutritionEstimate | null {
     };
   }
 
-  const template = findTemplate(normalizedInput) ?? { name: "Estimated meal", calories: 500, protein: 24, fiber: 5 };
-
-  return {
-    input: input.trim(),
-    matchedFoodName: template.name,
-    quantityLabel: "1 entry",
-    calories: template.calories,
-    protein: template.protein,
-    fiber: template.fiber
-  };
+  return null;
 }

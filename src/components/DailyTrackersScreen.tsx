@@ -518,7 +518,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
 
           <div className="grid gap-3">
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-              <FormField label="Meal tracker" value={foodInput} onChange={setFoodInput} placeholder="eggs and toast, chicken rice and broccoli" />
+              <FormField label="Meal tracker" value={foodInput} onChange={setFoodInput} placeholder="1 cup shredded cabbage + 1 tsp ground chia seeds" />
               <button
                 type="button"
                 onClick={saveFoodEntry}
@@ -533,7 +533,7 @@ export function DailyTrackersScreen({ selectedProfile, customTileIds }: DailyTra
               <p className={`rounded-2xl border p-3 text-sm leading-6 ${foodEstimate ? "border-ice/20 bg-ice/10 text-ice" : "border-champagne/20 bg-champagne/10 text-champagne"}`}>
                 {foodEstimate
                   ? `${foodEstimate.quantityLabel} ${foodEstimate.matchedFoodName}: ${formatFoodNutrition(foodEstimate)}`
-                  : "No estimate found yet"}
+                  : "No reliable estimate found yet. Add a food with an amount, choose a saved food, or use Manual nutrition."}
               </p>
             ) : null}
             {savedProducts.length ? (
