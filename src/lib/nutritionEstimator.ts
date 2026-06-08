@@ -92,6 +92,10 @@ const unitAliases: Record<string, string> = {
   pieces: "piece",
   bar: "bar",
   bars: "bar",
+  shake: "shake",
+  shakes: "shake",
+  bottle: "bottle",
+  bottles: "bottle",
   handful: "handful",
   handfuls: "handful",
   patty: "patty",
@@ -110,6 +114,7 @@ const foods: FoodProfile[] = [
   { name: "Cottage cheese", aliases: ["cottage cheese"], servingUnit: "cup", calories: 180, protein: 26, fiber: 0, unitMultipliers: { cup: 1, serving: 0.5, gram: 1 / 226, ounce: 1 / 8 } },
   { name: "Greek yogurt", aliases: ["greek yogurt", "yogurt"], servingUnit: "cup", calories: 130, protein: 23, fiber: 0, unitMultipliers: { cup: 1, serving: 0.75, gram: 1 / 245, ounce: 1 / 8.6 } },
   { name: "Egg", aliases: ["egg", "eggs"], servingUnit: "egg", calories: 72, protein: 6, fiber: 0, unitMultipliers: { egg: 1, piece: 1, serving: 1 } },
+  { name: "Costco chicken breast bites", aliases: ["costco chicken breast bites", "chicken breast bites"], servingUnit: "serving", calories: 140, protein: 24, fiber: 0, unitMultipliers: { serving: 1, ounce: 0.25, gram: 1 / 112 } },
   { name: "Chicken breast", aliases: ["chicken breast", "grilled chicken", "chicken"], servingUnit: "ounce", calories: 47, protein: 8.8, fiber: 0, unitMultipliers: { ounce: 1, gram: 1 / 28.35, pound: 16, serving: 3 } },
   { name: "Turkey burger patty", aliases: ["turkey burger patty", "turkey burger patties", "turkey burger"], servingUnit: "patty", calories: 170, protein: 22, fiber: 0, unitMultipliers: { patty: 1, piece: 1, serving: 1 } },
   { name: "Turkey", aliases: ["turkey"], servingUnit: "ounce", calories: 45, protein: 8, fiber: 0, unitMultipliers: { ounce: 1, gram: 1 / 28.35, serving: 3 } },
@@ -127,7 +132,8 @@ const foods: FoodProfile[] = [
   { name: "Oatmeal", aliases: ["oatmeal", "oats"], servingUnit: "cup", calories: 154, protein: 6, fiber: 4, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 234, ounce: 1 / 8.3 } },
   { name: "Rice", aliases: ["white rice", "brown rice", "rice"], servingUnit: "cup", calories: 216, protein: 5, fiber: 3.5, unitMultipliers: { cup: 1, serving: 0.5, gram: 1 / 195, ounce: 1 / 6.9 } },
   { name: "Quinoa", aliases: ["quinoa"], servingUnit: "cup", calories: 222, protein: 8, fiber: 5, unitMultipliers: { cup: 1, serving: 0.5, gram: 1 / 185, ounce: 1 / 6.5 } },
-  { name: "Pasta", aliases: ["pasta", "spaghetti", "noodles"], servingUnit: "cup", calories: 220, protein: 8, fiber: 2.5, unitMultipliers: { cup: 1, serving: 1, gram: 1 / 140, ounce: 1 / 5 } },
+  { name: "Pasta", aliases: ["cooked spaghetti", "cooked pasta", "pasta", "spaghetti", "noodles"], servingUnit: "cup", calories: 220, protein: 8, fiber: 2.5, unitMultipliers: { cup: 1, serving: 1, plate: 2, bowl: 2, gram: 1 / 140, ounce: 1 / 5 } },
+  { name: "Marinara sauce", aliases: ["marinara sauce", "tomato sauce"], servingUnit: "cup", calories: 135, protein: 3.5, fiber: 4, unitMultipliers: { cup: 1, serving: 0.5, tablespoon: 1 / 16, ounce: 1 / 8.6, gram: 1 / 245 } },
   { name: "Potato", aliases: ["potato", "potatoes"], servingUnit: "piece", calories: 161, protein: 4.3, fiber: 3.8, unitMultipliers: { piece: 1, serving: 1, cup: 0.85, gram: 1 / 173, ounce: 1 / 6.1 } },
   { name: "Sweet potato", aliases: ["sweet potato", "sweet potatoes"], servingUnit: "piece", calories: 112, protein: 2, fiber: 3.9, unitMultipliers: { piece: 1, serving: 1, cup: 1.6, gram: 1 / 130, ounce: 1 / 4.6 } },
   { name: "Avocado", aliases: ["avocados", "avocado"], servingUnit: "piece", calories: 240, protein: 3, fiber: 10, unitMultipliers: { piece: 1, serving: 0.5, cup: 1, gram: 1 / 150, ounce: 1 / 5.3 } },
@@ -155,9 +161,11 @@ const foods: FoodProfile[] = [
   { name: "Walnuts", aliases: ["walnuts", "walnut"], servingUnit: "ounce", calories: 185, protein: 4.3, fiber: 1.9, unitMultipliers: { ounce: 1, handful: 1, serving: 1, cup: 4.2, gram: 1 / 28.35 } },
   { name: "Pecans", aliases: ["pecans", "pecan"], servingUnit: "ounce", calories: 196, protein: 2.6, fiber: 2.7, unitMultipliers: { ounce: 1, handful: 1, serving: 1, cup: 3.9, gram: 1 / 28.35 } },
   { name: "Peanut butter", aliases: ["peanut butter"], servingUnit: "tablespoon", calories: 95, protein: 3.5, fiber: 1, unitMultipliers: { tablespoon: 1, teaspoon: 1 / 3, serving: 2, gram: 1 / 16 } },
-  { name: "Protein shake", aliases: ["protein shake", "protein powder"], servingUnit: "scoop", calories: 120, protein: 24, fiber: 1, unitMultipliers: { scoop: 1, serving: 1 } },
+  { name: "Kirkland chocolate protein shake", aliases: ["kirkland signature chocolate protein shake", "kirkland chocolate protein shake", "costco chocolate protein shake", "costco protein shake"], servingUnit: "shake", calories: 160, protein: 30, fiber: 0, unitMultipliers: { shake: 1, bottle: 1, serving: 1 } },
+  { name: "Protein shake", aliases: ["protein shake", "protein powder"], servingUnit: "scoop", calories: 120, protein: 24, fiber: 1, unitMultipliers: { scoop: 1, shake: 1, serving: 1 } },
   { name: "Protein bar", aliases: ["protein bar"], servingUnit: "bar", calories: 200, protein: 20, fiber: 6, unitMultipliers: { bar: 1, serving: 1 } },
   { name: "Whole wheat bread", aliases: ["whole wheat bread", "bread", "toast"], servingUnit: "slice", calories: 80, protein: 4, fiber: 2, unitMultipliers: { slice: 1, piece: 1, serving: 1 } },
+  { name: "Garlic bread", aliases: ["garlic breads", "garlic bread"], servingUnit: "slice", calories: 150, protein: 4, fiber: 1.5, unitMultipliers: { slice: 1, piece: 1, serving: 1 } },
   { name: "Tortilla", aliases: ["tortilla"], servingUnit: "tortilla", calories: 140, protein: 4, fiber: 2, unitMultipliers: { tortilla: 1, piece: 1, serving: 1 } },
   { name: "American cheese", aliases: ["american cheese"], servingUnit: "slice", calories: 60, protein: 3.5, fiber: 0, unitMultipliers: { slice: 1, ounce: 1.6, serving: 1, gram: 1 / 19 } },
   { name: "Cheese", aliases: ["cheese", "cheddar", "mozzarella"], servingUnit: "ounce", calories: 113, protein: 7, fiber: 0, unitMultipliers: { ounce: 1, slice: 0.75, serving: 1, gram: 1 / 28.35 } },
@@ -173,6 +181,7 @@ const foods: FoodProfile[] = [
   { name: "Soup", aliases: ["soup", "chili"], servingUnit: "cup", calories: 180, protein: 10, fiber: 4, unitMultipliers: { cup: 1, bowl: 2, serving: 1.5 } },
   { name: "Smoothie", aliases: ["smoothie"], servingUnit: "serving", calories: 280, protein: 12, fiber: 5, unitMultipliers: { serving: 1, cup: 0.5 } },
   { name: "Sushi", aliases: ["sushi"], servingUnit: "piece", calories: 45, protein: 2, fiber: 0.4, unitMultipliers: { piece: 1, serving: 6 } },
+  { name: "Coffee", aliases: ["black coffee", "coffee"], servingUnit: "cup", calories: 2, protein: 0.3, fiber: 0, unitMultipliers: { cup: 1, serving: 1, ounce: 1 / 8 } },
   { name: "Cereal", aliases: ["cereal"], servingUnit: "cup", calories: 160, protein: 4, fiber: 3, unitMultipliers: { cup: 1, bowl: 1.5, serving: 1 } }
 ];
 
@@ -202,15 +211,6 @@ const brandedTemplates: BrandedTemplate[] = [
     quantityLabel: "1 serving/default serving",
     calories: 150,
     protein: 24,
-    fiber: 0
-  },
-  {
-    brandKeywords: ["kirkland", "costco"],
-    itemKeywords: ["chocolate", "protein", "shake"],
-    name: "Kirkland Signature chocolate protein shake",
-    quantityLabel: "1 shake/default serving",
-    calories: 160,
-    protein: 30,
     fiber: 0
   },
   {
@@ -293,20 +293,36 @@ function lastSeparatorIndex(value: string) {
   return Math.max(value.lastIndexOf(" and "), value.lastIndexOf(" with "), value.lastIndexOf(" plus "), value.lastIndexOf(","), value.lastIndexOf("+"));
 }
 
+function firstSeparatorIndex(value: string) {
+  const indexes = [" and ", " with ", " plus ", ",", "+"]
+    .map((separator) => value.indexOf(separator))
+    .filter((index) => index >= 0);
+  return indexes.length ? Math.min(...indexes) : -1;
+}
+
+const specificAfterUnits = new Set(["bar", "bottle", "bun", "can", "egg", "patty", "piece", "shake", "slice", "scoop", "tortilla"]);
+
 function parseServing(input: string, match: FoodMatch) {
   const before = input.slice(0, match.index);
   const separatorIndex = lastSeparatorIndex(before);
   const nearbyBefore = before.slice(Math.max(separatorIndex + 1, before.length - 42)).trim();
   const after = input.slice(match.endIndex, Math.min(input.length, match.endIndex + 28));
-  const nearbyAfter = after.slice(0, Math.max(lastSeparatorIndex(after), 0) || after.length).trim();
-  const contexts = [nearbyBefore, nearbyAfter];
+  const afterStartsWithSeparator = /^\s*(and|with|plus|,|\+)/.test(after);
+  const afterContextSource = afterStartsWithSeparator ? after.replace(/^\s*(and|with|plus|,|\+)\s*/, "") : after;
+  const afterSeparatorIndex = firstSeparatorIndex(afterContextSource);
+  const nearbyAfter = (afterSeparatorIndex >= 0 ? afterContextSource.slice(0, afterSeparatorIndex) : afterContextSource).trim();
+  const contexts = [
+    { text: nearbyBefore, specificUnitOnly: false },
+    { text: nearbyAfter, specificUnitOnly: afterStartsWithSeparator }
+  ];
 
   for (const context of contexts) {
-    const matches = Array.from(context.matchAll(quantityPattern()));
+    const matches = Array.from(context.text.matchAll(quantityPattern()));
     for (let index = matches.length - 1; index >= 0; index -= 1) {
       const lastMatch = matches[index];
       const unit = normalizeUnit(lastMatch[2], match.food.servingUnit);
       if (!match.food.unitMultipliers[unit]) continue;
+      if (context.specificUnitOnly && (!lastMatch[2] || !specificAfterUnits.has(unit))) continue;
 
       return {
         quantity: parseQuantityValue(lastMatch[1].replace(/\s+/g, "")),
@@ -314,10 +330,11 @@ function parseServing(input: string, match: FoodMatch) {
       };
     }
 
-    const bareMatches = Array.from(context.matchAll(bareUnitPattern()));
+    const bareMatches = Array.from(context.text.matchAll(bareUnitPattern()));
     for (let index = bareMatches.length - 1; index >= 0; index -= 1) {
       const unit = normalizeUnit(bareMatches[index][1], match.food.servingUnit);
       if (!match.food.unitMultipliers[unit]) continue;
+      if (context.specificUnitOnly && !specificAfterUnits.has(unit)) continue;
 
       return {
         quantity: 1,
@@ -435,6 +452,23 @@ function roundMacro(value: number) {
   return Math.round(value * 10) / 10;
 }
 
+function estimateFoodMatch(input: string, match: FoodMatch) {
+  const serving = parseServing(input, match);
+  const multiplier = serving.quantity * (match.food.unitMultipliers[serving.unit] ?? 1);
+  return {
+    name: match.food.name,
+    quantityLabel: `${formatNumber(serving.quantity)} ${formatUnit(serving.unit, serving.quantity)}`,
+    calories: Math.round(match.food.calories * multiplier),
+    protein: roundMacro(match.food.protein * multiplier),
+    fiber: roundMacro(match.food.fiber * multiplier)
+  };
+}
+
+function brandedCoversFoodMatch(estimate: NutritionEstimate, match: FoodMatch) {
+  const brandedName = estimate.matchedFoodName.toLowerCase();
+  return match.food.aliases.some((alias) => brandedName.includes(alias)) || brandedName.includes(match.alias);
+}
+
 export function estimateFoodNutrition(input: string): NutritionEstimate | null {
   const normalizedInput = normalizeInput(input);
   if (!normalizedInput) {
@@ -442,34 +476,25 @@ export function estimateFoodNutrition(input: string): NutritionEstimate | null {
   }
 
   const brandedEstimates = findBrandedTemplates(normalizedInput);
-  if (brandedEstimates.length) {
-    return {
-      input: input.trim(),
-      matchedFoodName: brandedEstimates.map((estimate) => estimate.matchedFoodName).join(" + "),
-      quantityLabel: brandedEstimates.length === 1 ? brandedEstimates[0].quantityLabel : `${brandedEstimates.length} branded items`,
-      calories: brandedEstimates.reduce((total, estimate) => total + estimate.calories, 0),
-      protein: roundMacro(brandedEstimates.reduce((total, estimate) => total + estimate.protein, 0)),
-      fiber: roundMacro(brandedEstimates.reduce((total, estimate) => total + estimate.fiber, 0))
-    };
-  }
-
   const matches = findFoodMatches(normalizedInput);
-  if (matches.length) {
-    const lineItems = matches.map((match) => {
-      const serving = parseServing(normalizedInput, match);
-      const multiplier = serving.quantity * (match.food.unitMultipliers[serving.unit] ?? 1);
-      return {
-        name: match.food.name,
-        quantityLabel: `${formatNumber(serving.quantity)} ${formatUnit(serving.unit, serving.quantity)}`,
-        calories: Math.round(match.food.calories * multiplier),
-        protein: roundMacro(match.food.protein * multiplier),
-        fiber: roundMacro(match.food.fiber * multiplier)
-      };
-    });
+  const lineItems = [
+    ...brandedEstimates.map((estimate) => ({
+      name: estimate.matchedFoodName,
+      quantityLabel: estimate.quantityLabel,
+      calories: estimate.calories,
+      protein: estimate.protein,
+      fiber: estimate.fiber
+    })),
+    ...matches.filter((match) => !brandedEstimates.some((estimate) => brandedCoversFoodMatch(estimate, match))).map((match) => estimateFoodMatch(normalizedInput, match))
+  ];
+
+  if (lineItems.length) {
+    const matchedFoodName =
+      lineItems.length === 1 ? lineItems[0].name : lineItems.map((item) => `${item.quantityLabel} ${item.name}`).join(" + ");
 
     return {
       input: input.trim(),
-      matchedFoodName: lineItems.length === 1 ? lineItems[0].name : lineItems.map((item) => `${item.quantityLabel} ${item.name}`).join(" + "),
+      matchedFoodName,
       quantityLabel: lineItems.length === 1 ? lineItems[0].quantityLabel : `${lineItems.length} matched foods`,
       calories: lineItems.reduce((total, item) => total + item.calories, 0),
       protein: roundMacro(lineItems.reduce((total, item) => total + item.protein, 0)),
