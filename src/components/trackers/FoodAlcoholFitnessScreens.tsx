@@ -135,6 +135,7 @@ function normalizeFitnessActivity(activity: FitnessActivityEntry): FitnessActivi
     type: activity.type ?? option?.type ?? "cardio",
     name: activity.name || option?.label || "Workout",
     minutes: activity.minutes ?? option?.defaultMinutes ?? "",
+    miles: activity.miles ?? "",
     met: activity.met ?? option?.met,
     speed: activity.speed ?? option?.defaultSpeed,
     incline: activity.incline ?? option?.defaultIncline,
@@ -177,7 +178,11 @@ function activityDetail(activity: FitnessActivityEntry) {
     return [setLabel, weights.join(", ")].filter(Boolean).join(" | ");
   }
 
-  return `${activity.minutes || "0"} min`;
+  return [activity.minutes ? `${activity.minutes} min` : "0 min", activity.miles ? `${activity.miles} mi` : ""].filter(Boolean).join(" | ");
+}
+
+function activitySupportsMiles(activity: FitnessActivityEntry) {
+  return Boolean(getFitnessActivityOption(activity.optionId)?.supportsMiles);
 }
 
 function ChoiceButton({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
@@ -511,7 +516,7 @@ export function FitnessScreen() {
       treadmillMinutes: treadmill?.minutes ?? "",
       treadmillIncline: treadmill?.incline ?? "",
       treadmillSpeed: treadmill?.speed ?? "",
-      treadmillMiles: current.treadmillMiles,
+      treadmillMiles: treadmill?.miles ?? current.treadmillMiles,
       strengthExercise: strengthActivities.map((activity) => `${activity.name} ${activityDetail(activity)}`).join(" | "),
       sets: maxSets ? String(maxSets) : "",
       reps: allSets[0]?.reps ?? "",
@@ -640,8 +645,11 @@ export function FitnessScreen() {
                     </div>
 
                     {activity.type === "cardio" ? (
-                      <div className="mt-3 max-w-sm">
+                      <div className={`mt-3 grid gap-3 ${activitySupportsMiles(activity) ? "sm:grid-cols-2" : "max-w-sm"}`}>
                         <NumberStepper label="Minutes" value={activity.minutes} onChange={(value) => updateActivity(activity.id, { minutes: value })} suffix="min" />
+                        {activitySupportsMiles(activity) ? (
+                          <NumberStepper label="Miles" value={activity.miles ?? ""} onChange={(value) => updateActivity(activity.id, { miles: value })} step={0.1} suffix="mi" />
+                        ) : null}
                       </div>
                     ) : null}
 

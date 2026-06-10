@@ -12,6 +12,7 @@ export interface FitnessActivityEntry {
   type: FitnessActivityType;
   name: string;
   minutes: string;
+  miles?: string;
   met?: number;
   speed?: string;
   incline?: string;
@@ -24,6 +25,7 @@ export interface FitnessActivityOption {
   type: FitnessActivityType;
   defaultMinutes: string;
   met: number;
+  supportsMiles?: boolean;
   defaultSpeed?: string;
   defaultIncline?: string;
   defaultWeights?: string[];
@@ -45,15 +47,16 @@ export const quickWorkoutOptions: QuickWorkoutOption[] = [
 ];
 
 export const cardioOptions: FitnessActivityOption[] = [
-  { id: "treadmill-walk", label: "Treadmill walk", type: "cardio", defaultMinutes: "30", met: 3.4 },
-  { id: "outdoor-walk", label: "Outdoor walk", type: "cardio", defaultMinutes: "30", met: 3.3 },
-  { id: "elliptical", label: "Elliptical", type: "cardio", defaultMinutes: "30", met: 5 },
-  { id: "stationary-bike", label: "Stationary bike", type: "cardio", defaultMinutes: "30", met: 4.8 },
+  { id: "treadmill-walk", label: "Treadmill walk", type: "cardio", defaultMinutes: "30", met: 3.4, supportsMiles: true },
+  { id: "outdoor-walk", label: "Outdoor walk", type: "cardio", defaultMinutes: "30", met: 3.3, supportsMiles: true },
+  { id: "elliptical", label: "Elliptical", type: "cardio", defaultMinutes: "30", met: 5, supportsMiles: true },
+  { id: "stationary-bike", label: "Stationary bike", type: "cardio", defaultMinutes: "30", met: 4.8, supportsMiles: true },
   { id: "swimming", label: "Swimming", type: "cardio", defaultMinutes: "30", met: 6 }
 ];
 
 export const strengthMachineOptions: FitnessActivityOption[] = [
-  { id: "inner-outer-thighs", label: "Inner / outer thighs", type: "strength", defaultMinutes: "12", met: 3.5, defaultWeights: ["25", "30", "45"] },
+  { id: "adductor-inner-thighs", label: "Adductor (inner thighs)", type: "strength", defaultMinutes: "12", met: 3.5, defaultWeights: ["25", "30", "45"] },
+  { id: "abductor-outer-thighs", label: "Abductor (outer thighs)", type: "strength", defaultMinutes: "12", met: 3.5, defaultWeights: ["25", "30", "45"] },
   { id: "leg-press", label: "Leg press", type: "strength", defaultMinutes: "12", met: 3.8, defaultWeights: ["25", "25", "25"] },
   { id: "leg-extension", label: "Leg extension", type: "strength", defaultMinutes: "10", met: 3.5, defaultWeights: ["25", "30", "35"] },
   { id: "leg-curl", label: "Leg curl", type: "strength", defaultMinutes: "10", met: 3.5, defaultWeights: ["25", "30", "35"] },
@@ -87,6 +90,7 @@ export function buildFitnessActivity(option: FitnessActivityOption, id: string, 
     type: option.type,
     name: option.label,
     minutes: option.defaultMinutes,
+    miles: "",
     met: option.met,
     speed: option.defaultSpeed,
     incline: option.defaultIncline,
