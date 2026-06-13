@@ -79,7 +79,8 @@ export const mindBodyOptions: FitnessActivityOption[] = [
 
 export const recoveryOptions: FitnessActivityOption[] = [
   { id: "sauna", label: "Sauna", type: "recovery", defaultMinutes: "15", met: 1.5 },
-  { id: "steam-room", label: "Steam room", type: "recovery", defaultMinutes: "15", met: 1.5 }
+  { id: "steam-room", label: "Steam room", type: "recovery", defaultMinutes: "15", met: 1.5 },
+  { id: "tanning", label: "Tanning", type: "recovery", defaultMinutes: "10", met: 1.3 }
 ];
 
 export const fitnessActivityOptions = [...cardioOptions, ...strengthMachineOptions, ...mindBodyOptions, ...recoveryOptions];

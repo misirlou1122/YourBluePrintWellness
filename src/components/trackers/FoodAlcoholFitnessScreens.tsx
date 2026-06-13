@@ -625,7 +625,7 @@ export function FitnessScreen() {
           </div>
 
           <div className="grid gap-2">
-            <p className="text-sm font-semibold text-periwinkle/85">Sauna + steam room</p>
+            <p className="text-sm font-semibold text-periwinkle/85">Sauna + steam room + tanning</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {recoveryOptions.map((option) => (
                 <ChoiceButton
