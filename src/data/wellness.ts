@@ -447,17 +447,17 @@ export const wellnessTiles: WellnessTile[] = [
     title: "Fitness",
     subtitle: "Plans, selected workouts, calories burned",
     icon: "dumbbell",
-    subcategories: ["Calories burned", "Cardio", "Strength machines", "Treadmill", "Swimming", "Pilates", "Yoga", "Recovery"],
+    subcategories: ["Calories burned", "Cardio", "Strength machines", "Treadmill", "Swimming", "Pilates", "Yoga", "Sauna", "Steam room", "Recovery"],
     groups: [
       {
         title: "What I Want To Do",
         description: "Choose from supportive movement categories.",
-        checklist: ["Treadmill", "Swimming", "Strength machines", "Pilates", "Yoga", "Stretching", "Recovery day"]
+        checklist: ["Treadmill", "Swimming", "Strength machines", "Pilates", "Yoga", "Stretching", "Sauna", "Steam room", "Recovery day"]
       },
       {
         title: "What I Did Today",
         description: "Select completed movement and estimate calories burned.",
-        fields: ["Cardio", "Strength machines", "Calories burned", "Duration", "Status", "Notes"]
+        fields: ["Cardio", "Strength machines", "Sauna / steam room", "Calories burned", "Duration", "Status", "Notes"]
       },
       {
         title: "Treadmill",

@@ -16,6 +16,7 @@ import {
   getFitnessActivityOption,
   mindBodyOptions,
   parsePositiveNumber,
+  recoveryOptions,
   strengthMachineOptions,
   summarizeWorkout,
   type FitnessActivityEntry,
@@ -623,6 +624,20 @@ export function FitnessScreen() {
             </div>
           </div>
 
+          <div className="grid gap-2">
+            <p className="text-sm font-semibold text-periwinkle/85">Sauna + steam room</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {recoveryOptions.map((option) => (
+                <ChoiceButton
+                  key={option.id}
+                  label={option.label}
+                  selected={activities.some((activity) => activity.optionId === option.id)}
+                  onClick={() => toggleActivity(option)}
+                />
+              ))}
+            </div>
+          </div>
+
           <div className="grid gap-3">
             {activities.length ? (
               activities.map((activity) => {
@@ -653,7 +668,7 @@ export function FitnessScreen() {
                       </div>
                     ) : null}
 
-                    {activity.type === "mind-body" ? (
+                    {activity.type === "mind-body" || activity.type === "recovery" ? (
                       <div className="mt-3 max-w-sm">
                         <NumberStepper label="Minutes" value={activity.minutes} onChange={(value) => updateActivity(activity.id, { minutes: value })} suffix="min" />
                       </div>

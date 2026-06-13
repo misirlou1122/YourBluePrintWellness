@@ -1,4 +1,4 @@
-export type FitnessActivityType = "cardio" | "strength" | "mind-body";
+export type FitnessActivityType = "cardio" | "strength" | "mind-body" | "recovery";
 
 export interface FitnessSetEntry {
   id: string;
@@ -77,7 +77,12 @@ export const mindBodyOptions: FitnessActivityOption[] = [
   { id: "stretching-mobility", label: "Stretching", type: "mind-body", defaultMinutes: "20", met: 2.3 }
 ];
 
-export const fitnessActivityOptions = [...cardioOptions, ...strengthMachineOptions, ...mindBodyOptions];
+export const recoveryOptions: FitnessActivityOption[] = [
+  { id: "sauna", label: "Sauna", type: "recovery", defaultMinutes: "15", met: 1.5 },
+  { id: "steam-room", label: "Steam room", type: "recovery", defaultMinutes: "15", met: 1.5 }
+];
+
+export const fitnessActivityOptions = [...cardioOptions, ...strengthMachineOptions, ...mindBodyOptions, ...recoveryOptions];
 
 export function getFitnessActivityOption(optionId: string) {
   return fitnessActivityOptions.find((option) => option.id === optionId);
