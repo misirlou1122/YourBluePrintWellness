@@ -18,6 +18,41 @@ function modeTitle(mode: AuthMode) {
   return "Log in to your account";
 }
 
+const weakPasswordTerms = [
+  "password",
+  "qwerty",
+  "letmein",
+  "welcome",
+  "admin",
+  "iloveyou",
+  "blueprint",
+  "wellness",
+  "yourblueprint",
+  "123456"
+];
+
+function compact(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function passwordStrengthMessage(value: string, email: string, displayName = "") {
+  const compactPassword = compact(value);
+  const compactEmailName = compact(email.split("@")[0] ?? "");
+  const compactDisplayName = compact(displayName);
+
+  if (value.length < 12) return "Use at least 12 characters for your password.";
+  if (!/[a-z]/.test(value)) return "Add at least one lowercase letter to your password.";
+  if (!/[A-Z]/.test(value)) return "Add at least one uppercase letter to your password.";
+  if (!/\d/.test(value)) return "Add at least one number to your password.";
+  if (!/[^A-Za-z0-9]/.test(value)) return "Add at least one symbol to your password.";
+  if (/(.)\1{4,}/.test(value)) return "Avoid repeating the same character many times.";
+  if (weakPasswordTerms.some((term) => compactPassword.includes(term))) return "Avoid common words or easy-to-guess password patterns.";
+  if (compactEmailName.length >= 4 && compactPassword.includes(compactEmailName)) return "Do not include your email name in your password.";
+  if (compactDisplayName.length >= 4 && compactPassword.includes(compactDisplayName)) return "Do not include your name in your password.";
+
+  return "";
+}
+
 export function AuthScreen({ initialMode = "login", onNavigate }: AuthScreenProps) {
   const { session } = useSupabaseAuth();
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -67,6 +102,13 @@ export function AuthScreen({ initialMode = "login", onNavigate }: AuthScreenProp
       setError("Account creation is temporarily unavailable. Please refresh and try again.");
       return;
     }
+
+    const passwordMessage = passwordStrengthMessage(password, email, displayName);
+    if (passwordMessage) {
+      setError(passwordMessage);
+      return;
+    }
+
     setBusy(true);
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -101,6 +143,13 @@ export function AuthScreen({ initialMode = "login", onNavigate }: AuthScreenProp
     setBusy(true);
 
     if (session && newPassword) {
+      const passwordMessage = passwordStrengthMessage(newPassword, session.user.email ?? email);
+      if (passwordMessage) {
+        setError(passwordMessage);
+        setBusy(false);
+        return;
+      }
+
       const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
       setBusy(false);
 
