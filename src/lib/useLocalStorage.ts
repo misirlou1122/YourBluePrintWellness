@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 export interface LocalItem {
@@ -20,14 +20,6 @@ function resolveStorageKey(key: string) {
 
   const userId = window.localStorage.getItem("ybw.currentUserId");
   return userId ? `ybw.users.${userId}.${key}` : key;
-}
-
-function getCurrentUserId() {
-  if (typeof window === "undefined") {
-    return "";
-  }
-
-  return window.localStorage.getItem("ybw.currentUserId") ?? "";
 }
 
 function shouldSyncToCloud(key: string) {
@@ -52,9 +44,9 @@ export function toggleComplete<T extends CompletableItem>(items: T[], id: string
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   const storageKey = resolveStorageKey(key);
-  const userId = useMemo(() => getCurrentUserId(), []);
-  const cloudSyncEnabled = Boolean(supabase && userId && shouldSyncToCloud(key));
+  const cloudSyncEnabled = Boolean(supabase && shouldSyncToCloud(key));
   const [cloudReady, setCloudReady] = useState(!cloudSyncEnabled);
+  const [cloudUserId, setCloudUserId] = useState("");
   const [value, setValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
@@ -69,7 +61,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   });
 
   useEffect(() => {
-    if (!cloudSyncEnabled || !supabase) {
+    const client = supabase;
+    if (!cloudSyncEnabled || !client) {
       setCloudReady(true);
       return;
     }
@@ -77,12 +70,26 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     let isMounted = true;
     setCloudReady(false);
 
-    supabase
-      .from("wellness_records")
-      .select("record_value")
-      .eq("record_key", key)
-      .maybeSingle()
-      .then(({ data, error }) => {
+    client.auth
+      .getUser()
+      .then(async ({ data: userData, error: userError }) => {
+        if (!isMounted) return;
+
+        const authenticatedUserId = userError ? "" : userData.user?.id ?? "";
+        setCloudUserId(authenticatedUserId);
+
+        if (!authenticatedUserId) {
+          setCloudReady(true);
+          return;
+        }
+
+        const { data, error } = await client
+          .from("wellness_records")
+          .select("record_value")
+          .eq("user_id", authenticatedUserId)
+          .eq("record_key", key)
+          .maybeSingle();
+
         if (!isMounted) return;
 
         if (error) {
@@ -109,15 +116,16 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   }, [storageKey, value]);
 
   useEffect(() => {
-    if (!cloudSyncEnabled || !cloudReady || !supabase) {
+    const client = supabase;
+    if (!cloudSyncEnabled || !cloudReady || !cloudUserId || !client) {
       return;
     }
 
-    supabase
+    client
       .from("wellness_records")
       .upsert(
         {
-          user_id: userId,
+          user_id: cloudUserId,
           record_key: key,
           record_value: value,
           updated_at: new Date().toISOString()
@@ -129,7 +137,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
           console.warn("Cloud sync save skipped:", error.message);
         }
       });
-  }, [cloudReady, cloudSyncEnabled, key, userId, value]);
+  }, [cloudReady, cloudSyncEnabled, cloudUserId, key, value]);
 
   return [value, setValue] as const;
 }

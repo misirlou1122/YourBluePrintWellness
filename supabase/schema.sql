@@ -7,8 +7,10 @@ create table if not exists public.wellness_records (
 );
 
 alter table public.wellness_records enable row level security;
+alter table public.wellness_records force row level security;
 
 grant usage on schema public to authenticated;
+revoke all on public.wellness_records from anon;
 grant select, insert, update, delete on public.wellness_records to authenticated;
 
 drop policy if exists "Users can read their own wellness records" on public.wellness_records;
@@ -55,8 +57,13 @@ create table if not exists public.medical_documents (
 );
 
 alter table public.medical_documents enable row level security;
+alter table public.medical_documents force row level security;
 
+revoke all on public.medical_documents from anon;
 grant select, insert, update, delete on public.medical_documents to authenticated;
+
+create index if not exists medical_documents_file_path_idx
+on public.medical_documents (file_path);
 
 drop policy if exists "Users can read their own medical documents" on public.medical_documents;
 create policy "Users can read their own medical documents"
@@ -92,8 +99,8 @@ values (
   'medical-documents',
   'medical-documents',
   false,
-  52428800,
-  array['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/octet-stream']::text[]
+  20971520,
+  array['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']::text[]
 )
 on conflict (id) do update
 set public = false,
@@ -109,6 +116,28 @@ using (
   bucket_id = 'medical-documents'
   and (storage.foldername(name))[1] = (select auth.uid())::text
 );
+
+create table if not exists public.function_rate_limits (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  action text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.function_rate_limits enable row level security;
+alter table public.function_rate_limits force row level security;
+revoke all on public.function_rate_limits from anon, authenticated;
+
+drop policy if exists "No client access to function rate limits" on public.function_rate_limits;
+create policy "No client access to function rate limits"
+on public.function_rate_limits
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+create index if not exists function_rate_limits_user_action_created_at_idx
+on public.function_rate_limits (user_id, action, created_at desc);
 
 drop policy if exists "Users can upload their own private files" on storage.objects;
 create policy "Users can upload their own private files"

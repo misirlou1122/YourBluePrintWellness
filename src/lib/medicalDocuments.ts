@@ -1,6 +1,16 @@
 import { supabase } from "./supabase";
 
 export const MEDICAL_DOCUMENTS_BUCKET = "medical-documents";
+export const MAX_MEDICAL_DOCUMENT_BYTES = 20 * 1024 * 1024;
+
+export const ALLOWED_MEDICAL_DOCUMENT_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif"
+]);
 
 export interface MedicalDocumentRecord {
   id?: string;
@@ -12,8 +22,6 @@ export interface MedicalDocumentRecord {
   file_size: number;
   extraction_status: "not_started" | "text_extracted" | "needs_ocr" | "reviewed";
 }
-
-export const MAX_MEDICAL_DOCUMENT_BYTES = 20 * 1024 * 1024;
 
 export function isPdfFile(file: File) {
   return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
@@ -31,14 +39,22 @@ export function validatePdfUpload(file: File) {
   return "";
 }
 
-function safeFileName(fileName: string) {
-  const safeName = fileName
-    .trim()
-    .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .replace(/-+/g, "-")
-    .slice(0, 120);
+export function validateMedicalUpload(file: File) {
+  const contentType = contentTypeForFile(file);
 
-  return safeName || "upload";
+  if (!ALLOWED_MEDICAL_DOCUMENT_TYPES.has(contentType)) {
+    return "Please choose a PDF, JPG, PNG, WEBP, HEIC, or HEIF file.";
+  }
+
+  if (file.size <= 0) {
+    return "This file appears empty. Please choose another file.";
+  }
+
+  if (file.size > MAX_MEDICAL_DOCUMENT_BYTES) {
+    return "This file is too large. Please choose a file under 20 MB.";
+  }
+
+  return "";
 }
 
 function categoryFolder(category: string) {
@@ -50,7 +66,9 @@ function contentTypeForFile(file: File) {
   if (lowerName.endsWith(".pdf")) return "application/pdf";
 
   if (file.type) {
-    return file.type;
+    const browserType = file.type.toLowerCase();
+    if (browserType === "image/jpg") return "image/jpeg";
+    if (ALLOWED_MEDICAL_DOCUMENT_TYPES.has(browserType)) return browserType;
   }
 
   if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) return "image/jpeg";
@@ -71,9 +89,19 @@ function extensionForContentType(contentType: string) {
   return "";
 }
 
+function generatedFileName(contentType: string) {
+  const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+  return `${id}${extensionForContentType(contentType)}`;
+}
+
 export async function uploadMedicalDocument(file: File, category: string, title: string): Promise<MedicalDocumentRecord> {
   if (!supabase) {
     throw new Error("Secure file storage is not configured yet.");
+  }
+
+  const validationMessage = validateMedicalUpload(file);
+  if (validationMessage) {
+    throw new Error(validationMessage);
   }
 
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -82,10 +110,8 @@ export async function uploadMedicalDocument(file: File, category: string, title:
   }
 
   const contentType = contentTypeForFile(file);
-  const safeName = safeFileName(file.name);
-  const extension = safeName.includes(".") ? "" : extensionForContentType(contentType);
-  const fileName = `${safeName}${extension}`;
-  const filePath = `${userData.user.id}/${categoryFolder(category)}/${Date.now()}-${fileName}`;
+  const fileName = generatedFileName(contentType);
+  const filePath = `${userData.user.id}/${categoryFolder(category)}/${fileName}`;
   const { error: uploadError } = await supabase.storage
     .from(MEDICAL_DOCUMENTS_BUCKET)
     .upload(filePath, file, {

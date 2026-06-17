@@ -2,25 +2,28 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.106.1";
 
 const documentsBucket = "medical-documents";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
+const allowedOrigins = new Set([
+  "https://www.yourblueprintwellness.com",
+  "https://yourblueprintwellness.com",
+  "http://localhost:5173",
+  "http://localhost:4173",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:4173"
+]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeadersFor(req) });
   }
 
   if (req.method !== "POST") {
-    return send(405, { message: "This account action is not available." });
+    return send(req, 405, { message: "This account action is not available." });
   }
 
   try {
     const token = authToken(req);
     if (!token) {
-      return send(401, { message: "Please sign in again before deleting your account." });
+      return send(req, 401, { message: "Please sign in again before deleting your account." });
     }
 
     const supabaseUrl = requiredEnv("SUPABASE_URL");
@@ -31,7 +34,7 @@ Deno.serve(async (req) => {
 
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
     if (userError || !userData.user) {
-      return send(401, { message: "Please sign in again before deleting your account." });
+      return send(req, 401, { message: "Please sign in again before deleting your account." });
     }
 
     const userId = userData.user.id;
@@ -43,15 +46,15 @@ Deno.serve(async (req) => {
     const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userId);
     if (deleteUserError) {
       console.error(JSON.stringify({ event: "delete_account_failed", stage: "auth_delete", userId, error: deleteUserError.message }));
-      return send(500, { message: "Your saved data was removed, but the account could not be fully deleted. Please contact support." });
+      return send(req, 500, { message: "Your saved data was removed, but the account could not be fully deleted. Please contact support." });
     }
 
     console.log(JSON.stringify({ event: "delete_account_complete", userId }));
-    return send(200, { message: "Your account and saved data were deleted." });
+    return send(req, 200, { message: "Your account and saved data were deleted." });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Your account could not be deleted. Please try again.";
     console.error(JSON.stringify({ event: "delete_account_failed", stage: "unexpected", error: message }));
-    return send(500, { message: "Your account could not be deleted. Please try again." });
+    return send(req, 500, { message: "Your account could not be deleted. Please try again." });
   }
 });
 
@@ -103,9 +106,21 @@ function requiredEnv(name: string) {
   return value;
 }
 
-function send(status: number, body: Record<string, unknown>) {
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = allowedOrigins.has(origin) ? origin : "https://www.yourblueprintwellness.com";
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin"
+  };
+}
+
+function send(req: Request, status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" }
+    headers: { ...corsHeadersFor(req), "Content-Type": "application/json" }
   });
 }

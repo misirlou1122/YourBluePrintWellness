@@ -6,12 +6,18 @@ const bucketName = "medical-documents";
 const maxPollAttempts = 18;
 const apiVersion = "2024-11-30";
 const defaultModelId = "prebuilt-layout";
+const analysisAction = "analyze-health-document";
+const analysisLimit = 5;
+const analysisWindowMs = 60 * 60 * 1000;
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
+const allowedOrigins = new Set([
+  "https://www.yourblueprintwellness.com",
+  "https://yourblueprintwellness.com",
+  "http://localhost:5173",
+  "http://localhost:4173",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:4173"
+]);
 
 const labMarkers = [
   { category: "A1C", labName: "A1C", patterns: [/hemoglobin\s*a1c/i, /\ba1c\b/i, /\bhba1c\b/i] },
@@ -86,11 +92,11 @@ const supplementKeywords = /\b(vitamin|supplement|magnesium|zinc|omega|fish oil|
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeadersFor(req) });
   }
 
   if (req.method !== "POST") {
-    return send(405, { message: "This document action is not available." });
+    return send(req, 405, { message: "This document action is not available." });
   }
 
   try {
@@ -102,13 +108,13 @@ Deno.serve(async (req) => {
 
     if (!filePath || !filePath.toLowerCase().endsWith(".pdf")) {
       console.warn(JSON.stringify({ event: "analysis_rejected", reason: "invalid_pdf_path", hasFilePath: Boolean(filePath) }));
-      return send(400, { message: "Please upload a PDF before analyzing." });
+      return send(req, 400, { message: "Please upload a PDF before analyzing." });
     }
 
     const accessToken = authToken(req);
     if (!accessToken) {
       console.warn(JSON.stringify({ event: "analysis_rejected", reason: "missing_auth" }));
-      return send(401, { message: "Please sign in again before analyzing this PDF." });
+      return send(req, 401, { message: "Please sign in again before analyzing this PDF." });
     }
 
     const supabaseUrl = requiredEnv("SUPABASE_URL");
@@ -127,20 +133,25 @@ Deno.serve(async (req) => {
     const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
     if (userError || !userData.user) {
       console.warn(JSON.stringify({ event: "analysis_rejected", reason: "invalid_auth", authError: userError?.message || "no_user" }));
-      return send(401, { message: "Please sign in again before analyzing this PDF." });
+      return send(req, 401, { message: "Please sign in again before analyzing this PDF." });
     }
 
-    if (!filePath.startsWith(`${userData.user.id}/`)) {
+    if (!isOwnedPdfPath(filePath, userData.user.id)) {
       console.warn(JSON.stringify({ event: "analysis_rejected", reason: "file_owner_mismatch", userId: userData.user.id }));
-      return send(403, { message: "This document does not belong to the signed-in account." });
+      return send(req, 403, { message: "This document does not belong to the signed-in account." });
     }
 
-    await supabase.from("medical_documents").update({ extraction_status: "needs_ocr" }).eq("file_path", filePath);
+    const rateLimit = await checkAnalysisRateLimit(supabase, userData.user.id);
+    if (!rateLimit.allowed) {
+      return send(req, 429, { message: "Document analysis is temporarily limited. Please try again later." });
+    }
+
+    await supabase.from("medical_documents").update({ extraction_status: "needs_ocr" }).eq("user_id", userData.user.id).eq("file_path", filePath);
 
     const { data: fileBlob, error: downloadError } = await supabase.storage.from(bucketName).download(filePath);
     if (downloadError || !fileBlob) {
       console.error(JSON.stringify({ event: "analysis_failed", stage: "supabase_download", bucketName, filePath, error: downloadError?.message || "no_blob" }));
-      return send(404, { message: "The uploaded PDF could not be opened securely." });
+      return send(req, 404, { message: "The uploaded PDF could not be opened securely." });
     }
 
     console.log(JSON.stringify({ event: "analysis_file_loaded", contentType: fileBlob.type, size: fileBlob.size }));
@@ -156,11 +167,12 @@ Deno.serve(async (req) => {
         extraction_status: "text_extracted",
         extracted_summary: { mode, item_count: items.length, line_count: lines.length }
       })
+      .eq("user_id", userData.user.id)
       .eq("file_path", filePath);
 
     console.log(JSON.stringify({ event: "analysis_complete", mode, itemCount: items.length, lineCount: lines.length }));
 
-    return send(200, {
+    return send(req, 200, {
       text,
       lines,
       items,
@@ -170,11 +182,71 @@ Deno.serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "The PDF could not be analyzed. Please try again.";
     console.error(JSON.stringify({ event: "analysis_failed", stage: "unexpected", error: message }));
-    return send(500, {
+    return send(req, 500, {
       message: cleanError(message)
     });
   }
 });
+
+function corsHeadersFor(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = allowedOrigins.has(origin) ? origin : "https://www.yourblueprintwellness.com";
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin"
+  };
+}
+
+function isOwnedPdfPath(filePath: string, userId: string) {
+  const parts = filePath.split("/");
+  return parts[0] === userId && parts.length >= 3 && parts.every((part) => part && part !== "." && part !== "..") && filePath.toLowerCase().endsWith(".pdf");
+}
+
+async function checkAnalysisRateLimit(supabase: ReturnType<typeof createClient>, userId: string) {
+  const cutoff = new Date(Date.now() - analysisWindowMs).toISOString();
+
+  const { error: cleanupError } = await supabase
+    .from("function_rate_limits")
+    .delete()
+    .eq("action", analysisAction)
+    .lt("created_at", cutoff);
+
+  if (cleanupError) {
+    console.warn(JSON.stringify({ event: "analysis_rate_limit_cleanup_failed", error: cleanupError.message }));
+  }
+
+  const { count, error: countError } = await supabase
+    .from("function_rate_limits")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("action", analysisAction)
+    .gte("created_at", cutoff);
+
+  if (countError) {
+    console.warn(JSON.stringify({ event: "analysis_rate_limit_count_failed", error: countError.message }));
+    return { allowed: false };
+  }
+
+  if ((count ?? 0) >= analysisLimit) {
+    console.warn(JSON.stringify({ event: "analysis_rate_limited", userId, count }));
+    return { allowed: false };
+  }
+
+  const { error: insertError } = await supabase.from("function_rate_limits").insert({
+    user_id: userId,
+    action: analysisAction
+  });
+
+  if (insertError) {
+    console.warn(JSON.stringify({ event: "analysis_rate_limit_insert_failed", error: insertError.message }));
+    return { allowed: false };
+  }
+
+  return { allowed: true };
+}
 
 async function parseBody(req: Request) {
   try {
@@ -458,9 +530,9 @@ function cleanError(message: string) {
   return message || "The PDF could not be analyzed. Please try again.";
 }
 
-function send(status: number, body: Record<string, unknown>) {
+function send(req: Request, status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" }
+    headers: { ...corsHeadersFor(req), "Content-Type": "application/json" }
   });
 }

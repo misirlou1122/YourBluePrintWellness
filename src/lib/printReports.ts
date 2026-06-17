@@ -125,6 +125,17 @@ export function printFocusedReport(type: PrintReportType) {
     return;
   }
 
+  let printed = false;
+  const printWhenReady = () => {
+    if (printed || printWindow.closed) return;
+    printed = true;
+    printWindow.focus();
+    printWindow.print();
+  };
+
+  printWindow.addEventListener("load", () => window.setTimeout(printWhenReady, 350), { once: true });
+  window.setTimeout(printWhenReady, 1000);
+
   window.setTimeout(() => {
     if (!printWindow.closed) {
       printWindow.focus();
@@ -170,14 +181,6 @@ function buildPrintDocument(type: PrintReportType) {
     ${body}
     <footer>This app is for personal tracking and organization only. It does not diagnose, treat, or replace medical advice. Always consult a licensed medical professional.</footer>
   </main>
-  <script>
-    window.addEventListener("load", function () {
-      window.setTimeout(function () {
-        window.focus();
-        window.print();
-      }, 350);
-    });
-  </script>
 </body>
 </html>`;
 }
