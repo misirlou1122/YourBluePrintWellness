@@ -9,7 +9,7 @@ export function MedicalDisclaimer() {
         Privacy Policy
       </a>
       <p className="mt-2">
-        © 2026 Bianca Russek. Authored by Bianca Russek. First created May 21, 2026. All rights reserved.
+        &copy; 2026 Bianca Russek. All rights reserved.
       </p>
     </footer>
   );
