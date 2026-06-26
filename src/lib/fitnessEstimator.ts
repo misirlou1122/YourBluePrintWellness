@@ -51,6 +51,7 @@ export const cardioOptions: FitnessActivityOption[] = [
   { id: "outdoor-walk", label: "Outdoor walk", type: "cardio", defaultMinutes: "30", met: 3.3, supportsMiles: true },
   { id: "elliptical", label: "Elliptical", type: "cardio", defaultMinutes: "30", met: 5, supportsMiles: true },
   { id: "stationary-bike", label: "Stationary bike", type: "cardio", defaultMinutes: "30", met: 4.8, supportsMiles: true },
+  { id: "stairmaster", label: "Stairmaster", type: "cardio", defaultMinutes: "20", met: 8.8 },
   { id: "swimming", label: "Swimming", type: "cardio", defaultMinutes: "30", met: 6 }
 ];
 
